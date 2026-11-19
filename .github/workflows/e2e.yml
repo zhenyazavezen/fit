@@ -1,0 +1,28 @@
+name: Сквозные тесты (Playwright)
+# Отдельная проверка интерфейса в настоящем браузере. Не блокирует публикацию сайта.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Установка Playwright (только для этой проверки)
+        run: |
+          npm install --no-save --no-audit --no-fund playwright
+          npx playwright install --with-deps chromium
+      - name: Сборка сайта
+        run: tools/build.sh _site
+      - name: Сквозные тесты на исходниках
+        run: node tests/e2e/run.mjs
+      - name: Сквозные тесты на собранном сайте (подпапка /fit/)
+        run: E2E_DIR=_site E2E_BASE=/fit/ node tests/e2e/run.mjs
+      - name: Сквозные тесты на автономном файле
+        run: E2E_DIR=standalone node tests/e2e/run.mjs
