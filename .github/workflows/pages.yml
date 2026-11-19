@@ -1,0 +1,39 @@
+name: Публикация на GitHub Pages
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Проверки (данные и модульные тесты)
+        run: |
+          node tools/validate.mjs
+          node --test tests/*.test.mjs tests/worker/*.test.mjs
+      - name: Сборка (копия без тестов и документов + метка версии)
+        run: tools/build.sh _site
+      - name: Проверка сборки
+        run: |
+          test -f _site/index.html && test -f _site/.nojekyll
+          ! grep -rE "from '\.{1,2}/[^']+\.js'" _site/js || { echo "Есть импорты без метки версии"; exit 1; }
+          grep -q 'name="build" content="dev"' _site/index.html && { echo "Не проставлена версия"; exit 1; } || true
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: _site }
+      - id: deployment
+        uses: actions/deploy-pages@v4
+        
