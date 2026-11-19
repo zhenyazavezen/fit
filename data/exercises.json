@@ -1,0 +1,2047 @@
+[
+  {
+    "id": "squat",
+    "categories": [
+      "legs",
+      "glutes",
+      "fullbody"
+    ],
+    "muscles": {
+      "primary": [
+        "quads",
+        "glutes"
+      ],
+      "secondary": [
+        "hamstrings",
+        "abs"
+      ]
+    },
+    "level": "beginner",
+    "mode": "reps",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 15,
+      "rest": 45
+    },
+    "harder": "split_squat",
+    "stress": [
+      "knee"
+    ]
+  },
+  {
+    "id": "sumo_squat",
+    "categories": [
+      "legs",
+      "glutes"
+    ],
+    "muscles": {
+      "primary": [
+        "glutes",
+        "adductors",
+        "quads"
+      ],
+      "secondary": [
+        "hamstrings"
+      ]
+    },
+    "level": "beginner",
+    "mode": "reps",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 12,
+      "rest": 45
+    },
+    "easier": "squat",
+    "stress": [
+      "knee"
+    ]
+  },
+  {
+    "id": "reverse_lunge",
+    "categories": [
+      "legs",
+      "glutes"
+    ],
+    "muscles": {
+      "primary": [
+        "quads",
+        "glutes"
+      ],
+      "secondary": [
+        "hamstrings",
+        "abs"
+      ]
+    },
+    "level": "beginner",
+    "mode": "reps",
+    "sides": "sequential",
+    "switchSec": 5,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 10,
+      "rest": 45
+    },
+    "easier": "split_squat",
+    "harder": "bulgarian_split_squat",
+    "stress": [
+      "knee"
+    ]
+  },
+  {
+    "id": "glute_bridge",
+    "categories": [
+      "glutes",
+      "legs"
+    ],
+    "muscles": {
+      "primary": [
+        "glutes"
+      ],
+      "secondary": [
+        "hamstrings",
+        "abs"
+      ]
+    },
+    "level": "beginner",
+    "mode": "reps",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 15,
+      "rest": 40
+    },
+    "harder": "single_leg_bridge"
+  },
+  {
+    "id": "single_leg_bridge",
+    "categories": [
+      "glutes",
+      "legs"
+    ],
+    "muscles": {
+      "primary": [
+        "glutes"
+      ],
+      "secondary": [
+        "hamstrings",
+        "abs"
+      ]
+    },
+    "level": "intermediate",
+    "mode": "reps",
+    "sides": "sequential",
+    "switchSec": 5,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 10,
+      "rest": 45
+    },
+    "easier": "glute_bridge",
+    "harder": "towel_hamstring_curl"
+  },
+  {
+    "id": "calf_raise",
+    "categories": [
+      "legs"
+    ],
+    "muscles": {
+      "primary": [
+        "calves"
+      ],
+      "secondary": []
+    },
+    "level": "beginner",
+    "mode": "reps",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 20,
+      "rest": 30
+    },
+    "harder": "single_leg_calf_raise"
+  },
+  {
+    "id": "wall_sit",
+    "categories": [
+      "legs"
+    ],
+    "muscles": {
+      "primary": [
+        "quads"
+      ],
+      "secondary": [
+        "glutes",
+        "calves"
+      ]
+    },
+    "level": "beginner",
+    "mode": "time",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "wall"
+    ],
+    "defaults": {
+      "sets": 3,
+      "seconds": 30,
+      "rest": 45
+    },
+    "stress": [
+      "knee"
+    ]
+  },
+  {
+    "id": "pushup",
+    "categories": [
+      "chest",
+      "shoulders",
+      "fullbody"
+    ],
+    "muscles": {
+      "primary": [
+        "chest",
+        "triceps",
+        "shoulders"
+      ],
+      "secondary": [
+        "abs"
+      ]
+    },
+    "level": "intermediate",
+    "mode": "reps",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 10,
+      "rest": 60
+    },
+    "easier": "knee_pushup",
+    "harder": "decline_pushup",
+    "stress": [
+      "wrist",
+      "shoulder"
+    ]
+  },
+  {
+    "id": "incline_pushup",
+    "categories": [
+      "chest",
+      "arms"
+    ],
+    "muscles": {
+      "primary": [
+        "chest",
+        "triceps"
+      ],
+      "secondary": [
+        "shoulders",
+        "abs"
+      ]
+    },
+    "level": "beginner",
+    "mode": "reps",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "chair"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 12,
+      "rest": 45
+    },
+    "harder": "pushup",
+    "easier": "wall_pushup",
+    "stress": [
+      "wrist",
+      "shoulder"
+    ]
+  },
+  {
+    "id": "knee_pushup",
+    "categories": [
+      "chest",
+      "arms"
+    ],
+    "muscles": {
+      "primary": [
+        "chest",
+        "triceps"
+      ],
+      "secondary": [
+        "shoulders",
+        "abs"
+      ]
+    },
+    "level": "beginner",
+    "mode": "reps",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 10,
+      "rest": 45
+    },
+    "harder": "pushup",
+    "stress": [
+      "wrist",
+      "knee",
+      "shoulder"
+    ]
+  },
+  {
+    "id": "pike_pushup",
+    "categories": [
+      "shoulders",
+      "arms"
+    ],
+    "muscles": {
+      "primary": [
+        "shoulders",
+        "triceps"
+      ],
+      "secondary": [
+        "chest",
+        "traps"
+      ]
+    },
+    "level": "intermediate",
+    "mode": "reps",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 8,
+      "rest": 60
+    },
+    "easier": "incline_pushup",
+    "harder": "backpack_overhead_press",
+    "stress": [
+      "wrist",
+      "shoulder"
+    ]
+  },
+  {
+    "id": "plank",
+    "categories": [
+      "abs",
+      "fullbody"
+    ],
+    "muscles": {
+      "primary": [
+        "abs"
+      ],
+      "secondary": [
+        "shoulders",
+        "glutes",
+        "lowerback"
+      ]
+    },
+    "level": "beginner",
+    "mode": "time",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "seconds": 30,
+      "rest": 40
+    },
+    "harder": "plank_taps",
+    "stress": [
+      "wrist"
+    ]
+  },
+  {
+    "id": "side_plank",
+    "categories": [
+      "abs"
+    ],
+    "muscles": {
+      "primary": [
+        "obliques"
+      ],
+      "secondary": [
+        "shoulders",
+        "glutes"
+      ]
+    },
+    "level": "intermediate",
+    "mode": "time",
+    "sides": "sequential",
+    "switchSec": 5,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 2,
+      "seconds": 20,
+      "rest": 30
+    },
+    "easier": "side_plank_knee",
+    "stress": [
+      "wrist"
+    ]
+  },
+  {
+    "id": "crunch",
+    "categories": [
+      "abs"
+    ],
+    "muscles": {
+      "primary": [
+        "abs"
+      ],
+      "secondary": [
+        "obliques"
+      ]
+    },
+    "level": "beginner",
+    "mode": "reps",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 2,
+      "reps": 10,
+      "rest": 30
+    },
+    "harder": "leg_raise"
+  },
+  {
+    "id": "leg_raise",
+    "categories": [
+      "abs"
+    ],
+    "muscles": {
+      "primary": [
+        "abs",
+        "hipflexors"
+      ],
+      "secondary": []
+    },
+    "level": "intermediate",
+    "mode": "reps",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 10,
+      "rest": 45
+    },
+    "easier": "crunch",
+    "stress": [
+      "back"
+    ]
+  },
+  {
+    "id": "dead_bug",
+    "categories": [
+      "abs"
+    ],
+    "muscles": {
+      "primary": [
+        "abs"
+      ],
+      "secondary": [
+        "hipflexors",
+        "obliques"
+      ]
+    },
+    "level": "beginner",
+    "mode": "reps",
+    "sides": "alternating",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 8,
+      "rest": 30
+    },
+    "harder": "hollow_hold"
+  },
+  {
+    "id": "mountain_climber",
+    "categories": [
+      "cardio",
+      "abs",
+      "fullbody"
+    ],
+    "muscles": {
+      "primary": [
+        "abs",
+        "hipflexors"
+      ],
+      "secondary": [
+        "shoulders",
+        "quads"
+      ]
+    },
+    "level": "intermediate",
+    "mode": "time",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "seconds": 30,
+      "rest": 30
+    },
+    "stress": [
+      "impact",
+      "wrist"
+    ]
+  },
+  {
+    "id": "jumping_jack",
+    "categories": [
+      "cardio",
+      "fullbody"
+    ],
+    "muscles": {
+      "primary": [
+        "calves",
+        "shoulders"
+      ],
+      "secondary": [
+        "glutes",
+        "quads"
+      ]
+    },
+    "level": "beginner",
+    "mode": "time",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "seconds": 30,
+      "rest": 30
+    },
+    "easier": "step_jack",
+    "stress": [
+      "impact"
+    ]
+  },
+  {
+    "id": "high_knees",
+    "categories": [
+      "cardio",
+      "legs"
+    ],
+    "muscles": {
+      "primary": [
+        "quads",
+        "hipflexors"
+      ],
+      "secondary": [
+        "calves",
+        "abs"
+      ]
+    },
+    "level": "beginner",
+    "mode": "time",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "seconds": 30,
+      "rest": 30
+    },
+    "easier": "march_in_place",
+    "stress": [
+      "impact"
+    ]
+  },
+  {
+    "id": "burpee",
+    "categories": [
+      "fullbody",
+      "cardio"
+    ],
+    "muscles": {
+      "primary": [
+        "quads",
+        "chest"
+      ],
+      "secondary": [
+        "shoulders",
+        "triceps",
+        "abs",
+        "glutes"
+      ]
+    },
+    "level": "advanced",
+    "mode": "reps",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 8,
+      "rest": 60
+    },
+    "easier": "burpee_step",
+    "stress": [
+      "impact",
+      "wrist",
+      "knee",
+      "shoulder",
+      "back"
+    ]
+  },
+  {
+    "id": "skater",
+    "categories": [
+      "cardio",
+      "legs",
+      "glutes"
+    ],
+    "muscles": {
+      "primary": [
+        "glutes",
+        "quads"
+      ],
+      "secondary": [
+        "adductors",
+        "calves"
+      ]
+    },
+    "level": "intermediate",
+    "mode": "time",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "seconds": 30,
+      "rest": 30
+    },
+    "easier": "step_skater",
+    "stress": [
+      "impact",
+      "knee"
+    ]
+  },
+  {
+    "id": "bird_dog",
+    "categories": [
+      "back",
+      "abs"
+    ],
+    "muscles": {
+      "primary": [
+        "abs",
+        "glutes"
+      ],
+      "secondary": [
+        "lowerback",
+        "shoulders"
+      ]
+    },
+    "level": "beginner",
+    "mode": "reps",
+    "sides": "alternating",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 8,
+      "rest": 30
+    },
+    "stress": [
+      "wrist"
+    ]
+  },
+  {
+    "id": "plank_taps",
+    "categories": [
+      "shoulders",
+      "abs",
+      "fullbody"
+    ],
+    "muscles": {
+      "primary": [
+        "abs",
+        "shoulders"
+      ],
+      "secondary": [
+        "chest",
+        "glutes"
+      ]
+    },
+    "level": "intermediate",
+    "mode": "time",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "seconds": 30,
+      "rest": 40
+    },
+    "easier": "plank",
+    "harder": "hollow_hold",
+    "stress": [
+      "wrist",
+      "shoulder"
+    ]
+  },
+  {
+    "id": "arm_circles",
+    "categories": [
+      "shoulders",
+      "mobility"
+    ],
+    "muscles": {
+      "primary": [
+        "shoulders"
+      ],
+      "secondary": [
+        "upperback",
+        "traps"
+      ]
+    },
+    "level": "beginner",
+    "mode": "time",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 2,
+      "seconds": 30,
+      "rest": 20
+    },
+    "stress": [
+      "shoulder"
+    ]
+  },
+  {
+    "id": "cat_cow",
+    "categories": [
+      "mobility",
+      "back"
+    ],
+    "muscles": {
+      "primary": [
+        "lowerback",
+        "upperback"
+      ],
+      "secondary": [
+        "abs"
+      ]
+    },
+    "level": "beginner",
+    "mode": "reps",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 2,
+      "reps": 10,
+      "rest": 20
+    },
+    "stress": [
+      "wrist"
+    ]
+  },
+  {
+    "id": "lunge_twist",
+    "categories": [
+      "mobility",
+      "fullbody",
+      "legs"
+    ],
+    "muscles": {
+      "primary": [
+        "hipflexors",
+        "glutes"
+      ],
+      "secondary": [
+        "upperback",
+        "obliques",
+        "quads"
+      ]
+    },
+    "level": "beginner",
+    "mode": "reps",
+    "sides": "sequential",
+    "switchSec": 5,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 2,
+      "reps": 6,
+      "rest": 20
+    },
+    "stress": [
+      "knee"
+    ]
+  },
+  {
+    "id": "thoracic_rotation",
+    "categories": [
+      "mobility",
+      "back"
+    ],
+    "muscles": {
+      "primary": [
+        "upperback"
+      ],
+      "secondary": [
+        "obliques",
+        "shoulders"
+      ]
+    },
+    "level": "beginner",
+    "mode": "reps",
+    "sides": "sequential",
+    "switchSec": 5,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 2,
+      "reps": 8,
+      "rest": 15
+    }
+  },
+  {
+    "id": "child_pose",
+    "categories": [
+      "stretch",
+      "back"
+    ],
+    "muscles": {
+      "primary": [
+        "lowerback",
+        "lats"
+      ],
+      "secondary": [
+        "glutes",
+        "shoulders"
+      ]
+    },
+    "level": "beginner",
+    "mode": "time",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 2,
+      "seconds": 30,
+      "rest": 10
+    }
+  },
+  {
+    "id": "hamstring_stretch",
+    "categories": [
+      "stretch",
+      "legs"
+    ],
+    "muscles": {
+      "primary": [
+        "hamstrings"
+      ],
+      "secondary": [
+        "calves",
+        "lowerback"
+      ]
+    },
+    "level": "beginner",
+    "mode": "time",
+    "sides": "sequential",
+    "switchSec": 5,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 2,
+      "seconds": 30,
+      "rest": 10
+    }
+  },
+  {
+    "id": "quad_stretch",
+    "categories": [
+      "stretch",
+      "legs"
+    ],
+    "muscles": {
+      "primary": [
+        "quads"
+      ],
+      "secondary": [
+        "hipflexors"
+      ]
+    },
+    "level": "beginner",
+    "mode": "time",
+    "sides": "sequential",
+    "switchSec": 5,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 2,
+      "seconds": 30,
+      "rest": 10
+    }
+  },
+  {
+    "id": "chest_stretch",
+    "categories": [
+      "stretch",
+      "chest"
+    ],
+    "muscles": {
+      "primary": [
+        "chest"
+      ],
+      "secondary": [
+        "shoulders",
+        "biceps"
+      ]
+    },
+    "level": "beginner",
+    "mode": "time",
+    "sides": "sequential",
+    "switchSec": 5,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "wall"
+    ],
+    "defaults": {
+      "sets": 2,
+      "seconds": 30,
+      "rest": 10
+    },
+    "stress": [
+      "shoulder"
+    ]
+  },
+  {
+    "id": "figure_four",
+    "categories": [
+      "stretch",
+      "glutes"
+    ],
+    "muscles": {
+      "primary": [
+        "glutes"
+      ],
+      "secondary": [
+        "hamstrings",
+        "hipflexors"
+      ]
+    },
+    "level": "beginner",
+    "mode": "time",
+    "sides": "sequential",
+    "switchSec": 5,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 2,
+      "seconds": 30,
+      "rest": 10
+    }
+  },
+  {
+    "id": "hip_flexor_stretch",
+    "categories": [
+      "stretch",
+      "mobility",
+      "legs"
+    ],
+    "muscles": {
+      "primary": [
+        "hipflexors"
+      ],
+      "secondary": [
+        "quads"
+      ]
+    },
+    "level": "beginner",
+    "mode": "time",
+    "sides": "sequential",
+    "switchSec": 5,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 2,
+      "seconds": 30,
+      "rest": 10
+    }
+  },
+  {
+    "id": "step_up",
+    "categories": [
+      "legs",
+      "glutes",
+      "cardio"
+    ],
+    "muscles": {
+      "primary": [
+        "quads",
+        "glutes"
+      ],
+      "secondary": [
+        "hamstrings",
+        "calves"
+      ]
+    },
+    "level": "beginner",
+    "mode": "reps",
+    "sides": "alternating",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "chair"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 12,
+      "rest": 40
+    },
+    "stress": [
+      "knee"
+    ]
+  },
+  {
+    "id": "pushup_rotation",
+    "categories": [
+      "chest",
+      "shoulders",
+      "abs"
+    ],
+    "muscles": {
+      "primary": [
+        "chest",
+        "triceps"
+      ],
+      "secondary": [
+        "shoulders",
+        "obliques",
+        "abs"
+      ]
+    },
+    "level": "intermediate",
+    "mode": "reps",
+    "sides": "alternating",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 8,
+      "rest": 60
+    },
+    "easier": "knee_pushup",
+    "stress": [
+      "wrist",
+      "shoulder"
+    ]
+  },
+  {
+    "id": "step_jack",
+    "categories": [
+      "cardio",
+      "fullbody"
+    ],
+    "muscles": {
+      "primary": [
+        "quads",
+        "shoulders"
+      ],
+      "secondary": [
+        "calves"
+      ]
+    },
+    "level": "beginner",
+    "mode": "time",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "seconds": 30,
+      "rest": 30
+    },
+    "harder": "jumping_jack"
+  },
+  {
+    "id": "march_in_place",
+    "categories": [
+      "cardio",
+      "legs"
+    ],
+    "muscles": {
+      "primary": [
+        "quads",
+        "hipflexors"
+      ],
+      "secondary": [
+        "calves"
+      ]
+    },
+    "level": "beginner",
+    "mode": "time",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "seconds": 30,
+      "rest": 30
+    },
+    "harder": "high_knees"
+  },
+  {
+    "id": "step_skater",
+    "categories": [
+      "cardio",
+      "legs",
+      "glutes"
+    ],
+    "muscles": {
+      "primary": [
+        "glutes",
+        "quads"
+      ],
+      "secondary": [
+        "adductors"
+      ]
+    },
+    "level": "beginner",
+    "mode": "time",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "seconds": 30,
+      "rest": 30
+    },
+    "harder": "skater",
+    "stress": [
+      "knee"
+    ]
+  },
+  {
+    "id": "burpee_step",
+    "categories": [
+      "fullbody",
+      "cardio"
+    ],
+    "muscles": {
+      "primary": [
+        "quads",
+        "shoulders"
+      ],
+      "secondary": [
+        "abs",
+        "chest"
+      ]
+    },
+    "level": "intermediate",
+    "mode": "reps",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 2,
+      "reps": 8,
+      "rest": 45
+    },
+    "harder": "burpee",
+    "stress": [
+      "wrist",
+      "shoulder"
+    ]
+  },
+  {
+    "id": "close_grip_incline_pushup",
+    "categories": [
+      "arms",
+      "chest"
+    ],
+    "muscles": {
+      "primary": [
+        "triceps",
+        "chest"
+      ],
+      "secondary": [
+        "shoulders",
+        "abs"
+      ]
+    },
+    "level": "intermediate",
+    "mode": "reps",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "chair"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 10,
+      "rest": 45
+    },
+    "harder": "pushup",
+    "easier": "incline_pushup",
+    "stress": [
+      "wrist",
+      "shoulder"
+    ]
+  },
+  {
+    "id": "backpack_row",
+    "categories": [
+      "back",
+      "arms"
+    ],
+    "muscles": {
+      "primary": [
+        "lats",
+        "upperback"
+      ],
+      "secondary": [
+        "biceps",
+        "lowerback"
+      ]
+    },
+    "level": "beginner",
+    "mode": "reps",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "backpack"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 12,
+      "rest": 60
+    },
+    "stress": [
+      "back"
+    ]
+  },
+  {
+    "id": "split_squat",
+    "categories": [
+      "legs",
+      "glutes"
+    ],
+    "muscles": {
+      "primary": [
+        "quads",
+        "glutes"
+      ],
+      "secondary": [
+        "hamstrings",
+        "adductors"
+      ]
+    },
+    "level": "beginner",
+    "mode": "reps",
+    "sides": "sequential",
+    "switchSec": 5,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 8,
+      "rest": 45
+    },
+    "easier": "squat",
+    "harder": "reverse_lunge",
+    "stress": [
+      "knee"
+    ]
+  },
+  {
+    "id": "bulgarian_split_squat",
+    "categories": [
+      "legs",
+      "glutes"
+    ],
+    "muscles": {
+      "primary": [
+        "quads",
+        "glutes"
+      ],
+      "secondary": [
+        "hamstrings",
+        "adductors",
+        "abs"
+      ]
+    },
+    "level": "advanced",
+    "mode": "reps",
+    "sides": "sequential",
+    "switchSec": 5,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "chair"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 8,
+      "rest": 75
+    },
+    "easier": "reverse_lunge",
+    "stress": [
+      "knee"
+    ]
+  },
+  {
+    "id": "backpack_rdl",
+    "categories": [
+      "legs",
+      "glutes",
+      "back"
+    ],
+    "muscles": {
+      "primary": [
+        "hamstrings",
+        "glutes"
+      ],
+      "secondary": [
+        "lowerback"
+      ]
+    },
+    "level": "beginner",
+    "mode": "reps",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "backpack"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 10,
+      "rest": 45
+    },
+    "harder": "single_leg_rdl",
+    "stress": [
+      "back"
+    ]
+  },
+  {
+    "id": "single_leg_rdl",
+    "categories": [
+      "legs",
+      "glutes",
+      "back"
+    ],
+    "muscles": {
+      "primary": [
+        "hamstrings",
+        "glutes"
+      ],
+      "secondary": [
+        "lowerback",
+        "abs"
+      ]
+    },
+    "level": "intermediate",
+    "mode": "reps",
+    "sides": "sequential",
+    "switchSec": 5,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "wall"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 8,
+      "rest": 60
+    },
+    "easier": "backpack_rdl",
+    "stress": [
+      "back"
+    ]
+  },
+  {
+    "id": "towel_hamstring_curl",
+    "categories": [
+      "legs",
+      "glutes"
+    ],
+    "muscles": {
+      "primary": [
+        "hamstrings"
+      ],
+      "secondary": [
+        "glutes",
+        "calves"
+      ]
+    },
+    "level": "intermediate",
+    "mode": "reps",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "towel"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 8,
+      "rest": 45
+    },
+    "easier": "single_leg_bridge"
+  },
+  {
+    "id": "lateral_lunge",
+    "categories": [
+      "legs",
+      "glutes"
+    ],
+    "muscles": {
+      "primary": [
+        "quads",
+        "adductors",
+        "glutes"
+      ],
+      "secondary": [
+        "hamstrings"
+      ]
+    },
+    "level": "intermediate",
+    "mode": "reps",
+    "sides": "sequential",
+    "switchSec": 5,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 8,
+      "rest": 45
+    },
+    "stress": [
+      "knee"
+    ]
+  },
+  {
+    "id": "prone_ytw",
+    "categories": [
+      "back",
+      "shoulders"
+    ],
+    "muscles": {
+      "primary": [
+        "upperback",
+        "shoulders"
+      ],
+      "secondary": [
+        "lowerback",
+        "traps"
+      ]
+    },
+    "level": "beginner",
+    "mode": "reps",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 8,
+      "rest": 30
+    },
+    "stress": [
+      "shoulder",
+      "back"
+    ]
+  },
+  {
+    "id": "wall_angel",
+    "categories": [
+      "mobility",
+      "back"
+    ],
+    "muscles": {
+      "primary": [
+        "upperback",
+        "shoulders"
+      ],
+      "secondary": [
+        "traps"
+      ]
+    },
+    "level": "beginner",
+    "mode": "reps",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "wall"
+    ],
+    "defaults": {
+      "sets": 2,
+      "reps": 8,
+      "rest": 20
+    },
+    "stress": [
+      "shoulder"
+    ]
+  },
+  {
+    "id": "decline_pushup",
+    "categories": [
+      "chest",
+      "shoulders"
+    ],
+    "muscles": {
+      "primary": [
+        "chest",
+        "shoulders"
+      ],
+      "secondary": [
+        "triceps",
+        "abs"
+      ]
+    },
+    "level": "advanced",
+    "mode": "reps",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "chair"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 8,
+      "rest": 75
+    },
+    "easier": "pushup",
+    "stress": [
+      "wrist",
+      "shoulder"
+    ]
+  },
+  {
+    "id": "side_plank_knee",
+    "categories": [
+      "abs"
+    ],
+    "muscles": {
+      "primary": [
+        "obliques",
+        "abs"
+      ],
+      "secondary": [
+        "shoulders",
+        "glutes"
+      ]
+    },
+    "level": "beginner",
+    "mode": "time",
+    "sides": "sequential",
+    "switchSec": 5,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 2,
+      "seconds": 15,
+      "rest": 30
+    },
+    "harder": "side_plank",
+    "stress": [
+      "wrist"
+    ]
+  },
+  {
+    "id": "hollow_hold",
+    "categories": [
+      "abs"
+    ],
+    "muscles": {
+      "primary": [
+        "abs"
+      ],
+      "secondary": [
+        "hipflexors"
+      ]
+    },
+    "level": "advanced",
+    "mode": "time",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "seconds": 15,
+      "rest": 30
+    },
+    "easier": "dead_bug",
+    "stress": [
+      "back"
+    ]
+  },
+  {
+    "id": "goblet_squat",
+    "categories": [
+      "legs",
+      "glutes"
+    ],
+    "muscles": {
+      "primary": [
+        "quads",
+        "glutes"
+      ],
+      "secondary": [
+        "abs",
+        "upperback"
+      ]
+    },
+    "level": "intermediate",
+    "mode": "reps",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "backpack"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 12,
+      "rest": 60
+    },
+    "easier": "squat",
+    "stress": [
+      "knee",
+      "back"
+    ]
+  },
+  {
+    "id": "wall_pushup",
+    "categories": [
+      "chest",
+      "shoulders"
+    ],
+    "muscles": {
+      "primary": [
+        "chest"
+      ],
+      "secondary": [
+        "shoulders",
+        "triceps"
+      ]
+    },
+    "level": "beginner",
+    "mode": "reps",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "wall"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 10,
+      "rest": 40
+    },
+    "harder": "incline_pushup",
+    "stress": [
+      "wrist",
+      "shoulder"
+    ]
+  },
+  {
+    "id": "backpack_overhead_press",
+    "categories": [
+      "shoulders",
+      "arms"
+    ],
+    "muscles": {
+      "primary": [
+        "shoulders",
+        "triceps"
+      ],
+      "secondary": [
+        "upperback",
+        "abs"
+      ]
+    },
+    "level": "intermediate",
+    "mode": "reps",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "backpack"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 10,
+      "rest": 60
+    },
+    "easier": "pike_pushup",
+    "stress": [
+      "shoulder"
+    ]
+  },
+  {
+    "id": "backpack_curl",
+    "categories": [
+      "arms"
+    ],
+    "muscles": {
+      "primary": [
+        "biceps"
+      ],
+      "secondary": [
+        "forearms"
+      ]
+    },
+    "level": "beginner",
+    "mode": "reps",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "backpack"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 12,
+      "rest": 45
+    }
+  },
+  {
+    "id": "backpack_triceps_extension",
+    "categories": [
+      "arms"
+    ],
+    "muscles": {
+      "primary": [
+        "triceps"
+      ],
+      "secondary": [
+        "shoulders"
+      ]
+    },
+    "level": "intermediate",
+    "mode": "reps",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "backpack"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 10,
+      "rest": 45
+    },
+    "stress": [
+      "shoulder"
+    ]
+  },
+  {
+    "id": "backpack_wrist_curl",
+    "categories": [
+      "arms"
+    ],
+    "muscles": {
+      "primary": [
+        "forearms"
+      ],
+      "secondary": []
+    },
+    "level": "beginner",
+    "mode": "reps",
+    "sides": "none",
+    "switchSec": 0,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "backpack"
+    ],
+    "defaults": {
+      "sets": 2,
+      "reps": 15,
+      "rest": 30
+    },
+    "stress": [
+      "wrist"
+    ]
+  },
+  {
+    "id": "single_leg_calf_raise",
+    "categories": [
+      "legs"
+    ],
+    "muscles": {
+      "primary": [
+        "calves"
+      ],
+      "secondary": []
+    },
+    "level": "intermediate",
+    "mode": "reps",
+    "sides": "sequential",
+    "switchSec": 5,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "wall"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 12,
+      "rest": 30
+    },
+    "easier": "calf_raise",
+    "stress": [
+      "knee"
+    ]
+  },
+  {
+    "id": "clamshell",
+    "categories": [
+      "glutes"
+    ],
+    "muscles": {
+      "primary": [
+        "glutes"
+      ],
+      "secondary": [
+        "hipflexors"
+      ]
+    },
+    "level": "beginner",
+    "mode": "reps",
+    "sides": "sequential",
+    "switchSec": 5,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 12,
+      "rest": 30
+    },
+    "harder": "side_lying_leg_raise"
+  },
+  {
+    "id": "side_lying_leg_raise",
+    "categories": [
+      "glutes",
+      "legs"
+    ],
+    "muscles": {
+      "primary": [
+        "glutes"
+      ],
+      "secondary": [
+        "quads"
+      ]
+    },
+    "level": "beginner",
+    "mode": "reps",
+    "sides": "sequential",
+    "switchSec": 5,
+    "review": "draft",
+    "access": "free",
+    "equipment": [
+      "none"
+    ],
+    "defaults": {
+      "sets": 3,
+      "reps": 12,
+      "rest": 30
+    },
+    "easier": "clamshell"
+  }
+]

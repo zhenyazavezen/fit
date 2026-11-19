@@ -1,0 +1,65 @@
+/* Дизайн-токены ZAVEZEN_FIT. Единственное место, где задаются цвета, радиусы, отступы и размеры.
+   Компоненты (app.css) используют только эти переменные. Тема одна — тёмная. */
+:root {
+  color-scheme: dark;
+
+  /* поверхности */
+  --bg: #0A0A0B;
+  --s1: #121214;
+  --s2: #1A1A1D;
+  --s3: #242428;
+  --line: #303036;
+
+  /* текст */
+  --text: #F5F5F6;
+  --text2: #A3A3AB;
+  --text3: #8A8A93;
+
+  /* светлые акценты (без ярких цветов) */
+  --silver: #C7C9CF;
+  --platinum: #ECEDEF;
+  --on-platinum: #0A0A0B;
+  --halo: rgba(239, 240, 242, 0.07);
+  --danger: #E3A19F;
+  --danger-bg: rgba(227, 161, 159, 0.1);
+
+  /* типографика */
+  --font: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --fs-xs: 11px;
+  --fs-s: 13px;
+  --fs-m: 15px;
+  --fs-l: 17px;
+  --fs-xl: 22px;
+  --fs-xxl: 28px;
+
+  /* радиусы */
+  --r-m: 16px;
+  --r-l: 22px;
+  --r-xl: 28px;
+
+  /* отступы */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+
+  /* размеры */
+  --gutter: 20px;
+  --touch: 44px;
+  --tabbar-h: 64px;
+  --btn-h: 56px;
+  --maxw: 560px;
+
+  /* Telegram и безопасные зоны (задаются из JS) */
+  --tg-top: 0px;
+  --tg-bottom: 0px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+
+  --ease: cubic-bezier(.2, .7, .2, 1);
+}

@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+export const readJson = (p) => JSON.parse(fs.readFileSync(path.join(root, p), 'utf8'));
+export const root_ = root;
+const exercises = readJson('data/exercises.json');
+export const exById = new Map(exercises.map((e) => [e.id, e]));
+export const programs = readJson('data/programs.json');
+export const progById = new Map(programs.map((p) => [p.id, p]));
+export const stepsOf = async (prog) => { const { buildSteps } = await import('../js/engine.js'); return buildSteps(prog.items, exById, prog.restBetween); };

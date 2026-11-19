@@ -1,0 +1,17 @@
+# Конфигурация Worker «fit». Ресурсы УЖЕ созданы в Cloudflare — повторно не создавайте.
+name = "fit"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "fit_db"
+database_id = "f9e95ea9-24d4-473a-a757-92f122d5dc49"   # идентификатор не секретный
+migrations_dir = "migrations"
+
+[vars]
+# Источники, которым разрешены запросы к API (через запятую). Добавьте домен Cloudflare Pages после переезда.
+ALLOWED_ORIGINS = "https://zhenyazavezen.github.io"
+GOOGLE_CLIENT_ID = ""        # публичный Client ID из Google Cloud (пока пусто: вход через Google выключен)
+
+# СЕКРЕТЫ не хранятся в файле. Задайте командой:  wrangler secret put TELEGRAM_BOT_TOKEN

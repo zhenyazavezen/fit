@@ -1,0 +1,55 @@
+{
+  "categories": [
+    "fullbody",
+    "abs",
+    "legs",
+    "glutes",
+    "chest",
+    "back",
+    "shoulders",
+    "arms",
+    "cardio",
+    "stretch",
+    "mobility"
+  ],
+  "muscles": [
+    "chest",
+    "shoulders",
+    "triceps",
+    "biceps",
+    "forearms",
+    "abs",
+    "obliques",
+    "lowerback",
+    "upperback",
+    "lats",
+    "traps",
+    "glutes",
+    "quads",
+    "hamstrings",
+    "calves",
+    "hipflexors",
+    "adductors"
+  ],
+  "levels": [
+    "beginner",
+    "intermediate",
+    "advanced"
+  ],
+  "equipment": [
+    "none",
+    "chair",
+    "wall",
+    "backpack",
+    "towel"
+  ],
+  "goals": [
+    "shape",
+    "strength",
+    "endurance",
+    "home",
+    "weight",
+    "muscle",
+    "activity"
+  ]
+}

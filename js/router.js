@@ -1,0 +1,114 @@
+// Мини-роутер без изменения URL: хэш занят параметрами запуска Telegram (#tgWebAppData=…),
+// поэтому состояние навигации хранится в памяти + history.state (работает системная кнопка «Назад»).
+import { tg } from './tg.js';
+
+const routes = new Map();            // name → { factory, tab, tabs }
+const backHandlers = [];             // верхний обработчик «Назад» перехватывает навигацию (шторка, подтверждение выхода…)
+let stack = [];                      // [{ name, params, scroll }]
+let view = null;                     // { el, onShow, onHide, destroy }
+let screenEl, tabbarEl;
+let navToken = 0;
+let canPush = true;                 // в ограниченных окружениях (iframe) pushState может быть запрещён — тогда стек ведём сами
+const pushState = (n) => { try { history.pushState({ n }, ''); return true; } catch { canPush = false; return false; } };
+const replaceState = (n) => { try { history.replaceState({ n }, ''); } catch { /* ignore */ } };
+
+export function register(name, factory, opts = {}) {
+  routes.set(name, { factory, tab: opts.tab || null, tabs: opts.tabs !== false });
+}
+
+export function start({ screen, tabbar, initial }) {
+  screenEl = screen; tabbarEl = tabbar;
+  tabbar.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-tab]');
+    if (b) openTab(b.dataset.tab);
+  });
+  window.addEventListener('popstate', onPop);
+  replaceState(1);
+  stack = [];
+  return show({ name: initial, params: {} }, [{ name: initial, params: {}, scroll: 0 }]);
+}
+
+const current = () => stack[stack.length - 1] || null;
+
+/** Перейти на экран. replace — заменить текущий вместо добавления в стек. */
+export function go(name, params = {}, { replace = false } = {}) {
+  saveScroll();
+  const entry = { name, params, scroll: 0 };
+  const next = replace ? [...stack.slice(0, -1), entry] : [...stack, entry];
+  if (!replace) pushState(next.length);
+  return show(entry, next);
+}
+
+export function openTab(name) {
+  if (stack.length === 1 && current()?.name === name) { screenEl.scrollTo?.({ top: 0, behavior: 'smooth' }); return; }
+  const entry = { name, params: {}, scroll: 0 };
+  replaceState(1);
+  return show(entry, [entry]);
+}
+
+/** Зарегистрировать обработчик «Назад» (например, закрыть шторку). Возвращает функцию снятия. */
+export function onBack(fn) {
+  backHandlers.push(fn);
+  syncBackButton();
+  return () => { const i = backHandlers.lastIndexOf(fn); if (i >= 0) backHandlers.splice(i, 1); syncBackButton(); };
+}
+
+export function back() {
+  if (backHandlers.length) { backHandlers[backHandlers.length - 1](); return; }
+  if (stack.length > 1) {
+    if (canPush) { try { history.back(); return; } catch { canPush = false; } }
+    const next = stack.slice(0, -1);
+    show(next[next.length - 1], next, true);
+  }
+}
+
+function onPop(e) {
+  if (backHandlers.length) {                       // перехвачено: вернём запись истории и вызовем обработчик
+    pushState(stack.length);
+    backHandlers[backHandlers.length - 1]();
+    return;
+  }
+  const n = e.state?.n ?? 1;
+  if (n < stack.length) {
+    const next = stack.slice(0, n);
+    show(next[next.length - 1], next, true);
+  }
+}
+
+function saveScroll() { const c = current(); if (c && screenEl) c.scroll = screenEl.scrollTop; }
+
+async function show(entry, nextStack, restore = false) {
+  const token = ++navToken;
+  const def = routes.get(entry.name);
+  if (!def) throw new Error('Неизвестный экран: ' + entry.name);
+  try { view?.onHide?.(); view?.destroy?.(); } catch (e) { console.error(e); }
+  stack = nextStack;
+  let next;
+  try { next = await def.factory(entry.params || {}); } catch (e) { console.error(e); next = errorView(e); }
+  if (token !== navToken) { next.destroy?.(); return; }
+  view = next;
+  screenEl.replaceChildren(next.el);
+  screenEl.classList.remove('enter'); void screenEl.offsetWidth; screenEl.classList.add('enter');
+  screenEl.scrollTop = restore ? entry.scroll || 0 : 0;
+  document.body.dataset.route = entry.name;
+  tabbarEl.hidden = !def.tabs;
+  const activeTab = def.tab || routes.get(stack[0].name)?.tab;
+  tabbarEl.querySelectorAll('[data-tab]').forEach((b) => b.setAttribute('aria-current', String(b.dataset.tab === activeTab)));
+  syncBackButton();
+  try { next.onShow?.(); } catch (e) { console.error(e); }
+}
+
+function errorView(e) {
+  const el = document.createElement('div');
+  el.className = 'pad';
+  el.textContent = 'Не удалось открыть экран: ' + (e?.message || e);
+  return { el };
+}
+
+function syncBackButton() {
+  const need = stack.length > 1 || backHandlers.length > 0;
+  tg.setBack(need ? () => back() : null);
+}
+
+/** Перерисовать текущий экран (например, после смены языка). */
+export function refresh() { const c = current(); if (c) return show(c, stack, true); }
