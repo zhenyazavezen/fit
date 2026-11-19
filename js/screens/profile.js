@@ -26,6 +26,18 @@ function exportData() {
   });
 }
 
+// Аватар из Telegram (только показ): принимаем лишь https-адрес t.me; при ошибке загрузки остаётся буква.
+function avatarEl(u, name) {
+  const letter = (name[0] || 'S').toUpperCase();
+  const box = h('div', { class: 'avatar' }, letter);
+  const url = u && typeof u.photo_url === 'string' ? u.photo_url : '';
+  if (/^https:\/\/(t\.me|telegram\.org)\//.test(url)) {
+    const img = h('img', { src: url, alt: '', referrerpolicy: 'no-referrer', decoding: 'async' });
+    img.addEventListener('load', () => { box.textContent = ''; box.append(img); });
+  }
+  return box;
+}
+
 export default function profile() {
   const hist = history.all(), set = settings.get(), u = tg.user;
   const name = u ? [u.first_name, u.last_name].filter(Boolean).join(' ') : t('profile.guest');
@@ -33,7 +45,7 @@ export default function profile() {
   const el = h('div', { class: 'pad' });
 
   el.append(h('h1', { class: 'h1 page-title' }, t('profile.title')),
-    h('div', { class: 'card row-flex' }, h('div', { class: 'avatar' }, (name[0] || 'S').toUpperCase()),
+    h('div', { class: 'card row-flex' }, avatarEl(u, name),
       h('div', { class: 'grow' }, h('div', { class: 'h3' }, name), h('div', { class: 'small muted' }, u ? t('profile.fromTelegram') + (u.username ? ` · @${u.username}` : '') : t('profile.localOnly')))),
     h('div', { class: 'facts', style: { marginTop: '12px' } },
       fact(String(hist.length), t('profile.total')), fact(total ? spentLabel(total) : '0', t('profile.totalTime')), fact(String(streak(hist)), t('progress.streak'))));

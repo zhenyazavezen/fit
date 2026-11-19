@@ -9,6 +9,8 @@ export const tg = {
   get user() { return WA()?.initDataUnsafe?.user || null; },
   /** Сырая строка initData для проверки подписи на сервере. */
   get initData() { return WA()?.initData || ''; },
+  /** Параметр ссылки t.me/бот/app?startapp=… (только из белого списка в main.js). */
+  get startParam() { return String(WA()?.initDataUnsafe?.start_param || ''); },
   get platform() { return WA()?.platform || 'web'; },
 
   init() {

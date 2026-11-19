@@ -30,7 +30,8 @@ export async function handle(request, env, opts = {}) {
   if (method === 'POST' && path === '/auth/telegram') {
     await rateLimit(db, 'auth:' + ipOf(request), 30, 600, now);
     const body = await readJson(request);
-    const r = await verifyInitData(body.initData, env.TELEGRAM_BOT_TOKEN, now);
+    const r = await verifyInitData(body.initData, String(env.TELEGRAM_BOT_TOKEN || '').trim(), now);
+    if (!r.ok) console.warn('telegram auth failed: ' + r.reason);
     if (!r.ok) throw new HttpError(r.reason === 'not_configured' ? 503 : 401, 'auth_failed', r.reason === 'not_configured' ? 'Вход через Telegram не настроен' : 'Не удалось подтвердить вход через Telegram');
     const name = [r.user.first_name, r.user.last_name].filter(Boolean).join(' ');
     return json(await loginResponse(env, 'telegram', String(r.user.id), { displayName: name, username: r.user.username }, now));

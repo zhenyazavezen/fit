@@ -7,7 +7,7 @@ export const CONFIG = {
   enabledLangs: ['ru'],
   defaultLang: 'ru',
   // Куда ведёт «Написать в поддержку». Замените на свой чат, когда он появится.
-  supportUrl: 'https://t.me/zhenya_zavezen_bot',
+  supportUrl: 'https://t.me/ZAVEZEN_FIT_BOT',
   storePrefix: 'seven:',
   // Серверная часть (Cloudflare Worker «fit»). Пустая строка выключает вход и синхронизацию: приложение работает локально.
   apiBase: 'https://fit.zavezenz.workers.dev',

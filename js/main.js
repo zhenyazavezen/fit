@@ -70,9 +70,13 @@ async function boot() {
   store.setWriteHook(onLocalWrite);
   startSyncTriggers();
   const wantAuth = /[?&]auth=google\b/.test(location.search);
-  await router.start({ screen: document.getElementById('screen'), tabbar, initial: wantAuth ? 'account' : 'home' });
+  await router.start({ screen: document.getElementById('screen'), tabbar, initial: wantAuth ? 'account' : startScreen() });
   resume().catch(() => {});                      // тихо вернуть сессию и синхронизироваться; без входа ничего не происходит
   registerServiceWorker();
 }
+
+// Ссылки вида t.me/ZAVEZEN_FIT_BOT/app?startapp=plan открывают нужный экран. Только белый список, остальное игнорируется.
+const START_SCREENS = { home: 'home', workouts: 'workouts', catalog: 'catalog', progress: 'progress', profile: 'profile', plan: 'plan', map: 'bodymap', account: 'account' };
+function startScreen() { return START_SCREENS[tg.startParam] || 'home'; }
 
 boot().catch((e) => { console.error(e); showFatal(String(e?.message || e)); });
