@@ -294,6 +294,24 @@ await test('Фото профиля: выбор из галереи, обрез�
   const box = await page.locator('.crop-canvas').boundingBox();
   await page.mouse.move(box.x + 140, box.y + 140); await page.mouse.down(); await page.mouse.move(box.x + 100, box.y + 150, { steps: 5 }); await page.mouse.up();
   await page.locator('.crop-zoom').fill('2');
+  // щипок двумя пальцами увеличивает масштаб; перетаскивание работает по обеим осям
+  const pz = await page.evaluate(() => {
+    const c = document.querySelector('.crop-canvas'), r = c.getBoundingClientRect(), sl = document.querySelector('.crop-zoom');
+    const ev = (type, id, x, y) => c.dispatchEvent(new PointerEvent(type, { pointerId: id, clientX: r.left + x, clientY: r.top + y, bubbles: true, pointerType: 'touch' }));
+    const z0 = Number(sl.value);
+    ev('pointerdown', 11, 120, 140); ev('pointerdown', 12, 160, 140);
+    ev('pointermove', 12, 200, 140); ev('pointermove', 12, 220, 140);
+    ev('pointerup', 11, 120, 140); ev('pointerup', 12, 220, 140);
+    return [z0, Number(sl.value)];
+  });
+  if (!(pz[1] > pz[0])) throw new Error('щипок не увеличил масштаб: ' + pz);
+  const before = await page.locator('.crop-canvas').screenshot();
+  await page.evaluate(() => {
+    const c = document.querySelector('.crop-canvas'), r = c.getBoundingClientRect();
+    const ev = (type, x, y) => c.dispatchEvent(new PointerEvent(type, { pointerId: 21, clientX: r.left + x, clientY: r.top + y, bubbles: true, pointerType: 'touch' }));
+    ev('pointerdown', 140, 140); ev('pointermove', 150, 100); ev('pointerup', 150, 100);
+  });
+  if (before.equals(await page.locator('.crop-canvas').screenshot())) throw new Error('перетаскивание по вертикали не двигает фото');
   await shot(page, 'avatar-crop');
   await btn(page, 'Сохранить').click();
   await page.waitForSelector('.avatar img');

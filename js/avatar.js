@@ -59,17 +59,38 @@ export function openAvatarEditor(onChange) {
       g.fillStyle = 'rgba(10,10,11,.62)'; g.beginPath(); g.rect(0, 0, VIEW, VIEW); g.arc(VIEW / 2, VIEW / 2, VIEW / 2 - 2, 0, Math.PI * 2); g.fill('evenodd');
       g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 1.5; g.beginPath(); g.arc(VIEW / 2, VIEW / 2, VIEW / 2 - 2, 0, Math.PI * 2); g.stroke();
     };
-    let drag = null;
-    canvas.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY }; canvas.setPointerCapture?.(e.pointerId); });
-    canvas.addEventListener('pointermove', (e) => {
-      if (!drag) return;
-      off = clampOffset({ x: off.x + e.clientX - drag.x, y: off.y + e.clientY - drag.y }, w, ih, base * zoom);
-      drag = { x: e.clientX, y: e.clientY }; draw();
-    });
-    const end = () => { drag = null; };
-    canvas.addEventListener('pointerup', end); canvas.addEventListener('pointercancel', end);
     const slider = h('input', { type: 'range', min: '1', max: String(MAX_ZOOM), step: '0.01', value: '1', class: 'crop-zoom', 'aria-label': t('avatar.zoom') });
-    slider.addEventListener('input', () => { zoom = Number(slider.value); off = clampOffset(off, w, ih, base * zoom); draw(); });
+    // Масштаб вокруг точки (px,py) в координатах кадра: точка под пальцами остаётся на месте.
+    const zoomAt = (nz, px, py) => {
+      nz = Math.min(MAX_ZOOM, Math.max(1, nz));
+      const k = nz / zoom, cx = px - VIEW / 2, cy = py - VIEW / 2;
+      zoom = nz; off = clampOffset({ x: cx - (cx - off.x) * k, y: cy - (cy - off.y) * k }, w, ih, base * zoom);
+      slider.value = String(zoom); draw();
+    };
+    const pts = new Map(); let pinch = 0;
+    const local = (e) => { const r = canvas.getBoundingClientRect(); return { x: (e.clientX - r.left) * VIEW / r.width, y: (e.clientY - r.top) * VIEW / r.height }; };
+    const span = () => { const [a, b] = [...pts.values()]; return { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; };
+    canvas.addEventListener('pointerdown', (e) => {
+      pts.set(e.pointerId, local(e)); try { canvas.setPointerCapture(e.pointerId); } catch { /* необязательно */ }
+      if (pts.size === 2) pinch = span().d;
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      const prev = pts.get(e.pointerId); if (!prev) return;
+      const cur = local(e);
+      if (pts.size >= 2) {
+        const before = span(); pts.set(e.pointerId, cur); const after = span();
+        // сдвиг центра пальцев + масштаб по изменению расстояния
+        off = clampOffset({ x: off.x + after.x - before.x, y: off.y + after.y - before.y }, w, ih, base * zoom);
+        zoomAt(zoom * after.d / before.d, after.x, after.y);
+      } else {
+        pts.set(e.pointerId, cur);
+        off = clampOffset({ x: off.x + cur.x - prev.x, y: off.y + cur.y - prev.y }, w, ih, base * zoom); draw();
+      }
+    });
+    const end = (e) => { pts.delete(e.pointerId); pinch = 0; };
+    canvas.addEventListener('pointerup', end); canvas.addEventListener('pointercancel', end);
+    canvas.addEventListener('wheel', (e) => { e.preventDefault(); const p = local(e); zoomAt(zoom * Math.exp(-e.deltaY * 0.002), p.x, p.y); }, { passive: false });
+    slider.addEventListener('input', () => zoomAt(Number(slider.value), VIEW / 2, VIEW / 2));
     body.replaceChildren(
       h('p', { class: 'small muted' }, t('avatar.hint')), canvas, slider,
       h('button', { class: 'btn', onClick: () => {
