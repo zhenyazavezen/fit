@@ -263,3 +263,11 @@ body[data-route="player"] .toast { bottom: calc(var(--safe-bottom) + var(--tg-bo
 .exercise-card { width: 100%; height: auto; border-radius: var(--r-l); margin-top: var(--sp-4); }
 .pcard-wide .top > .t { min-width: 0; overflow-wrap: anywhere; }
 .pcard-wide .top > .row-flex { flex: none; }
+
+/* Фото профиля */
+.avatar-btn { position: relative; flex: none; width: 64px; height: 64px; border-radius: 50%; padding: 0; }
+.avatar-badge { position: absolute; right: -3px; bottom: -3px; width: 22px; height: 22px; border-radius: 50%; background: var(--platinum); color: var(--on-platinum); display: grid; place-items: center; border: 2px solid var(--s1); }
+.avatar-big { width: 120px; height: 120px; font-size: 40px; }
+.avatar-ed { align-items: center; text-align: center; }
+.crop-canvas { touch-action: none; border-radius: var(--r-l); background: var(--bg); max-width: 100%; cursor: grab; }
+.crop-zoom { width: 100%; max-width: 280px; accent-color: var(--silver); }

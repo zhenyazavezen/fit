@@ -110,13 +110,7 @@ export const activeSession = {
   clear() { store.remove('active'); },
 };
 
-// Служебные ключи не экспортируются и не синхронизируются (токен входа, состояние синхронизации, активная тренировка).
+// Служебные ключи не синхронизируются (токен входа, состояние синхронизации, активная тренировка).
 export const LOCAL_ONLY = ['auth', 'syncmeta', 'active', 'schema', 'authPromptAt'];
-
-export function exportAll() {
-  const out = { app: 'ZAVEZEN_FIT', version: CONFIG.version, exportedAt: new Date().toISOString(), data: {} };
-  for (const k of store.keys()) if (!LOCAL_ONLY.includes(k)) out.data[k] = store.get(k);
-  return out;
-}
 
 export function resetAll() { for (const k of store.keys()) store.remove(k); }

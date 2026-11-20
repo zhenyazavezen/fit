@@ -247,7 +247,7 @@ await test('Конструктор: своя программа создаётс
   await ctx.close();
 });
 
-await test('Профиль: настройки сохраняются, экспорт, «О приложении», сброс данных с подтверждением', async () => {
+await test('Профиль: настройки сохраняются, нет экспорта, «О приложении», сброс данных с подтверждением', async () => {
   const { page, errors, ctx } = await fresh();
   await tab(page, 'profile');
   const sw = page.getByRole('switch', { name: 'Звуковые сигналы' });
@@ -256,7 +256,7 @@ await test('Профиль: настройки сохраняются, эксп�
   eq(await page.evaluate(() => JSON.parse(localStorage.getItem('seven:settings')).sound), false, 'настройка сохранена');
   await page.reload(); await page.waitForSelector('#tabbar button'); await tab(page, 'profile');
   eq(await page.getByRole('switch', { name: 'Звуковые сигналы' }).getAttribute('aria-checked'), 'false', 'после перезагрузки');
-  await btn(page, 'Экспорт данных').click(); await page.waitForSelector('.sheet'); await page.locator('.sheet .icon-btn').click();
+  ok(!/Экспорт/.test(await page.locator('body').innerText()), 'экспорта данных в профиле нет');
   await page.getByRole('button', { name: /О приложении/ }).click();
   const about = await text(page, '.pad');
   const approved = 'ZAVEZEN_FIT помогает заниматься дома самостоятельно: понятная инструкция, время, повторения и структура тренировки. Без видео и голоса тренера.';
@@ -270,6 +270,44 @@ await test('Профиль: настройки сохраняются, эксп�
   ok((await text(page, '.sheet')).includes('Отменить это нельзя'), 'подтверждение');
   await page.locator('.sheet .btn.danger').click();
   eq(await page.evaluate(() => localStorage.getItem('seven:settings')), null, 'данные удалены');
+  eq(errors.length, 0, errors.join(' | '));
+  await ctx.close();
+});
+
+await test('Фото профиля: выбор из галереи, обрезка, сохранение, перезагрузка, удаление; поддержка ведёт к @zhenya_zavezen', async () => {
+  const mock = () => { window.__tg = []; window.Telegram = { WebApp: { platform: 'android', initDataUnsafe: { user: { first_name: 'Женя' } }, ready() {}, expand() {}, setHeaderColor() {}, setBackgroundColor() {}, setBottomBarColor() {}, disableVerticalSwipes() {}, onEvent() {},
+    viewportStableHeight: 700, viewportHeight: 700, safeAreaInset: { top: 0, bottom: 0 }, contentSafeAreaInset: { top: 0, bottom: 0 }, enableClosingConfirmation() {}, disableClosingConfirmation() {},
+    openTelegramLink(u) { window.__tg.push('open:' + u); }, openLink(u) { window.__tg.push('link:' + u); }, HapticFeedback: { impactOccurred() {}, notificationOccurred() {}, selectionChanged() {} }, BackButton: { show() {}, hide() {}, onClick() {}, offClick() {} } } }; };
+  const { page, errors, ctx } = await fresh({ tgMock: mock });
+  await tab(page, 'profile');
+  // тестовое фото 1200×800 (не квадрат), нарисованное в браузере
+  const b64 = await page.evaluate(async () => {
+    const c = document.createElement('canvas'); c.width = 1200; c.height = 800; const g = c.getContext('2d');
+    const gr = g.createLinearGradient(0, 0, 1200, 800); gr.addColorStop(0, '#c33'); gr.addColorStop(1, '#36c'); g.fillStyle = gr; g.fillRect(0, 0, 1200, 800);
+    g.fillStyle = '#fff'; g.fillRect(500, 300, 200, 200);
+    const blob = await new Promise((r) => c.toBlob(r, 'image/jpeg', 0.9)); const buf = new Uint8Array(await blob.arrayBuffer());
+    let s = ''; for (const b of buf) s += String.fromCharCode(b); return btoa(s);
+  });
+  await btn(page, 'Изменить фото профиля').click(); await page.waitForSelector('.sheet input[type=file]', { state: 'attached' });
+  await page.locator('.sheet input[type=file]').setInputFiles({ name: 'me.jpg', mimeType: 'image/jpeg', buffer: Buffer.from(b64, 'base64') });
+  await page.waitForSelector('.crop-canvas');
+  const box = await page.locator('.crop-canvas').boundingBox();
+  await page.mouse.move(box.x + 140, box.y + 140); await page.mouse.down(); await page.mouse.move(box.x + 100, box.y + 150, { steps: 5 }); await page.mouse.up();
+  await page.locator('.crop-zoom').fill('2');
+  await shot(page, 'avatar-crop');
+  await btn(page, 'Сохранить').click();
+  await page.waitForSelector('.avatar img');
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('seven:avatar')).img);
+  ok(/^data:image\/jpeg;base64,/.test(saved) && saved.length < 60000, 'фото сохранено как маленький JPEG, размер ' + saved.length);
+  eq(await page.evaluate(() => { const i = document.querySelector('.avatar img'); return i.naturalWidth + 'x' + i.naturalHeight; }), '256x256', 'квадрат 256×256');
+  await shot(page, 'avatar-profile');
+  await page.reload(); await page.waitForSelector('#tabbar button'); await tab(page, 'profile'); await page.waitForSelector('.avatar img');
+  // поддержка
+  await page.getByRole('button', { name: /Поддержка/ }).click();
+  ok((await page.evaluate(() => window.__tg)).some((x) => x.includes('t.me/zhenya_zavezen')), 'поддержка открывает t.me/zhenya_zavezen: ' + await page.evaluate(() => window.__tg.join()));
+  // удаление фото
+  await btn(page, 'Изменить фото профиля').click(); await btn(page, 'Убрать фото').click();
+  eq(await page.evaluate(() => JSON.parse(localStorage.getItem('seven:avatar')).img), '', 'фото убрано');
   eq(errors.length, 0, errors.join(' | '));
   await ctx.close();
 });

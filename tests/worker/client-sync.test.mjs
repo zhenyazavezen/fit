@@ -78,13 +78,6 @@ test('Без связи изменения копятся и отправляю�
   assert.ok(favorites.has('pushup'));
 });
 
-test('Токен входа и служебные ключи не попадают в экспорт данных', async () => {
-  const { exportAll } = await import('../../js/store.js');
-  store.set('auth', { token: 'SECRET' });
-  assert.ok(!JSON.stringify(exportAll()).includes('SECRET'));
-  store.remove('auth');
-});
-
 test('Просроченный токен: статус ошибки, локальные данные остаются', async () => {
   device();
   store.set('history', [W('keep', 1_760_000_030_000)]);

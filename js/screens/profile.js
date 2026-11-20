@@ -4,43 +4,25 @@ import * as router from '../router.js';
 import { CONFIG } from '../config.js';
 import { tg } from '../tg.js';
 import { auth } from '../auth.js';
-import { settings, history, favorites, exportAll, resetAll } from '../store.js';
+import { settings, history, favorites, resetAll } from '../store.js';
+import { getAvatar, openAvatarEditor } from '../avatar.js';
 import { streak } from '../stats.js';
 import { spentLabel } from '../format.js';
-import { toggle, sheet, confirmDialog, toast } from '../ui.js';
+import { toggle, confirmDialog, toast } from '../ui.js';
 
-function exportData() {
-  const text = JSON.stringify(exportAll(), null, 2);
-  const s = sheet({
-    title: t('profile.export'),
-    body: [h('p', { class: 'muted small' }, 'JSON')],
-    foot: [
-      h('button', { class: 'btn ghost', onClick: async () => { try { await navigator.clipboard.writeText(text); toast(t('profile.exportCopied')); s.close(); } catch { toast(t('profile.exportFailed')); } } }, t('profile.copy')),
-      h('button', { class: 'btn', onClick: () => {
-        try {
-          const a = h('a', { href: URL.createObjectURL(new Blob([text], { type: 'application/json' })), download: `zavezen-fit-${new Date().toISOString().slice(0, 10)}.json` });
-          document.body.append(a); a.click(); a.remove(); toast(t('profile.exported')); s.close();
-        } catch { toast(t('profile.exportFailed')); }
-      } }, icon('download', 18), t('profile.export')),
-    ],
-  });
-}
-
-// Аватар из Telegram (только показ): принимаем лишь https-адрес t.me; при ошибке загрузки остаётся буква.
+// Аватар: своё фото (синхронизируется) → фото Telegram (только показ, адрес t.me) → буква. Нажатие открывает смену фото.
 function avatarEl(u, name) {
   const letter = (name[0] || 'S').toUpperCase();
   const box = h('div', { class: 'avatar' }, letter);
-  const url = u && typeof u.photo_url === 'string' ? u.photo_url : '';
-  let state = !u ? 'нет данных Telegram (открыто не из Mini App)' : !url ? 'Telegram не передал photo_url (скрыто настройками приватности или нет фото)' : 'адрес получен, загрузка…';
-  if (url && !/^https:\/\/(t\.me|telegram\.org)\//.test(url)) state = 'адрес фото неожиданного вида';
-  else if (url) {
-    const img = h('img', { src: url, alt: '', referrerpolicy: 'no-referrer', decoding: 'async' });
-    img.addEventListener('load', () => { state = 'фото загружено'; box.textContent = ''; box.append(img); });
-    img.addEventListener('error', () => { state = 'адрес получен, но картинка не загрузилась'; });
-  }
-  // Диагностика: нажатие на аватар показывает причину, почему стоит буква.
-  box.addEventListener('click', () => toast('Аватар: ' + state));
-  return box;
+  const show = (src, extra = {}) => {
+    const img = h('img', { src, alt: '', decoding: 'async', ...extra });
+    img.addEventListener('load', () => { box.textContent = ''; box.append(img); });
+  };
+  const mine = getAvatar(), url = u && typeof u.photo_url === 'string' ? u.photo_url : '';
+  if (mine) show(mine);
+  else if (/^https:\/\/(t\.me|telegram\.org)\//.test(url)) show(url, { referrerpolicy: 'no-referrer' });
+  return h('button', { class: 'avatar-btn', type: 'button', 'aria-label': t('avatar.change'), onClick: () => openAvatarEditor(() => router.refresh()) },
+    box, h('span', { class: 'avatar-badge' }, icon('edit', 12)));
 }
 
 export default function profile() {
@@ -66,7 +48,6 @@ export default function profile() {
   el.append(h('h2', { class: 'h3 group-title' }, t('profile.data')),
     h('div', { class: 'list' },
       row('heart', t('profile.favorites'), String(favorites.all().length), () => router.go('catalog', { favs: true })),
-      row('download', t('profile.export'), '', exportData),
       h('button', { class: 'item', style: { color: 'var(--danger)' }, onClick: async () => {
         if (await confirmDialog({ title: t('profile.resetTitle'), text: t('profile.resetText'), confirm: t('common.delete'), danger: true })) { resetAll(); toast(t('profile.resetDone')); router.refresh(); }
       } }, icon('trash'), h('div', { class: 'grow t' }, t('profile.reset')))));

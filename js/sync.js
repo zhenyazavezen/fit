@@ -4,7 +4,7 @@
 import { store, history } from './store.js';
 import { api, ApiError } from './api.js';
 
-export const DOCS = ['settings', 'favorites', 'programs', 'profile'];
+export const DOCS = ['settings', 'favorites', 'programs', 'profile', 'avatar'];
 const PUSH_LIMIT = 200;
 const listeners = new Set();
 let applying = false, timer = null, running = false, token = null, status = { state: 'off', lastAt: 0, error: null };

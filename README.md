@@ -19,7 +19,7 @@ node tests/e2e/run.mjs           # сквозные, нужен Playwright (360/
 ```
 
 ## Как обновлять репозиторий (с телефона, без Git)
-Рабочая схема (проверена): архив `update.zip` + автоскрипт `.github/workflows/apply-update.yml`.
+Рабочая схема: любой архив `.zip` + автоскрипт `.github/workflows/apply-update.yml`.
 1. Загрузите `update.zip` в папку `incoming/` репозитория (Add file → Upload files по адресу `…/upload/main/incoming`).
 2. Вкладка Actions: «Применить обновление из архива» распакует архив в корень (папка `.github` и пути вне проекта игнорируются), удалит архив и запустит «Публикацию на GitHub Pages» (тесты → сборка → сайт).
 3. Файлы в `.github/workflows/` через архив не обновляются (ограничение GitHub): их загружают вручную.

@@ -13,8 +13,8 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const req = e.request, url = new URL(req.url);
   if (req.method !== 'GET' || url.origin !== self.location.origin) return;      // API и внешние ресурсы — напрямую
-  if (req.mode === 'navigate') {                                                 // страница: сеть, при отсутствии связи — кэш
-    e.respondWith(fetch(req).then((r) => { const copy = r.clone(); caches.open(CACHE).then((c) => c.put('index.html', copy)); return r; }).catch(() => caches.match('index.html')));
+  if (req.mode === 'navigate') {                                                 // страница: всегда сверяется с сервером (HTTP-кэш Pages живёт 10 мин), без связи — кэш
+    e.respondWith(fetch(req, { cache: 'no-cache' }).then((r) => { const copy = r.clone(); caches.open(CACHE).then((c) => c.put('index.html', copy)); return r; }).catch(() => caches.match('index.html')));
     return;
   }
   e.respondWith(caches.match(req).then((hit) => hit || fetch(req).then((r) => {

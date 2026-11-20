@@ -1,11 +1,11 @@
 // @ts-check
 // Синхронизация данных пользователя между устройствами.
-//  • Документы (settings, profile, favorites, programs): побеждает запись с более поздним updatedAt клиента (LWW), решение принимает сама SQL-команда.
+//  • Документы (settings, profile, favorites, programs, avatar): побеждает запись с более поздним updatedAt клиента (LWW), решение принимает сама SQL-команда.
 //  • История тренировок: запись определяется id клиента — повторная отправка безопасна; удаление — «надгробие», которое не отменяется.
 //  • Каждое изменение получает номер ревизии аккаунта; клиент запрашивает изменения «после ревизии N».
 import { HttpError } from './http.js';
 
-export const DOC_KEYS = ['settings', 'profile', 'favorites', 'programs'];
+export const DOC_KEYS = ['settings', 'profile', 'favorites', 'programs', 'avatar'];
 const MAX_DOC_BYTES = 64 * 1024;
 const MAX_SESSIONS_PER_PUSH = 200;
 export const MAX_SESSIONS_PER_ACCOUNT = 5000;
@@ -39,6 +39,11 @@ export function validateDoc(key, value) {
   if (key === 'profile') {
     if (!isObj(value)) throw bad('ожидается объект');
     return value;      // поля профиля нормализует клиент (profile-data.js); здесь только ограничение размера
+  }
+  if (key === 'avatar') {
+    // фото профиля: пустая строка (убрано) или JPEG-квадрат в виде data-URL, не больше 60 000 символов
+    if (!isObj(value) || typeof value.img !== 'string' || value.img.length > 60000 || (value.img !== '' && !/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(value.img))) throw bad('ожидается JPEG-фото');
+    return { img: value.img };
   }
   throw new HttpError(400, 'bad_doc', 'Неизвестный документ');
 }

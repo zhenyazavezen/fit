@@ -168,3 +168,31 @@ test('Ошибка посреди объединения откатывает в
   assert.equal(e.DB.raw.prepare('SELECT COUNT(DISTINCT account_id) n FROM identities').get().n, 2, 'аккаунты не слиты');
   assert.equal(e.DB.raw.prepare('SELECT COUNT(*) n FROM accounts WHERE merged_into IS NOT NULL').get().n, 0);
 });
+
+// ---------- фото профиля (документ avatar)
+const JPG = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ' + 'A'.repeat(200);
+test('Фото профиля: сохраняется, приходит на втором устройстве, удаление распространяется', async () => {
+  const e = env(); const a = await tg(e);
+  const r = await push(e, a.token, { docs: { avatar: { value: { img: JPG }, updatedAt: T0 } } });
+  assert.equal(r.status, 200);
+  const dev2 = await tg(e);
+  const pulled = (await call(e, req('GET', '/sync?since=0', { token: dev2.token }))).body;
+  assert.equal(pulled.docs.find((d) => d.key === 'avatar').value.img, JPG);
+  await push(e, a.token, { docs: { avatar: { value: { img: '' }, updatedAt: T0 + 1000 } } });
+  const again = (await call(e, req('GET', '/sync?since=0', { token: dev2.token }))).body;
+  assert.equal(again.docs.find((d) => d.key === 'avatar').value.img, '');
+});
+test('Фото профиля: чужие форматы, скрипты и большие файлы отклоняются', async () => {
+  const e = env(); const a = await tg(e);
+  for (const img of ['data:image/svg+xml;base64,PHN2Zz4=', 'javascript:alert(1)', 'https://evil.example/x.jpg', 'data:image/jpeg;base64,' + 'A'.repeat(60001), 42]) {
+    const r = await push(e, a.token, { docs: { avatar: { value: { img }, updatedAt: T0 } } });
+    assert.ok(r.status === 400 || r.status === 413, String(img).slice(0, 30) + ' → ' + r.status);
+  }
+  assert.equal(e.DB.raw.prepare("SELECT COUNT(*) n FROM user_docs WHERE doc_key = 'avatar'").get().n, 0);
+});
+test('Удаление аккаунта стирает и фото профиля', async () => {
+  const e = env(); const a = await tg(e);
+  await push(e, a.token, { docs: { avatar: { value: { img: JPG }, updatedAt: T0 } } });
+  assert.equal((await call(e, req('DELETE', '/me', { token: a.token, body: { confirm: 'DELETE' } }))).status, 200);
+  assert.equal(e.DB.raw.prepare("SELECT COUNT(*) n FROM user_docs").get().n, 0);
+});
