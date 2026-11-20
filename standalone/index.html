@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0A0A0B">
 <meta name="color-scheme" content="dark">
-<meta name="build" content="0d801b4d">
+<meta name="build" content="86da23c0">
 <title>ZAVEZEN_FIT</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230A0A0B'/%3E%3Cpath d='M18 20h28L30 46' fill='none' stroke='%23ECEDEF' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
@@ -2168,10 +2168,15 @@ function avatarEl(u, name) {
   const letter = (name[0] || 'S').toUpperCase();
   const box = h('div', { class: 'avatar' }, letter);
   const url = u && typeof u.photo_url === 'string' ? u.photo_url : '';
-  if (/^https:\/\/(t\.me|telegram\.org)\//.test(url)) {
+  let state = !u ? 'нет данных Telegram (открыто не из Mini App)' : !url ? 'Telegram не передал photo_url (скрыто настройками приватности или нет фото)' : 'адрес получен, загрузка…';
+  if (url && !/^https:\/\/(t\.me|telegram\.org)\//.test(url)) state = 'адрес фото неожиданного вида';
+  else if (url) {
     const img = h('img', { src: url, alt: '', referrerpolicy: 'no-referrer', decoding: 'async' });
-    img.addEventListener('load', () => { box.textContent = ''; box.append(img); });
+    img.addEventListener('load', () => { state = 'фото загружено'; box.textContent = ''; box.append(img); });
+    img.addEventListener('error', () => { state = 'адрес получен, но картинка не загрузилась'; });
   }
+  // Диагностика: нажатие на аватар показывает причину, почему стоит буква.
+  box.addEventListener('click', () => toast('Аватар: ' + state));
   return box;
 }
 

@@ -31,10 +31,15 @@ function avatarEl(u, name) {
   const letter = (name[0] || 'S').toUpperCase();
   const box = h('div', { class: 'avatar' }, letter);
   const url = u && typeof u.photo_url === 'string' ? u.photo_url : '';
-  if (/^https:\/\/(t\.me|telegram\.org)\//.test(url)) {
+  let state = !u ? 'нет данных Telegram (открыто не из Mini App)' : !url ? 'Telegram не передал photo_url (скрыто настройками приватности или нет фото)' : 'адрес получен, загрузка…';
+  if (url && !/^https:\/\/(t\.me|telegram\.org)\//.test(url)) state = 'адрес фото неожиданного вида';
+  else if (url) {
     const img = h('img', { src: url, alt: '', referrerpolicy: 'no-referrer', decoding: 'async' });
-    img.addEventListener('load', () => { box.textContent = ''; box.append(img); });
+    img.addEventListener('load', () => { state = 'фото загружено'; box.textContent = ''; box.append(img); });
+    img.addEventListener('error', () => { state = 'адрес получен, но картинка не загрузилась'; });
   }
+  // Диагностика: нажатие на аватар показывает причину, почему стоит буква.
+  box.addEventListener('click', () => toast('Аватар: ' + state));
   return box;
 }
 
