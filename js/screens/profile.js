@@ -1,7 +1,7 @@
 import { h, icon } from '../util.js';
 import { t } from '../i18n.js';
 import * as router from '../router.js';
-import { CONFIG } from '../config.js';
+import { CONFIG, BUILD } from '../config.js';
 import { tg } from '../tg.js';
 import { auth } from '../auth.js';
 import { settings, history, favorites, resetAll } from '../store.js';
@@ -56,6 +56,7 @@ export default function profile() {
     h('div', { class: 'list' },
       row('help', t('profile.support'), t('profile.supportHint'), () => tg.openLink(CONFIG.supportUrl), 'external'),
       row('info', t('profile.about'), '', () => router.go('about'))));
+  el.append(h('p', { class: 'small muted', style: { textAlign: 'center', marginTop: '24px' } }, 'Сборка ' + BUILD));
   return { el };
 }
 

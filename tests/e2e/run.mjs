@@ -288,7 +288,7 @@ await test('Фото профиля: выбор из галереи, обрез�
     const blob = await new Promise((r) => c.toBlob(r, 'image/jpeg', 0.9)); const buf = new Uint8Array(await blob.arrayBuffer());
     let s = ''; for (const b of buf) s += String.fromCharCode(b); return btoa(s);
   });
-  await btn(page, 'Изменить фото профиля').click(); await page.waitForSelector('.sheet input[type=file]', { state: 'attached' });
+  await page.locator('.avatar-btn').tap(); await page.waitForSelector('.sheet input[type=file]', { state: 'attached' });
   await page.locator('.sheet input[type=file]').setInputFiles({ name: 'me.jpg', mimeType: 'image/jpeg', buffer: Buffer.from(b64, 'base64') });
   await page.waitForSelector('.crop-canvas');
   const box = await page.locator('.crop-canvas').boundingBox();

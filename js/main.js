@@ -36,6 +36,24 @@ function registerServiceWorker() {
   if (!('serviceWorker' in navigator) || !/^https:|^http:\/\/localhost/.test(location.origin)) return;
   const build = document.querySelector('meta[name="build"]')?.content || 'dev';
   navigator.serviceWorker.register('sw.js?v=' + build).catch(() => { /* офлайн-режим недоступен, приложение работает как обычно */ });
+  refreshIfStale(build);
+}
+
+// Самолечение кэша: если на сервере уже новая сборка, а открыта старая (кэш Telegram/сервис-воркера),
+// сбрасываем кэш приложения и один раз перезагружаемся. Данные пользователя (localStorage) не затрагиваются.
+async function refreshIfStale(build) {
+  if (build === 'dev' || !navigator.onLine) return;
+  try {
+    const res = await fetch('index.html?_=' + Date.now(), { cache: 'no-store' });
+    const latest = /name="build" content="([^"]+)"/.exec(await res.text())?.[1];
+    if (!latest || latest === build || latest === 'dev') return;
+    if (sessionStorage.getItem('zfit-refreshed') === latest) return;      // не больше одного раза на сборку
+    sessionStorage.setItem('zfit-refreshed', latest);
+    const regs = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(regs.map((r) => r.unregister()));
+    for (const k of await caches.keys()) if (k.startsWith('zfit-')) await caches.delete(k);
+    location.reload();
+  } catch { /* нет связи — работаем как есть */ }
 }
 
 async function boot() {

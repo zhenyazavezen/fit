@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>ZAVEZEN_FIT · обновление</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; padding: 20px 16px 40px; background: #0A0A0B; color: #ECECEF; font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  h1 { font-size: 22px; margin: 8px 0 6px; }
+  p { color: #A8A8B0; margin: 6px 0 14px; }
+  pre { background: #121214; border: 1px solid #242428; border-radius: 14px; padding: 12px; font: 13px/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap; word-break: break-word; color: #D8D8DE; }
+  button { width: 100%; min-height: 52px; border: 0; border-radius: 14px; background: #E4E4E8; color: #0A0A0B; font: 600 17px system-ui, sans-serif; }
+</style>
+</head>
+<body>
+<h1>Обновление приложения</h1>
+<p>Страница очищает сохранённую копию приложения (кэш). Ваши тренировки и настройки не удаляются.</p>
+<pre id="log">Проверка…</pre>
+<button id="go" type="button">Очистить кэш и открыть приложение</button>
+<script>
+(function () {
+  var log = document.getElementById('log'), lines = [];
+  var say = function (s) { lines.push(s); log.textContent = lines.join('\n'); };
+  var hasSW = 'serviceWorker' in navigator, hasCaches = typeof caches !== 'undefined';
+  var ls = 0; try { for (var i = 0; i < localStorage.length; i++) if (localStorage.key(i).indexOf('seven:') === 0) ls++; } catch (e) { ls = -1; }
+  say('Время: ' + new Date().toISOString());
+  say('Онлайн: ' + navigator.onLine);
+  say('Хэш адреса: ' + (location.hash ? 'есть (' + location.hash.length + ' симв.)' : 'нет'));
+  say('Данных приложения на устройстве: ' + (ls >= 0 ? ls + ' записей (не удаляются)' : 'недоступно'));
+  fetch('../index.html?_=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.text(); }).then(function (t) {
+    var m = /name="build" content="([^"]+)"/.exec(t);
+    say('Сборка на сервере: ' + (m ? m[1] : 'не найдена'));
+  }).catch(function (e) { say('Сборка на сервере: ошибка запроса (' + e + ')'); });
+  if (hasSW) navigator.serviceWorker.getRegistrations().then(function (rs) {
+    say('Сервис-воркеров: ' + rs.length + (rs.length ? ' — ' + rs.map(function (r) { return (r.active && r.active.scriptURL || '?').split('/').pop(); }).join(', ') : ''));
+  }); else say('Сервис-воркеры: не поддерживаются');
+  if (hasCaches) caches.keys().then(function (k) { say('Кэшей: ' + k.length + (k.length ? ' — ' + k.join(', ') : '')); }); else say('Кэш-хранилище: недоступно');
+
+  document.getElementById('go').addEventListener('click', function () {
+    var jobs = [];
+    if (hasSW) jobs.push(navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (r) { return r.unregister(); })); }));
+    if (hasCaches) jobs.push(caches.keys().then(function (k) { return Promise.all(k.map(function (n) { return caches.delete(n); })); }));
+    Promise.all(jobs).catch(function () {}).then(function () {
+      say('Кэш очищен. Открываю приложение…');
+      location.replace('../?r=' + Date.now() + location.hash);      // хэш сохраняется: в нём данные запуска Telegram
+    });
+  });
+})();
+</script>
+</body>
+</html>
