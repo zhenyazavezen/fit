@@ -60,7 +60,6 @@ export default function catalog(params = {}) {
     const s = sheet({
       title: t('catalog.filters'),
       body: [group(t('catalog.level'), 'levels', D.meta.levels, (v) => t('level.' + v)),
-        group(t('catalog.equipment'), 'equip', D.meta.equipment, (v) => t('equip.' + v)),
         group(t('catalog.type'), 'modes', ['reps', 'time'], (v) => t('mode.' + v)),
         group(t('catalog.muscles'), 'muscles', D.meta.muscles, (v) => t('muscle.' + v))],
       foot: [h('button', { class: 'btn ghost', onClick: () => { for (const k of Object.keys(draft)) draft[k].clear(); s.root.querySelectorAll('[aria-pressed="true"]').forEach((b) => b.setAttribute('aria-pressed', 'false')); upd(); } }, t('common.reset')), showBtn],

@@ -105,6 +105,12 @@ export function syncTabbar() {
   const tabOf = (e) => { const d = routes.get(e.name); return typeof d?.tab === 'function' ? d.tab(e.params) : d?.tab; };
   const activeTab = tabOf(c) || tabOf(stack[0]);
   tabbarEl.querySelectorAll('[data-tab]').forEach((b) => b.setAttribute('aria-current', String(b.dataset.tab === activeTab)));
+  const cur = tabbarEl.querySelector('[aria-current="true"]');            // панель прокручивается: активная вкладка должна быть видна
+  if (cur && tabbarEl.clientWidth) {
+    const l = cur.offsetLeft, r = l + cur.offsetWidth;
+    if (l < tabbarEl.scrollLeft) tabbarEl.scrollLeft = Math.max(0, l - 8);
+    else if (r > tabbarEl.scrollLeft + tabbarEl.clientWidth) tabbarEl.scrollLeft = r - tabbarEl.clientWidth + 8;
+  }
 }
 
 function errorView(e) {

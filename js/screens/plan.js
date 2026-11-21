@@ -48,7 +48,6 @@ export default function plan() {
     single(t('plan.level'), LEVELS, 'level', 'level.'),
     single(t('plan.goal'), PROFILE_GOALS, 'goal', 'pgoal.'),
     single(t('plan.minutes'), [10, 15, 20, 30, 45, 60].map(String), 'minutes', 'min.'),
-    multi(t('plan.equipment'), PROFILE_EQUIP, 'equipment', 'equip.'),
     multi(t('plan.limits'), PROFILE_LIMITS, 'limits', 'limit.'),
     h('p', { class: 'small muted' }, t('plan.limitsNote')),
     h('h2', { class: 'h3 group-title' }, t('plan.params')),

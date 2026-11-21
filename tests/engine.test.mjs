@@ -33,12 +33,12 @@ test('Круг: боковая планка — правая 15 с, смена 5
 test('Круг: порядок упражнений как в программе', async () => {
   const steps = await stepsOf(circuit());
   const order = [...new Set(steps.filter((s) => s.type === 'work').map((s) => s.ex))];
-  assert.deepEqual(order, ['jumping_jack', 'wall_sit', 'incline_pushup', 'crunch', 'step_up', 'squat', 'close_grip_incline_pushup', 'plank', 'high_knees', 'sumo_squat', 'pushup_rotation', 'side_plank']);
+  assert.deepEqual(order, ['jumping_jack', 'glute_bridge', 'knee_pushup', 'crunch', 'march_in_place', 'squat', 'dead_bug', 'plank', 'high_knees', 'sumo_squat', 'pushup_rotation', 'side_plank']);
 });
 
 test('Подход на время не имеет счётчика повторений; подход на повторения — не имеет таймера', async () => {
   const steps = await stepsOf(circuit());
-  const pushup = steps.find((s) => s.ex === 'incline_pushup' && s.type === 'work');
+  const pushup = steps.find((s) => s.ex === 'knee_pushup' && s.type === 'work');
   assert.equal(pushup.kind, 'timed'); assert.equal(pushup.dur, 30); assert.equal(pushup.reps, undefined);
   const squat = buildSteps([{ ex: 'squat' }], exById, 45).find((s) => s.type === 'work');
   assert.equal(squat.kind, 'reps'); assert.equal(squat.dur, undefined); assert.equal(squat.reps, 15);
@@ -75,7 +75,7 @@ test('Возврат из фона: большой скачок времени �
   const ev = s.tick(T0 + 100_000);                  // 100 с «в фоне»
   assert.ok(ev.length >= 3);
   // 100 с = 30 (прыжки) + 10 + 30 (стульчик) + 10 + 20 из 30 у отжиманий
-  assert.equal(s.step.ex, 'incline_pushup');
+  assert.equal(s.step.ex, 'knee_pushup');
   assert.equal(Math.round(s.remainingMs(T0 + 100_000) / 1000), 10);
   const end = s.tick(T0 + 10_000_000);
   assert.ok(end.some((e) => e.type === 'finish'));
@@ -161,7 +161,7 @@ test('Снимок и восстановление: время «вне прил
   const steps = await stepsOf(circuit());
   const a = new Session(steps, { now: T0 });
   a.tick(T0 + 40_000);                              // конец прыжков, пауза, стульчик 0 → 30 с
-  a.tick(T0 + 50_000);                              // 10 с ушло в стульчик? (30+10=40 → вошли в wall_sit, 10 с)
+  a.tick(T0 + 50_000);                              // 10 с ушло в стульчик? (30+10=40 → вошли в glute_bridge, 10 с)
   const snap = a.snapshot(T0 + 50_000);
   const later = T0 + 9_999_999;
   const b = Session.restore(steps, JSON.parse(JSON.stringify(snap)), { now: later });

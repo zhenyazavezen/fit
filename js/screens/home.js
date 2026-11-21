@@ -2,7 +2,8 @@ import { h, icon } from '../util.js';
 import { t } from '../i18n.js';
 import * as router from '../router.js';
 import { tg } from '../tg.js';
-import { history, activeSession, todos } from '../store.js';
+import { history, activeSession, todos, settings } from '../store.js';
+import { dragSort } from '../dragsort.js';
 import { checklist } from '../checklist.js';
 import { weekDots, summary, streak } from '../stats.js';
 import { startOfWeek, dayKey } from '../dates.js';
@@ -40,34 +41,42 @@ function todoCard() {
     count.textContent = !n ? t('todo.none') : d === n ? t('todo.allDone') : t('todo.progress', { d, n });
   };
   const cl = checklist({ items: todos.get(day), save: (l) => todos.set(day, l), placeholder: t('todo.add'), onUpdate: upd });
-  return h('section', { class: 'card todo', 'aria-label': t('todo.title') },
+  return h('section', { class: 'card todo htile', dataset: { key: 'todo' }, 'aria-label': t('todo.title') },
     h('div', { class: 'row-flex', style: { justifyContent: 'space-between' } }, h('h2', { class: 'h3' }, t('todo.title')), count),
     h('div', { class: 'bar', role: 'progressbar', 'aria-label': t('todo.title') }, bar), cl.el);
 }
 
+function weekTile(hist, now) {
+  const dots = weekDots(hist, now), ws = summary(hist, startOfWeek(now), Infinity), st = streak(hist, now);
+  const open = () => router.go('calendar');
+  return h('section', { class: 'card weekcard htile', dataset: { key: 'week' }, role: 'button', tabindex: '0', 'aria-label': t('cal.open'), onClick: open, onKeydown: (e) => { if (e.key === 'Enter') open(); } },
+    h('div', { class: 'row-flex', style: { justifyContent: 'space-between' } }, h('h2', { class: 'h3' }, t('cal.title')), h('span', { class: 'small muted row-flex', style: { gap: '2px' } }, t('cal.month'), icon('chev-r', 16))),
+    h('div', { class: 'dots' }, ...dots.map((d) => h('div', { class: 'dot' + (d.done ? ' done' : '') + (d.today ? ' today' : '') + (d.future ? ' future' : '') },
+      h('i', null, String(new Date(d.ts).getDate())), h('span', null, t('day.' + d.i))))),
+    h('div', { class: 'kpis' },
+      h('div', { class: 'kpi' }, h('div', { class: 'v' }, String(st)), h('div', { class: 'l' }, t('home.streak'))),
+      h('div', { class: 'kpi' }, h('div', { class: 'v' }, String(ws.workouts)), h('div', { class: 'l' }, t('home.weekWorkouts'))),
+      h('div', { class: 'kpi' }, h('div', { class: 'v' }, String(Math.round(ws.sec / 60))), h('div', { class: 'l' }, t('home.weekMinutes')))));
+}
+
+const TILES = ['week', 'todo'];
 export default function home() {
   const hist = history.all(), now = Date.now();
   const name = tg.user?.first_name;
   const greet = t(greetingKey(new Date().getHours()));
-  const el = h('div', { class: 'pad' });
+  const el = h('div', { class: 'pad home-col' });
 
-  el.append(h('div', { class: 'greet' }, h('div', { class: 'eyebrow' }, t('app.tagline')), h('h1', { class: 'h1' }, name ? `${greet}, ${name}` : greet)));
+  el.append(h('div', { class: 'greet' }, h('h1', { class: 'h1' }, name ? `${greet}, ${name}` : greet)));
   const resume = resumeCard();
   if (resume) el.append(resume);
-
   if (hist.length) { const pc = authPromptCard(); if (pc) el.append(pc); }
 
-  const dots = weekDots(hist, now), ws = summary(hist, startOfWeek(now), Infinity), st = streak(hist, now);
-  el.append(h('div', { class: 'section' }, h('h2', { class: 'h3' }, t('home.week'))));
-  el.append(h('div', { class: 'card weekcard' },
-    h('div', { class: 'dots' }, ...dots.map((d) => h('div', { class: 'dot' + (d.done ? ' done' : '') + (d.today ? ' today' : '') },
-      h('i', null, d.done ? icon('check') : null), h('span', null, t('day.' + d.i))))),
-    h('div', { class: 'kpis' },
-      h('div', { class: 'kpi' }, h('div', { class: 'v' }, String(st)), h('div', { class: 'l' }, t('home.streak'))),
-      h('div', { class: 'kpi' }, h('div', { class: 'v' }, String(ws.workouts)), h('div', { class: 'l' }, t('home.weekWorkouts'))),
-      h('div', { class: 'kpi' }, h('div', { class: 'v' }, String(Math.round(ws.sec / 60))), h('div', { class: 'l' }, t('home.weekMinutes'))))));
-
-  el.append(todoCard());
+  // Две плашки: порядок задаёт пользователь — зажать плашку и перетащить (без кнопок и настроек).
+  const saved = String(settings.get().homeOrder || '').split(',').filter((k) => TILES.includes(k));
+  const order = [...new Set([...saved, ...TILES])];
+  const makers = { week: () => weekTile(hist, now), todo: todoCard };
+  const tiles = h('div', { class: 'home-tiles' }, ...order.map((k) => makers[k]()));
+  el.append(tiles);
+  dragSort(tiles, { itemSel: '[data-key]', axis: 'y', scale: 1.02, onDrop: (keys) => settings.set({ homeOrder: keys.join(',') }) });
   return { el };
 }
-

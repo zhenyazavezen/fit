@@ -44,11 +44,9 @@ test('Ограничение «прыжки»: программы с прыжк�
   for (const x of r) for (const it of x.program.items) assert.ok(!(exById.get(it.ex).stress || []).includes('impact') || x.warnings.some((w) => w.key === 'limits' || w.key === 'impact'), `${x.program.id}:${it.ex}`);
 });
 
-test('Нет рюкзака — предупреждение об оборудовании и штраф', () => {
-  const a = scoreProgram(programs.find((p) => p.id === 'b1_full_a'), prof({ equipment: ['chair', 'wall'] }), ctx());
-  const b = scoreProgram(programs.find((p) => p.id === 'b1_full_a'), prof({ equipment: ['chair', 'wall', 'backpack'] }), ctx());
-  assert.ok(a.warnings.some((w) => w.key === 'equipment' && w.list.includes('backpack')));
-  assert.ok(b.score > a.score);
+test('Все упражнения без оборудования: предупреждений об инвентаре нет', () => {
+  const a = scoreProgram(programs.find((p) => p.id === 'b1_full_a'), prof({ equipment: [] }), ctx());
+  assert.ok(!a.warnings.some((w) => w.key === 'equipment'));
 });
 
 test('Восстановление: мышцы, нагруженные менее 48 ч назад, помечаются и снижают оценку', () => {

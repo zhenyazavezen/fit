@@ -1,6 +1,6 @@
 // Данные карты тела: области → мышцы каталога. Чистый модуль без DOM (проверяется тестами).
 export const REGIONS = {
-  chest: ['chest'], shoulders: ['shoulders'], biceps: ['biceps'], triceps: ['triceps'], forearms: ['forearms'],
+  chest: ['chest'], shoulders: ['shoulders'], triceps: ['triceps'],
   abs: ['abs', 'obliques'], back: ['upperback', 'lats', 'traps', 'lowerback'],
   glutes: ['glutes'], quads: ['quads', 'hipflexors'], hamstrings: ['hamstrings'], calves: ['calves'],
 };
@@ -16,6 +16,6 @@ export function musclesOf(regions) {
 
 /** Области, которые видны спереди и сзади (одна область может быть на обоих видах). */
 export const VIEWS = {
-  front: ['chest', 'shoulders', 'biceps', 'forearms', 'abs', 'quads', 'calves'],
-  back: ['back', 'shoulders', 'triceps', 'forearms', 'glutes', 'hamstrings', 'calves'],
+  front: ['chest', 'shoulders', 'abs', 'quads', 'calves'],
+  back: ['back', 'shoulders', 'triceps', 'glutes', 'hamstrings', 'calves'],
 };

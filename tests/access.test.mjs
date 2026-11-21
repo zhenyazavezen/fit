@@ -17,10 +17,10 @@ test('При включённом Premium: free открыта всем, premium
   assert.equal(canStartProgram({ custom: true, access: 'premium' }, { account: null, enforced: true }), true);
   assert.equal(hasPremium({ premium: { active: false } }), false);
 });
-test('Финальная модель: все упражнения free; ровно 9 программ free и 8 premium; premium-программ нет среди «входных»', () => {
+test('Финальная модель: все упражнения free; ровно 9 программ free и 5 premium; premium-программ нет среди «входных»', () => {
   for (const e of exById.values()) assert.equal(e.access, 'free');
   assert.equal(programs.filter((p) => p.access === 'free').length, 9);
-  assert.equal(programs.filter(isPremiumProgram).length, 8);
+  assert.equal(programs.filter(isPremiumProgram).length, 5);
   for (const id of ['b1_full_a', 'b2_full_b', 'b3_core_beginner', 'b4_light_cardio']) assert.equal(programs.find((p) => p.id === id).access, 'free', id);
 });
 test('Бесплатного набора достаточно для нормы силовых занятий: 2+ силовые free-программы на все основные группы мышц', () => {

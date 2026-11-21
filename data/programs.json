@@ -39,27 +39,9 @@
         "rest": 45
       },
       {
-        "ex": "incline_pushup",
-        "sets": 2,
-        "reps": 8,
-        "rest": 45
-      },
-      {
         "ex": "glute_bridge",
         "sets": 2,
         "reps": 12,
-        "rest": 45
-      },
-      {
-        "ex": "backpack_row",
-        "sets": 2,
-        "reps": 10,
-        "rest": 60
-      },
-      {
-        "ex": "backpack_rdl",
-        "sets": 2,
-        "reps": 10,
         "rest": 45
       },
       {
@@ -73,11 +55,6 @@
         "sets": 2,
         "seconds": 20,
         "rest": 30
-      },
-      {
-        "ex": "chest_stretch",
-        "sets": 1,
-        "seconds": 30
       },
       {
         "ex": "hip_flexor_stretch",
@@ -131,12 +108,6 @@
         "rest": 45
       },
       {
-        "ex": "backpack_rdl",
-        "sets": 2,
-        "reps": 10,
-        "rest": 45
-      },
-      {
         "ex": "knee_pushup",
         "sets": 2,
         "reps": 8,
@@ -165,11 +136,6 @@
         "sets": 2,
         "reps": 15,
         "rest": 30
-      },
-      {
-        "ex": "chest_stretch",
-        "sets": 1,
-        "seconds": 30
       },
       {
         "ex": "hip_flexor_stretch",
@@ -257,12 +223,6 @@
         "rest": 20
       },
       {
-        "ex": "step_up",
-        "sets": 3,
-        "seconds": 40,
-        "rest": 20
-      },
-      {
         "ex": "high_knees",
         "sets": 3,
         "seconds": 30,
@@ -310,12 +270,6 @@
         "rest": 60
       },
       {
-        "ex": "backpack_row",
-        "sets": 4,
-        "reps": 10,
-        "rest": 60
-      },
-      {
         "ex": "pike_pushup",
         "sets": 3,
         "reps": 8,
@@ -332,11 +286,6 @@
         "sets": 2,
         "seconds": 30,
         "rest": 40
-      },
-      {
-        "ex": "chest_stretch",
-        "sets": 1,
-        "seconds": 30
       },
       {
         "ex": "hip_flexor_stretch",
@@ -389,12 +338,6 @@
         "rest": 60
       },
       {
-        "ex": "backpack_rdl",
-        "sets": 3,
-        "reps": 10,
-        "rest": 60
-      },
-      {
         "ex": "single_leg_bridge",
         "sets": 3,
         "reps": 9,
@@ -407,27 +350,10 @@
         "rest": 45
       },
       {
-        "ex": "towel_hamstring_curl",
-        "sets": 2,
-        "reps": 8,
-        "rest": 45
-      },
-      {
         "ex": "calf_raise",
         "sets": 3,
         "reps": 17,
         "rest": 30
-      },
-      {
-        "ex": "wall_sit",
-        "sets": 2,
-        "seconds": 40,
-        "rest": 45
-      },
-      {
-        "ex": "chest_stretch",
-        "sets": 1,
-        "seconds": 30
       },
       {
         "ex": "hip_flexor_stretch",
@@ -487,18 +413,6 @@
         "rest": 60
       },
       {
-        "ex": "backpack_rdl",
-        "sets": 3,
-        "reps": 10,
-        "rest": 60
-      },
-      {
-        "ex": "backpack_row",
-        "sets": 3,
-        "reps": 10,
-        "rest": 60
-      },
-      {
         "ex": "pike_pushup",
         "sets": 2,
         "reps": 8,
@@ -515,11 +429,6 @@
         "sets": 2,
         "seconds": 40,
         "rest": 40
-      },
-      {
-        "ex": "chest_stretch",
-        "sets": 1,
-        "seconds": 30
       },
       {
         "ex": "hip_flexor_stretch",
@@ -645,12 +554,12 @@
         "seconds": 30
       },
       {
-        "ex": "wall_sit",
+        "ex": "glute_bridge",
         "sets": 1,
         "seconds": 30
       },
       {
-        "ex": "incline_pushup",
+        "ex": "knee_pushup",
         "sets": 1,
         "seconds": 30
       },
@@ -660,7 +569,7 @@
         "seconds": 30
       },
       {
-        "ex": "step_up",
+        "ex": "march_in_place",
         "sets": 1,
         "seconds": 30
       },
@@ -670,7 +579,7 @@
         "seconds": 30
       },
       {
-        "ex": "close_grip_incline_pushup",
+        "ex": "dead_bug",
         "sets": 1,
         "seconds": 30
       },
@@ -699,252 +608,6 @@
         "sets": 1,
         "seconds": 15,
         "switchSec": 5
-      }
-    ]
-  },
-  {
-    "id": "a1_upper_adv",
-    "goals": [
-      "strength",
-      "muscle"
-    ],
-    "level": "advanced",
-    "restBetween": 75,
-    "access": "premium",
-    "review": "draft",
-    "items": [
-      {
-        "ex": "march_in_place",
-        "sets": 1,
-        "seconds": 40
-      },
-      {
-        "ex": "arm_circles",
-        "sets": 1,
-        "seconds": 30
-      },
-      {
-        "ex": "cat_cow",
-        "sets": 1,
-        "reps": 8
-      },
-      {
-        "ex": "lunge_twist",
-        "sets": 1,
-        "reps": 5
-      },
-      {
-        "ex": "decline_pushup",
-        "sets": 4,
-        "reps": 8,
-        "rest": 75
-      },
-      {
-        "ex": "backpack_row",
-        "sets": 4,
-        "reps": 10,
-        "rest": 60
-      },
-      {
-        "ex": "pike_pushup",
-        "sets": 3,
-        "reps": 9,
-        "rest": 60
-      },
-      {
-        "ex": "prone_ytw",
-        "sets": 3,
-        "reps": 10,
-        "rest": 30
-      },
-      {
-        "ex": "plank_taps",
-        "sets": 3,
-        "seconds": 30,
-        "rest": 40
-      },
-      {
-        "ex": "chest_stretch",
-        "sets": 1,
-        "seconds": 30
-      },
-      {
-        "ex": "hip_flexor_stretch",
-        "sets": 1,
-        "seconds": 30
-      },
-      {
-        "ex": "child_pose",
-        "sets": 1,
-        "seconds": 30
-      }
-    ]
-  },
-  {
-    "id": "a2_lower_adv",
-    "goals": [
-      "strength",
-      "muscle"
-    ],
-    "level": "advanced",
-    "restBetween": 75,
-    "access": "premium",
-    "review": "draft",
-    "items": [
-      {
-        "ex": "march_in_place",
-        "sets": 1,
-        "seconds": 40
-      },
-      {
-        "ex": "arm_circles",
-        "sets": 1,
-        "seconds": 30
-      },
-      {
-        "ex": "cat_cow",
-        "sets": 1,
-        "reps": 8
-      },
-      {
-        "ex": "lunge_twist",
-        "sets": 1,
-        "reps": 5
-      },
-      {
-        "ex": "bulgarian_split_squat",
-        "sets": 3,
-        "reps": 9,
-        "rest": 75
-      },
-      {
-        "ex": "single_leg_rdl",
-        "sets": 3,
-        "reps": 8,
-        "rest": 60
-      },
-      {
-        "ex": "single_leg_bridge",
-        "sets": 3,
-        "reps": 11,
-        "rest": 45
-      },
-      {
-        "ex": "towel_hamstring_curl",
-        "sets": 3,
-        "reps": 10,
-        "rest": 45
-      },
-      {
-        "ex": "lateral_lunge",
-        "sets": 3,
-        "reps": 8,
-        "rest": 45
-      },
-      {
-        "ex": "calf_raise",
-        "sets": 3,
-        "reps": 20,
-        "rest": 30
-      },
-      {
-        "ex": "chest_stretch",
-        "sets": 1,
-        "seconds": 30
-      },
-      {
-        "ex": "hip_flexor_stretch",
-        "sets": 1,
-        "seconds": 30
-      },
-      {
-        "ex": "child_pose",
-        "sets": 1,
-        "seconds": 30
-      }
-    ]
-  },
-  {
-    "id": "a3_full_adv",
-    "goals": [
-      "strength",
-      "endurance"
-    ],
-    "level": "advanced",
-    "restBetween": 60,
-    "access": "premium",
-    "review": "draft",
-    "items": [
-      {
-        "ex": "march_in_place",
-        "sets": 1,
-        "seconds": 40
-      },
-      {
-        "ex": "arm_circles",
-        "sets": 1,
-        "seconds": 30
-      },
-      {
-        "ex": "cat_cow",
-        "sets": 1,
-        "reps": 8
-      },
-      {
-        "ex": "lunge_twist",
-        "sets": 1,
-        "reps": 5
-      },
-      {
-        "ex": "bulgarian_split_squat",
-        "sets": 3,
-        "reps": 8,
-        "rest": 75
-      },
-      {
-        "ex": "decline_pushup",
-        "sets": 3,
-        "reps": 8,
-        "rest": 75
-      },
-      {
-        "ex": "single_leg_rdl",
-        "sets": 3,
-        "reps": 8,
-        "rest": 60
-      },
-      {
-        "ex": "backpack_row",
-        "sets": 3,
-        "reps": 10,
-        "rest": 60
-      },
-      {
-        "ex": "burpee",
-        "sets": 3,
-        "reps": 8,
-        "rest": 60
-      },
-      {
-        "ex": "hollow_hold",
-        "sets": 3,
-        "seconds": 20,
-        "rest": 30
-      },
-      {
-        "ex": "chest_stretch",
-        "sets": 1,
-        "seconds": 30
-      },
-      {
-        "ex": "hip_flexor_stretch",
-        "sets": 1,
-        "seconds": 30
-      },
-      {
-        "ex": "child_pose",
-        "sets": 1,
-        "seconds": 30
       }
     ]
   },
@@ -1027,12 +690,6 @@
         "rest": 15
       },
       {
-        "ex": "wall_angel",
-        "sets": 1,
-        "reps": 8,
-        "rest": 15
-      },
-      {
         "ex": "thoracic_rotation",
         "sets": 1,
         "reps": 8,
@@ -1066,12 +723,6 @@
     "items": [
       {
         "ex": "quad_stretch",
-        "sets": 1,
-        "seconds": 30,
-        "rest": 10
-      },
-      {
-        "ex": "chest_stretch",
         "sets": 1,
         "seconds": 30,
         "rest": 10
@@ -1123,12 +774,6 @@
         "ex": "cat_cow",
         "sets": 1,
         "reps": 10,
-        "rest": 15
-      },
-      {
-        "ex": "wall_angel",
-        "sets": 1,
-        "reps": 8,
         "rest": 15
       },
       {

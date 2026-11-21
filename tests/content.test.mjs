@@ -8,9 +8,9 @@ const content = readJson('data/content.ru.json');
 const LEVEL = { beginner: 0, intermediate: 1, advanced: 2 };
 const ids = (p) => p.items.map((i) => i.ex);
 
-test('61 упражнение и 17 программ, у каждого полный текст', () => {
-  assert.equal(programs.length, 17);
-  assert.equal(exById.size, 61);
+test('42 упражнения и 14 программ, у каждого полный текст', () => {
+  assert.equal(programs.length, 14);
+  assert.equal(exById.size, 42);
   for (const [id, e] of exById) {
     const t = content.exercises[id];
     assert.ok(t.start && t.desc, id);
@@ -39,39 +39,20 @@ test('Цепочки «легче/сложнее» взаимны, без цик
   }
 });
 
-test('FREE / PREMIUM: все упражнения free; 9 из 17 программ free, остальные premium', () => {
+test('FREE / PREMIUM: все упражнения free; 9 из 14 программ free, остальные premium', () => {
   for (const e of exById.values()) assert.equal(e.access, 'free', e.id);
   const free = programs.filter((p) => p.access === 'free').map((p) => p.id).sort();
   assert.deepEqual(free, ['b1_full_a', 'b2_full_b', 'b3_core_beginner', 'b4_light_cardio', 'i3_full_strength', 'i6_express', 'r1_morning_mobility', 'r2_stretch_after', 'r3_recovery_day']);
-  assert.equal(programs.filter((p) => p.access === 'premium').length, 8);
+  assert.equal(programs.filter((p) => p.access === 'premium').length, 5);
 });
 
 const setsOf = (p, pred) => p.items.filter((i) => pred(exById.get(i.ex))).reduce((s, i) => s + (i.sets ?? exById.get(i.ex).defaults.sets), 0);
 const isPull = (e) => e.muscles.primary.some((m) => ['upperback', 'lats'].includes(m)) && !e.categories.includes('mobility');
 const isPush = (e) => e.muscles.primary.includes('chest') || (e.muscles.primary.includes('shoulders') && !e.categories.includes('abs') && !e.categories.includes('back') && !e.categories.includes('mobility'));
 
-test('Жим и тяга: в силовых программах тяговых подходов не меньше, чем жимовых', () => {
-  for (const id of ['b1_full_a', 'b2_full_b', 'i1_upper', 'i3_full_strength', 'a1_upper_adv']) {
-    const p = progById.get(id);
-    assert.ok(setsOf(p, isPull) >= setsOf(p, isPush) - 0, `${id}: тяга ${setsOf(p, isPull)} < жим ${setsOf(p, isPush)}`);
-  }
-});
-
-test('Гамстринг у начинающих: backpack_rdl в обеих базовых программах, суммарно не менее 4 подходов', () => {
-  const total = ['b1_full_a', 'b2_full_b'].reduce((s, id) => s + setsOf(progById.get(id), (e) => e.muscles.primary.includes('hamstrings')), 0);
-  assert.ok(total >= 4, `подходов на заднюю поверхность бедра: ${total}`);
-  for (const id of ['b1_full_a', 'b2_full_b']) assert.ok(ids(progById.get(id)).includes('backpack_rdl'), id);
-});
-
 test('Каждая группа мышц из карты тела покрыта хотя бы одним упражнением как основная', () => {
-  const need = ['chest', 'shoulders', 'biceps', 'triceps', 'forearms', 'abs', 'upperback', 'glutes', 'quads', 'hamstrings', 'calves'];
+  const need = ['chest', 'shoulders', 'triceps', 'abs', 'upperback', 'glutes', 'quads', 'hamstrings', 'calves'];
   for (const m of need) assert.ok([...exById.values()].some((e) => e.muscles.primary.includes(m)), m);
-});
-
-test('Подъёмы на стул: низкая, устойчивая, нескользящая опора', () => {
-  const t = content.exercises.step_up;
-  const all = [t.desc, t.start, ...t.mistakes, t.tip].join(' ');
-  for (const w of [/низк/, /устойчив/, /нескольз/]) assert.match(all, w);
 });
 
 test('Бёрпи: есть вариант без прыжка и отжимания; «продвинутое» бёрпи есть только в программе уровня advanced', () => {
@@ -131,7 +112,7 @@ test('Ссылка на Klika & Jordan: только проверенные да
   assert.doesNotMatch(content.programs.i6_express.desc, /7 минут|доказан|подтвержд/i);
 });
 
-test('Каждая из 17 программ проходится до конца: переходы, отдых, итог; для программ на время длительность совпадает с расчётом', async () => {
+test('Каждая из 14 программ проходится до конца: переходы, отдых, итог; для программ на время длительность совпадает с расчётом', async () => {
   const { Session, withPrep } = await import('../js/engine.js');
   for (const p of programs) {
     const steps = await stepsOf(p);

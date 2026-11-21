@@ -294,3 +294,36 @@ body[data-route="player"] .toast { bottom: calc(var(--safe-bottom) + var(--tg-bo
 #tabbar { touch-action: none; }
 #tabbar button.dragging { position: relative; z-index: 5; background: var(--s2); border-radius: 16px; box-shadow: 0 8px 24px rgba(0, 0, 0, .5); }
 #tabbar.sorting button:not(.dragging) { opacity: .8; }
+
+/* Главная: одинаковые отступы между плашками */
+.home-col { display: flex; flex-direction: column; gap: var(--sp-4); }
+.home-col > * { margin: 0; }
+.home-col .greet { padding: var(--sp-6) 0 var(--sp-1); }
+.home-tiles { display: flex; flex-direction: column; gap: var(--sp-4); }
+.htile { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; transition: box-shadow .15s; }
+.htile input, .htile textarea { -webkit-user-select: text; user-select: text; }
+.htile.dragging { position: relative; z-index: 5; box-shadow: 0 14px 36px rgba(0, 0, 0, .55); border-color: var(--silver); }
+.weekcard[role="button"] { cursor: pointer; }
+.dot i { font-style: normal; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text2); }
+.dot.done i { color: var(--on-platinum); }
+.dot.today i { color: var(--text); }
+.dot.today.done i { color: var(--on-platinum); }
+.dot.future i { color: var(--text3); }
+
+/* Нижняя панель прокручивается; в конце «+» */
+#tabbar { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; touch-action: pan-x; overscroll-behavior-x: contain; }
+#tabbar::-webkit-scrollbar { display: none; }
+#tabbar button { flex: 1 0 72px; min-width: 72px; }
+#tabbar button.tab-add { flex: 0 0 64px; min-width: 64px; }
+
+/* Календарь */
+.cal { display: flex; flex-direction: column; gap: var(--sp-4); }
+.cal-card { padding: var(--sp-4); }
+.cal-head, .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.cal-head { margin-bottom: 8px; text-align: center; font-size: var(--fs-xs); color: var(--text3); font-weight: 600; }
+.cal-cell { width: 100%; min-width: 0; min-height: 0; padding: 0; aspect-ratio: 1; border-radius: 50%; border: 1.5px solid var(--line); display: grid; place-items: center; font-size: 14px; font-weight: 600; color: var(--text2); font-variant-numeric: tabular-nums; }
+.cal-cell.empty { border-color: transparent; }
+.cal-cell.done { background: var(--platinum); border-color: var(--platinum); color: var(--on-platinum); font-weight: 700; }
+.cal-cell.today { border-color: var(--silver); color: var(--text); }
+.cal-cell.today.done { color: var(--on-platinum); }
+.cal-cell.sel { outline: 2px solid var(--text); outline-offset: 2px; }
