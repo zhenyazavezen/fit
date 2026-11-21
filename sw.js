@@ -1,9 +1,10 @@
 // Service worker ZAVEZEN_FIT: офлайн-оболочка приложения. Версия подставляется при сборке (tools/stamp.sh), старый кэш удаляется.
 // Что кэшируется: страница, стили, скрипты, данные каталога, иллюстрации. Запросы к API (другой домен) НЕ кэшируются и не перехватываются.
+// Метка ?v=dev (сайт без сборочных меток) считается отсутствием метки: иначе обновлённые тексты и данные застревают в кэше.
 // Правило свежести: страница и файлы БЕЗ метки версии (?v=…) берутся из сети в первую очередь, кэш — только без связи.
 // Это важно, если сайт опубликован «как есть» (без меток): иначе старые скрипты застревают в кэше навсегда.
 const VERSION = new URL(self.location.href).searchParams.get('v') || 'dev';
-const CACHE = 'zfit-' + VERSION + '-r3';        // «r3» — ревизия логики кэша; смена удаляет кэши прежних версий
+const CACHE = 'zfit-' + VERSION + '-r4';        // «r3» — ревизия логики кэша; смена удаляет кэши прежних версий
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'assets/icons/icon-192.png', 'assets/icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
@@ -22,7 +23,8 @@ self.addEventListener('fetch', (e) => {
   const req = e.request, url = new URL(req.url);
   if (req.method !== 'GET' || url.origin !== self.location.origin) return;      // API и внешние ресурсы — напрямую
   if (req.mode === 'navigate') { e.respondWith(networkFirst(req, 'index.html')); return; }
-  if (url.searchParams.has('v')) {                                               // файл с меткой версии: содержимое не меняется — кэш первым
+  const stamped = url.searchParams.get('v');
+  if (stamped && stamped !== 'dev') {                                               // файл с меткой версии: содержимое не меняется — кэш первым
     e.respondWith(caches.match(req).then((hit) => hit || networkFirst(req)));
     return;
   }

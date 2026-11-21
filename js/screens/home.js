@@ -4,14 +4,12 @@ import * as router from '../router.js';
 import { tg } from '../tg.js';
 import { history, activeSession, todos } from '../store.js';
 import { checklist } from '../checklist.js';
-import { recommend, weekDots, summary, streak } from '../stats.js';
+import { weekDots, summary, streak } from '../stats.js';
 import { startOfWeek, dayKey } from '../dates.js';
-import { allPrograms, progText, programEstimate, planForProgram, stepsOfItems } from '../data.js';
+import { stepsOfItems } from '../data.js';
 import { withPrep } from '../engine.js';
-import { durationLabel, greetingKey } from '../format.js';
-import { startPlan } from '../start.js';
+import { greetingKey } from '../format.js';
 import { confirmDialog, toast } from '../ui.js';
-import { canStartProgram } from '../access.js';
 import { authPromptCard } from '../auth-prompt.js';
 
 function resumeCard() {
@@ -51,27 +49,11 @@ export default function home() {
   const hist = history.all(), now = Date.now();
   const name = tg.user?.first_name;
   const greet = t(greetingKey(new Date().getHours()));
-  const rec = recommend(hist, allPrograms().filter((p) => canStartProgram(p)), now);
   const el = h('div', { class: 'pad' });
 
   el.append(h('div', { class: 'greet' }, h('div', { class: 'eyebrow' }, t('app.tagline')), h('h1', { class: 'h1' }, name ? `${greet}, ${name}` : greet)));
   const resume = resumeCard();
   if (resume) el.append(resume);
-
-  if (rec) {
-    const p = rec.program, est = programEstimate(p);
-    el.append(h('section', { class: 'hero', 'aria-label': t('home.recommend') },
-      h('div', { class: 'eyebrow' }, t('home.recommend')),
-      h('div', { class: 'name' }, progText(p).name),
-      h('div', { class: 'time' }, durationLabel(est)),
-      h('div', { class: 'meta' }, h('span', null, t('n.exercises', { n: p.items.length })), h('span', null, t('level.' + p.level))),
-      h('p', { class: 'small muted' }, t('home.reason.' + rec.reason)),
-      h('div', { class: 'actions' },
-        h('button', { class: 'btn', onClick: () => startPlan(planForProgram(p)) }, icon('play'), t('common.start')),
-        h('button', { class: 'btn ghost', onClick: () => router.go('program', { id: p.id }) }, t('common.details')))));
-  }
-
-  el.append(todoCard());
 
   if (hist.length) { const pc = authPromptCard(); if (pc) el.append(pc); }
 
@@ -85,6 +67,7 @@ export default function home() {
       h('div', { class: 'kpi' }, h('div', { class: 'v' }, String(ws.workouts)), h('div', { class: 'l' }, t('home.weekWorkouts'))),
       h('div', { class: 'kpi' }, h('div', { class: 'v' }, String(Math.round(ws.sec / 60))), h('div', { class: 'l' }, t('home.weekMinutes'))))));
 
+  el.append(todoCard());
   return { el };
 }
 

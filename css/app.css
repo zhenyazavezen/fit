@@ -289,3 +289,8 @@ body[data-route="player"] .toast { bottom: calc(var(--safe-bottom) + var(--tg-bo
 .note-area { min-height: 120px; padding: var(--sp-3) var(--sp-4); resize: vertical; font-family: inherit; }
 .tab-emoji { font-style: normal; font-size: 20px; line-height: 24px; height: 24px; }
 #tabbar button { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+
+/* Перетаскивание вкладок */
+#tabbar { touch-action: none; }
+#tabbar button.dragging { position: relative; z-index: 5; background: var(--s2); border-radius: 16px; box-shadow: 0 8px 24px rgba(0, 0, 0, .5); }
+#tabbar.sorting button:not(.dragging) { opacity: .8; }

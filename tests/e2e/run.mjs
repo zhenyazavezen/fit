@@ -198,7 +198,7 @@ await test('Выход: «продолжу позже» → карточка н�
   await btn(page, 'Продолжить').click();
   await btn(page, 'Выйти из тренировки').click();
   await btn(page, 'Отменить без сохранения').click();
-  await tab(page, 'home'); await page.waitForSelector('.hero');
+  await tab(page, 'home'); await page.waitForSelector('.todo');
   eq(await page.locator('.resume').count(), 0, 'карточка продолжения исчезла');
   eq(await page.evaluate(() => localStorage.getItem('seven:active')), null, 'сессия очищена');
   await ctx.close();
@@ -237,7 +237,7 @@ await test('Конструктор: своя программа создаётс
   ok((await text(page, 'h1')).includes('Моя проверка'), 'открылась карточка программы');
   await btn(page, 'Начать тренировку').click(); await page.waitForSelector('.player');
   await btn(page, 'Выйти из тренировки').click(); await btn(page, 'Отменить без сохранения').click();
-  await tab(page, 'home'); await page.waitForSelector('.hero');
+  await tab(page, 'home'); await page.waitForSelector('.todo');
   await tab(page, 'workouts'); await page.getByRole('button', { name: 'Мои', exact: true }).click();
   await page.locator('.pcard-wide', { hasText: 'Моя проверка' }).click();
   await btn(page, 'Удалить').click(); await page.locator('.sheet .btn.danger').click();
@@ -351,7 +351,8 @@ await test('Фото профиля: выбор из галереи, обрез�
 
 await test('Главная: без блока «Программы» и ссылок; «Дела на сегодня» со шкалой прогресса', async () => {
   const { page, errors, ctx } = await fresh();
-  eq(await page.locator('.hscroll, .pcard').count(), 0, 'блок «Программы» убран');
+  eq(await page.locator('.hscroll, .pcard, .hero').count(), 0, 'блок «Программы» и рекомендация убраны');
+  ok((await page.locator('.weekcard, .todo').evaluateAll((n) => n.map((e) => e.className.split(' ').includes('todo')))).join() === 'false,true', 'календарь выше дел');
   eq(await page.locator('.list .item').count(), 0, 'ссылки под программами убраны');
   eq(await page.locator('#tabbar button').count(), 5, 'все вкладки на месте');
   await page.locator('.todo input').fill('Выпить воду'); await page.locator('.todo .cl-add').tap();
@@ -368,26 +369,32 @@ await test('Главная: без блока «Программы» и ссыл
   ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
 });
 
-await test('Нижняя панель: долгое нажатие, порядок, скрытие, своя вкладка с делами и заметкой', async () => {
+await test('Нижняя панель: зажать и перетащить вкладку, своя вкладка с делами и заметкой', async () => {
   const { page, errors, ctx } = await fresh();
   const names = () => page.locator('#tabbar button span').allTextContents();
-  await page.evaluate(() => { const b = document.querySelector('#tabbar [data-tab="workouts"]'), r = b.getBoundingClientRect(); b.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: r.x + 5, clientY: r.y + 5, pointerId: 5 })); });
-  await page.clock.runFor(700);
-  await page.waitForSelector('.sheet');
-  ok(await page.locator('.todo').count() === 1, 'остались на главной (клик по вкладке не сработал)');
-  await page.locator('.sheet .item').nth(0).locator('button[aria-label="Ниже"]').tap();
-  eq((await names()).slice(0, 2).join(), 'Тренировки,Главная', 'порядок изменён');
+  const tabBox = async (n) => page.locator(`#tabbar [data-tab="${n}"]`).boundingBox();
+  const bx = await tabBox('home'), by = await tabBox('progress');
+  await page.mouse.move(bx.x + bx.width / 2, bx.y + 20); await page.mouse.down();
+  await page.clock.runFor(500);
+  await page.mouse.move(by.x + by.width / 2 + 25, by.y + 20, { steps: 12 });
+  await page.mouse.up(); await page.clock.runFor(600);
+  eq((await names()).join(), 'Тренировки,Упражнения,Прогресс,Главная,Профиль', 'вкладка «Главная» перетащена');
+  ok(await page.locator('.todo').count() === 1, 'клик после перетаскивания не открыл вкладку');
+  await page.reload(); await page.waitForSelector('#tabbar button');
+  eq((await names()).join(), 'Тренировки,Упражнения,Прогресс,Главная,Профиль', 'порядок сохранился');
+  // быстрое нажатие по-прежнему открывает вкладку
+  await tab(page, 'workouts'); await page.waitForSelector('.page-title');
+  // своя вкладка: Профиль → Нижняя панель
+  await tab(page, 'profile'); await page.getByRole('button', { name: /Нижняя панель/ }).click();
   await btn(page, 'Добавить вкладку').tap();
   await page.locator('.sheet input[type=text]').first().fill('Питание'); await btn(page, 'Готово').tap();
   ok((await names()).includes('Питание'), 'своя вкладка появилась: ' + (await names()).join());
-  await page.locator('.sheet .item', { hasText: 'Каталог' }).first().locator('.switch').tap().catch(() => {});
   await page.keyboard.press('Escape');
   await page.locator('#tabbar [data-tab^="c_"]').tap(); await page.waitForSelector('.note-area');
   await page.locator('.pad input').fill('Белок 120 г'); await page.keyboard.press('Enter');
   await page.locator('.note-area').fill('План на неделю'); await page.locator('.note-area').blur();
   eq(await page.locator('#tabbar [aria-current="true"]').count(), 1, 'активна одна вкладка');
   await page.reload(); await page.waitForSelector('#tabbar button');
-  eq((await names()).slice(0, 2).join(), 'Тренировки,Главная', 'порядок сохранился');
   await page.locator('#tabbar [data-tab^="c_"]').tap(); await page.waitForSelector('.note-area');
   eq(await page.locator('.note-area').inputValue(), 'План на неделю', 'заметка сохранилась');
   eq(await page.locator('.cl-row').count(), 1, 'дело во вкладке сохранилось');
@@ -425,7 +432,7 @@ await test('Telegram Mini App (эмуляция): ready/expand, цвета, Back
   ok((await page.evaluate(() => window.__tg)).includes('confirm:on'), 'подтверждение закрытия включено');
   await run(page, 5100);          // подготовка → первый рабочий шаг (вибрация)
   await btn(page, 'Выйти из тренировки').click(); await btn(page, 'Отменить без сохранения').click();
-  await tab(page, 'home'); await page.waitForSelector('.hero');
+  await tab(page, 'home'); await page.waitForSelector('.todo');
   const log = await page.evaluate(() => window.__tg);
   ok(log.includes('confirm:off'), 'подтверждение закрытия выключено'); ok(log.lastIndexOf('back:hide') > log.lastIndexOf('back:show'), 'BackButton скрыт на главной');
   ok(log.some((x) => x.startsWith('haptic')), 'вибрация вызывалась');

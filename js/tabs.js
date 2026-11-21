@@ -4,10 +4,10 @@ import { t } from './i18n.js';
 import * as router from './router.js';
 import { tabsCfg, pages, store } from './store.js';
 import { sheet, toggle, confirmDialog, toast } from './ui.js';
+import { dragSort } from './dragsort.js';
 
 export const BUILTIN = ['home', 'workouts', 'catalog', 'progress', 'profile'];
 export const MAX_VISIBLE = 6, MAX_CUSTOM = 5;
-const HOLD_MS = 520;
 
 /** Итоговый список вкладок: порядок (с новыми в конце), скрытые, видимые. «Профиль» скрыть нельзя — там настройки. */
 export function resolveTabs(cfg = tabsCfg.get()) {
@@ -36,16 +36,12 @@ export function renderTabbar() {
 export function initTabbar(el) {
   bar = el;
   renderTabbar();
-  let timer = 0, sx = 0, sy = 0;
-  const cancel = () => { clearTimeout(timer); timer = 0; };
-  el.addEventListener('pointerdown', (e) => {
-    if (!e.target.closest('[data-tab]')) return;
-    sx = e.clientX; sy = e.clientY; cancel();
-    timer = setTimeout(() => { timer = 0; el.dataset.hold = '1'; setTimeout(() => { delete el.dataset.hold; }, 500); try { navigator.vibrate?.(15); } catch { /* ignore */ } openTabsEditor(); }, HOLD_MS);
-  });
-  el.addEventListener('pointermove', (e) => { if (timer && Math.hypot(e.clientX - sx, e.clientY - sy) > 10) cancel(); });
-  for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) el.addEventListener(ev, cancel);
-  el.addEventListener('contextmenu', (e) => e.preventDefault());
+  dragSort(el, { itemSel: '[data-tab]', axis: 'x', onDrop: (visibleOrder) => {
+    const cfg = tabsCfg.get(), r = resolveTabs(cfg), vis = new Set(r.visible);
+    let k = 0;                                           // видимые места заполняем новым порядком, скрытые остаются на своих
+    const order = r.order.map((id) => (vis.has(id) ? visibleOrder[k++] : id));
+    tabsCfg.set({ ...cfg, order });
+  } });
   store.onChange((_e, k) => { if (k === 'tabs') renderTabbar(); });
 }
 
@@ -60,9 +56,8 @@ export function openTabsEditor() {
   function draw() {
     const cfg = tabsCfg.get(), r = resolveTabs(cfg);
     const vis = r.visible.length;
-    list.replaceChildren(...r.order.map((id, i) => {
+    list.replaceChildren(...r.order.map((id) => {
       const isCustom = id.startsWith('c_'), on = !r.hidden.has(id) && r.visible.includes(id);
-      const move = (d) => { const o = [...r.order], j = i + d; if (j < 0 || j >= o.length) return; [o[i], o[j]] = [o[j], o[i]]; save({ order: o }); draw(); };
       const tg = toggle(on, (v) => {
         if (v && vis >= MAX_VISIBLE) { toast(t('tabs.max', { n: MAX_VISIBLE })); draw(); return; }
         const hidden = new Set(r.hidden); if (v) hidden.delete(id); else hidden.add(id);
@@ -72,8 +67,6 @@ export function openTabsEditor() {
       return h('div', { class: 'item' },
         h('div', { class: 'grow' }, h('div', { class: 't' }, nameOf(id, r.custom)), isCustom ? h('div', { class: 's' }, t('tabs.mine')) : null),
         isCustom ? h('button', { class: 'icon-btn', 'aria-label': t('tabs.edit'), onClick: () => editCustom(id) }, icon('edit', 18)) : null,
-        h('button', { class: 'icon-btn', 'aria-label': t('builder.up'), disabled: i === 0, onClick: () => move(-1) }, icon('up', 18)),
-        h('button', { class: 'icon-btn', 'aria-label': t('builder.down'), disabled: i === r.order.length - 1, onClick: () => move(1) }, icon('down', 18)),
         id === 'profile' ? h('span', { class: 'small muted', style: { minWidth: '52px', textAlign: 'center' } }, t('tabs.always')) : tg);
     }));
     foot.replaceChildren(

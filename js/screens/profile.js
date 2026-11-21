@@ -1,3 +1,4 @@
+import { openTabsEditor } from '../tabs.js';
 import { h, icon } from '../util.js';
 import { t } from '../i18n.js';
 import * as router from '../router.js';
@@ -39,7 +40,7 @@ export default function profile() {
 
   const sw = (key, ic, label) => h('div', { class: 'item' }, icon(ic), h('div', { class: 'grow t' }, label), toggle(set[key], (v) => settings.set({ [key]: v }), label));
   el.append(h('h2', { class: 'h3 group-title' }, t('plan.title')),
-    h('div', { class: 'list' }, row('profile', t('profile.account'), auth.signedIn ? '✓' : t('profile.accountOff'), () => router.go('account')), row('profile', t('plan.title'), '', () => router.go('plan')), row('catalog', t('map.title'), '', () => router.go('bodymap'))));
+    h('div', { class: 'list' }, row('profile', t('profile.account'), auth.signedIn ? '✓' : t('profile.accountOff'), () => router.go('account')), row('profile', t('plan.title'), '', () => router.go('plan')), row('catalog', t('map.title'), '', () => router.go('bodymap')), row('workouts', t('tabs.title'), '', () => openTabsEditor())));
 
   el.append(h('h2', { class: 'h3 group-title' }, t('profile.settings')),
     h('div', { class: 'list' }, sw('sound', 'sound', t('profile.sound')), sw('haptics', 'vibrate', t('profile.haptics')), sw('wake', 'screen', t('profile.wake')),
