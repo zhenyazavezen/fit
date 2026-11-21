@@ -133,7 +133,7 @@ export const todos = {
   },
 };
 
-// ---- Нижняя панель: { order:[id…], hidden:[id…], custom:[{id,name,emoji}] }; страницы своих вкладок: { id: {note, items:[{id,t,d}]} }
+// ---- Нижняя панель: { order:[id…], hidden:[id…], custom:[{id,name,icon}] }; страницы своих вкладок: { id: {note, items:[{id,t,d}]} }
 export const tabsCfg = {
   get() { const v = store.get('tabs', null); return v && typeof v === 'object' && !Array.isArray(v) ? { order: v.order || [], hidden: v.hidden || [], custom: v.custom || [] } : { order: [], hidden: [], custom: [] }; },
   set(c) { return store.set('tabs', c); },

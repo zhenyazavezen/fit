@@ -20,7 +20,7 @@ export default function ctab({ id }) {
   note.addEventListener('blur', () => { st.note = note.value; pages.set(id, { note: st.note, items: st.items }); });
   return { el: h('div', { class: 'pad stack' },
     h('div', { class: 'row-flex', style: { justifyContent: 'space-between' } },
-      h('h1', { class: 'h1 page-title' }, (c.emoji ? c.emoji + ' ' : '') + c.name),
+      h('h1', { class: 'h1 page-title row-flex' }, c.icon ? icon(c.icon, 28) : null, c.name),
       h('button', { class: 'icon-btn', 'aria-label': t('tabs.title'), onClick: openTabsEditor }, icon('edit'))),
     h('h2', { class: 'h3' }, t('tabs.list')), cl.el,
     h('h2', { class: 'h3' }, t('tabs.note')), note) };

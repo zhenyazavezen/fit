@@ -68,7 +68,7 @@ export function validateDoc(key, value) {
     if (custom.length > 10) throw bad('слишком много вкладок');
     return {
       order: ids(value.order || [], 30), hidden: ids(value.hidden || [], 30),
-      custom: custom.map((c) => { if (!isObj(c) || !str(c.id, 64) || !ID_RE.test(c.id) || !str(c.name, 30) || (c.emoji != null && !str(c.emoji, 12))) throw bad('некорректная вкладка'); return { id: c.id, name: c.name, emoji: c.emoji || '' }; }),
+      custom: custom.map((c) => { if (!isObj(c) || !str(c.id, 64) || !ID_RE.test(c.id) || !str(c.name, 30) || (c.emoji != null && !str(c.emoji, 12)) || (c.icon != null && !(str(c.icon, 20) && /^[a-z-]*$/.test(c.icon)))) throw bad('некорректная вкладка'); return { id: c.id, name: c.name, emoji: c.emoji || '', icon: c.icon || '' }; }),
     };
   }
   if (key === 'pages') {

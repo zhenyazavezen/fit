@@ -8,6 +8,7 @@ import { dragSort } from './dragsort.js';
 
 export const BUILTIN = ['home', 'workouts', 'catalog', 'progress', 'profile'];
 export const MAX_CUSTOM = 10;
+export const TAB_ICONS = ['star', 'flame', 'drop', 'leaf', 'book', 'target', 'moon', 'sun', 'list', 'calendar', 'trophy', 'heart', 'bolt', 'clock'];
 
 /** Итоговый список вкладок: порядок (новые в конце) и скрытые. «Профиль» скрыть нельзя — там настройки. */
 export function resolveTabs(cfg = tabsCfg.get()) {
@@ -25,7 +26,7 @@ export function renderTabbar() {
   const { visible, custom } = resolveTabs();
   const items = visible.map((id) => {
     const c = custom.find((x) => x.id === id);
-    const glyph = c ? h('i', { class: 'tab-emoji' }, c.emoji || (c.name[0] || '•').toUpperCase()) : icon(id);
+    const glyph = c ? (c.icon && TAB_ICONS.includes(c.icon) ? icon(c.icon) : h('i', { class: 'tab-emoji' }, (c.name[0] || '•').toUpperCase())) : icon(id);
     return h('button', { dataset: { tab: id }, type: 'button' }, glyph, h('span', null, nameOf(id, custom)));
   });
   const add = custom.length < MAX_CUSTOM ? h('button', { class: 'tab-add', type: 'button', 'aria-label': t('tabs.add'), onClick: () => editCustom(null) }, icon('plus', 22), h('span', null, t('tabs.addShort'))) : null;
@@ -49,11 +50,14 @@ export function initTabbar(el) {
 export function editCustom(id, onDone = () => {}) {
   const cfg = tabsCfg.get(), cur = id ? cfg.custom.find((c) => c.id === id) : null;
   const name = h('input', { class: 'input', type: 'text', maxlength: '14', value: cur?.name || '', placeholder: t('tabs.namePh'), 'aria-label': t('tabs.name') });
-  const emoji = h('input', { class: 'input', type: 'text', maxlength: '4', value: cur?.emoji || '', placeholder: '🔥', 'aria-label': t('tabs.emoji'), style: { width: '110px' } });
+  let pick = TAB_ICONS.includes(cur?.icon) ? cur.icon : 'star';
+  const icons = h('div', { class: 'icon-grid' });
+  const drawIcons = () => icons.replaceChildren(...TAB_ICONS.map((n) => h('button', { class: 'icon-pick', type: 'button', 'aria-label': n, 'aria-pressed': String(n === pick), onClick: () => { pick = n; drawIcons(); } }, icon(n, 22))));
+  drawIcons();
   const f = sheet({
     title: cur ? t('tabs.edit') : t('tabs.add'),
     body: [h('div', null, h('div', { class: 'eyebrow', style: { marginBottom: '8px' } }, t('tabs.name')), name),
-      h('div', null, h('div', { class: 'eyebrow', style: { marginBottom: '8px' } }, t('tabs.emoji')), emoji),
+      h('div', null, h('div', { class: 'eyebrow', style: { marginBottom: '8px' } }, t('tabs.icon')), icons),
       h('p', { class: 'small muted' }, t('tabs.pageHint'))],
     foot: [
       cur ? h('button', { class: 'btn secondary', onClick: async () => {
@@ -65,10 +69,10 @@ export function editCustom(id, onDone = () => {}) {
       h('button', { class: 'btn', onClick: () => {
         const nm = name.value.trim(); if (!nm) { name.focus(); return; }
         const c = tabsCfg.get();
-        if (cur) tabsCfg.set({ ...c, custom: c.custom.map((x) => (x.id === id ? { ...x, name: nm, emoji: emoji.value.trim() } : x)) });
+        if (cur) tabsCfg.set({ ...c, custom: c.custom.map((x) => (x.id === id ? { id: x.id, name: nm, icon: pick } : x)) });
         else {
           const nid = 'c_' + uid();
-          tabsCfg.set({ order: [...resolveTabs(c).order, nid], hidden: c.hidden, custom: [...c.custom, { id: nid, name: nm, emoji: emoji.value.trim() }] });
+          tabsCfg.set({ order: [...resolveTabs(c).order, nid], hidden: c.hidden, custom: [...c.custom, { id: nid, name: nm, icon: pick }] });
           f.close(); onDone(); router.openTab(nid); return;
         }
         f.close(); onDone();

@@ -34,7 +34,7 @@ export default function calendar() {
     const fmt = (n) => (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(n);
     const activeDays = p.bars.filter((b) => b.workouts).length;
     const groups = groupByDay(hist).filter((g) => g.ts >= p.start && g.ts < p.end && (!st.day || g.key === st.day));
-    body.replaceChildren(
+    body.replaceChildren(...[
       h('div', { class: 'period-nav' },
         h('button', { class: 'icon-btn', 'aria-label': t('progress.prev'), onClick: () => { st.offset -= 1; st.day = null; draw(); } }, icon('chev-l')),
         h('div', { class: 'lbl' }, label),
@@ -54,7 +54,7 @@ export default function calendar() {
         h('div', { class: 'list' }, ...g.items.map((s) => h('div', { class: 'item' },
           h('div', { class: 'grow' }, h('div', { class: 't' }, s.title || t('progress.customWorkout')), h('div', { class: 's' }, `${timeOf(s.at)} · ${t('n.sets', { n: s.setsDone })}`)),
           h('div', { class: 'end' }, spentLabel(s.durationSec)))))]))
-        : h('p', { class: 'muted small' }, st.day ? t('cal.noDay') : t('cal.noMonth')));
+        : h('p', { class: 'muted small' }, st.day ? t('cal.noDay') : t('cal.noMonth'))].filter(Boolean));
   }
   const fact = (v, l) => h('div', { class: 'fact' }, h('div', { class: 'v' }, v), h('div', { class: 'l' }, l));
   draw();

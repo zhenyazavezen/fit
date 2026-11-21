@@ -327,3 +327,9 @@ body[data-route="player"] .toast { bottom: calc(var(--safe-bottom) + var(--tg-bo
 .cal-cell.today { border-color: var(--silver); color: var(--text); }
 .cal-cell.today.done { color: var(--on-platinum); }
 .cal-cell.sel { outline: 2px solid var(--text); outline-offset: 2px; }
+
+/* Выбор значка своей вкладки: одноцветные значки в стиле приложения */
+.icon-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+.icon-pick { height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--s2); color: var(--text2); display: grid; place-items: center; }
+.icon-pick[aria-pressed="true"] { background: var(--platinum); border-color: var(--platinum); color: var(--on-platinum); }
+.todo .h3 { white-space: nowrap; }

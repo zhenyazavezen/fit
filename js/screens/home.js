@@ -34,11 +34,12 @@ function resumeCard() {
 
 function todoCard() {
   const day = dayKey(Date.now());
-  const bar = h('i'), count = h('span', { class: 'small muted' });
+  const bar = h('i'), count = h('span', { class: 'small muted row-flex', style: { gap: '4px', whiteSpace: 'nowrap' } });
   const upd = (list) => {
     const n = list.length, d = list.filter((x) => x.d).length;
     bar.style.width = (n ? (d / n) * 100 : 0) + '%';
-    count.textContent = !n ? t('todo.none') : d === n ? t('todo.allDone') : t('todo.progress', { d, n });
+    if (n && d === n) count.replaceChildren(icon('check', 16), t('todo.allDone'));
+    else count.textContent = !n ? t('todo.none') : t('todo.progress', { d, n });
   };
   const cl = checklist({ items: todos.get(day), save: (l) => todos.set(day, l), placeholder: t('todo.add'), onUpdate: upd });
   return h('section', { class: 'card todo htile', dataset: { key: 'todo' }, 'aria-label': t('todo.title') },
