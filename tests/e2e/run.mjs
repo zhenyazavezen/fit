@@ -558,6 +558,15 @@ await test('Тренировки: простой список по уровня�
   await ctx.close();
 });
 
+await test('Соревнования: пункт в профиле; без входа — просьба войти, без ошибок', async () => {
+  const { page, errors, ctx } = await fresh();
+  await tab(page, 'profile');
+  await page.getByText('Соревнования', { exact: true }).click();
+  await page.waitForSelector('.empty, .note, .pad');
+  ok((await text(page, '#screen')).includes('Нужен вход'), 'просит войти');
+  ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
+});
+
 await test('Автономный файл открывается напрямую (file://) без сервера', async () => {
   const f = path.join(root, 'standalone/index.html');
   const { page, ctx, errors } = await open(browser, 'file://' + f);

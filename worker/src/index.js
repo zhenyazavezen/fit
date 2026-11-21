@@ -6,6 +6,7 @@ import { verifyGoogleIdToken } from './google.js';
 import { rateLimit, cleanup } from './ratelimit.js';
 import * as acc from './accounts.js';
 import * as sync from './sync.js';
+import * as comp from './comp.js';
 
 const ipOf = (req) => req.headers.get('CF-Connecting-IP') || 'unknown';
 
@@ -75,6 +76,20 @@ export async function handle(request, env, opts = {}) {
     const b = await readJson(request);
     const { conflicts } = await sync.push(db, auth.accountId, b, now);
     return json({ ...(await sync.pull(db, auth.accountId, Number.isSafeInteger(b.baseRev) ? b.baseRev : 0)), conflicts });
+  }
+  if (path.startsWith('/comp/')) {
+    await comp.ensureSchema(db);
+    const a = auth.accountId;
+    if (method === 'GET' && path === '/comp/me') return json(await comp.me(db, a));
+    if (method === 'GET' && path === '/comp/board') return json(await comp.board(db, a, url.searchParams.get('scope') || 'global', url.searchParams.get('period') || 'week', now));
+    if (method === 'POST') {
+      const b = await readJson(request);
+      if (path === '/comp/global') { await comp.setGlobal(db, a, b.on === true, b.nick, now); return json(await comp.me(db, a)); }
+      if (path === '/comp/nick') { await comp.setNick(db, a, b.nick, now); return json(await comp.me(db, a)); }
+      if (path === '/comp/rooms') { const r = await comp.createRoom(db, a, b.name, b.nick, now); return json({ ...r, me: await comp.me(db, a) }); }
+      if (path === '/comp/rooms/join') { const r = await comp.joinRoom(db, a, b.code, b.nick, now); return json({ ...r, me: await comp.me(db, a) }); }
+      if (path === '/comp/rooms/leave') { await comp.leaveRoom(db, a, String(b.id || '')); return json(await comp.me(db, a)); }
+    }
   }
   throw new HttpError(404, 'not_found', 'Маршрут не найден');
 }

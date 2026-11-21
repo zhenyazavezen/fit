@@ -333,3 +333,7 @@ body[data-route="player"] .toast { bottom: calc(var(--safe-bottom) + var(--tg-bo
 .icon-pick { height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--s2); color: var(--text2); display: grid; place-items: center; }
 .icon-pick[aria-pressed="true"] { background: var(--platinum); border-color: var(--platinum); color: var(--on-platinum); }
 .todo .h3 { white-space: nowrap; }
+
+/* Соревнования */
+.item.me { background: var(--s2); }
+.item.me .lead { color: var(--platinum); }
