@@ -5,7 +5,7 @@
 //  • Каждое изменение получает номер ревизии аккаунта; клиент запрашивает изменения «после ревизии N».
 import { HttpError } from './http.js';
 
-export const DOC_KEYS = ['settings', 'profile', 'favorites', 'programs', 'avatar'];
+export const DOC_KEYS = ['settings', 'profile', 'favorites', 'programs', 'avatar', 'myex', 'todos', 'tabs', 'pages'];
 const MAX_DOC_BYTES = 64 * 1024;
 const MAX_SESSIONS_PER_PUSH = 200;
 export const MAX_SESSIONS_PER_ACCOUNT = 5000;
@@ -44,6 +44,39 @@ export function validateDoc(key, value) {
     // фото профиля: пустая строка (убрано) или JPEG-квадрат в виде data-URL, не больше 60 000 символов
     if (!isObj(value) || typeof value.img !== 'string' || value.img.length > 60000 || (value.img !== '' && !/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(value.img))) throw bad('ожидается JPEG-фото');
     return { img: value.img };
+  }
+  const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+  const cleanItems = (a) => {
+    if (!Array.isArray(a) || a.length > 60) throw bad('ожидается список дел');
+    return a.map((x) => { if (!isObj(x) || !str(x.id, 64) || !ID_RE.test(x.id) || !str(x.t, 160)) throw bad('некорректное дело'); return { id: x.id, t: x.t, d: x.d === true }; });
+  };
+  if (key === 'myex') {
+    if (!Array.isArray(value) || value.length > 200) throw bad('ожидается список упражнений');
+    return value.map((e) => {
+      if (!isObj(e) || !str(e.id, 64) || !ID_RE.test(e.id) || !str(e.name, 60) || !e.name.trim() || (e.mode !== 'reps' && e.mode !== 'time') || !str(e.cat, 30) || (e.note != null && !str(e.note, 400))) throw bad('некорректное упражнение');
+      return { id: e.id, name: e.name, mode: e.mode, cat: e.cat, note: e.note || '' };
+    });
+  }
+  if (key === 'todos') {
+    if (!isObj(value) || Object.keys(value).length > 30) throw bad('ожидается объект по дням');
+    return Object.fromEntries(Object.entries(value).map(([day, items]) => { if (!DAY_RE.test(day)) throw bad('некорректный день'); return [day, cleanItems(items)]; }));
+  }
+  if (key === 'tabs') {
+    if (!isObj(value)) throw bad('ожидается объект');
+    const ids = (a, n) => { if (!Array.isArray(a) || a.length > n || !a.every((x) => str(x, 64) && ID_RE.test(x))) throw bad('некорректный список вкладок'); return a; };
+    const custom = Array.isArray(value.custom) ? value.custom : [];
+    if (custom.length > 10) throw bad('слишком много вкладок');
+    return {
+      order: ids(value.order || [], 30), hidden: ids(value.hidden || [], 30),
+      custom: custom.map((c) => { if (!isObj(c) || !str(c.id, 64) || !ID_RE.test(c.id) || !str(c.name, 30) || (c.emoji != null && !str(c.emoji, 12))) throw bad('некорректная вкладка'); return { id: c.id, name: c.name, emoji: c.emoji || '' }; }),
+    };
+  }
+  if (key === 'pages') {
+    if (!isObj(value) || Object.keys(value).length > 12) throw bad('ожидается объект страниц');
+    return Object.fromEntries(Object.entries(value).map(([id, p]) => {
+      if (!ID_RE.test(id) || !isObj(p) || !str(p.note ?? '', 3000)) throw bad('некорректная страница');
+      return [id, { note: p.note || '', items: cleanItems(p.items || []) }];
+    }));
   }
   throw new HttpError(400, 'bad_doc', 'Неизвестный документ');
 }

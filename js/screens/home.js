@@ -2,9 +2,10 @@ import { h, icon } from '../util.js';
 import { t } from '../i18n.js';
 import * as router from '../router.js';
 import { tg } from '../tg.js';
-import { history, activeSession } from '../store.js';
+import { history, activeSession, todos } from '../store.js';
+import { checklist } from '../checklist.js';
 import { recommend, weekDots, summary, streak } from '../stats.js';
-import { startOfWeek } from '../dates.js';
+import { startOfWeek, dayKey } from '../dates.js';
 import { allPrograms, progText, programEstimate, planForProgram, stepsOfItems } from '../data.js';
 import { withPrep } from '../engine.js';
 import { durationLabel, greetingKey } from '../format.js';
@@ -32,6 +33,20 @@ function resumeCard() {
       } }, t('home.continueDiscard'))));
 }
 
+function todoCard() {
+  const day = dayKey(Date.now());
+  const bar = h('i'), count = h('span', { class: 'small muted' });
+  const upd = (list) => {
+    const n = list.length, d = list.filter((x) => x.d).length;
+    bar.style.width = (n ? (d / n) * 100 : 0) + '%';
+    count.textContent = !n ? t('todo.none') : d === n ? t('todo.allDone') : t('todo.progress', { d, n });
+  };
+  const cl = checklist({ items: todos.get(day), save: (l) => todos.set(day, l), placeholder: t('todo.add'), onUpdate: upd });
+  return h('section', { class: 'card todo', 'aria-label': t('todo.title') },
+    h('div', { class: 'row-flex', style: { justifyContent: 'space-between' } }, h('h2', { class: 'h3' }, t('todo.title')), count),
+    h('div', { class: 'bar', role: 'progressbar', 'aria-label': t('todo.title') }, bar), cl.el);
+}
+
 export default function home() {
   const hist = history.all(), now = Date.now();
   const name = tg.user?.first_name;
@@ -56,6 +71,8 @@ export default function home() {
         h('button', { class: 'btn ghost', onClick: () => router.go('program', { id: p.id }) }, t('common.details')))));
   }
 
+  el.append(todoCard());
+
   if (hist.length) { const pc = authPromptCard(); if (pc) el.append(pc); }
 
   const dots = weekDots(hist, now), ws = summary(hist, startOfWeek(now), Infinity), st = streak(hist, now);
@@ -68,19 +85,6 @@ export default function home() {
       h('div', { class: 'kpi' }, h('div', { class: 'v' }, String(ws.workouts)), h('div', { class: 'l' }, t('home.weekWorkouts'))),
       h('div', { class: 'kpi' }, h('div', { class: 'v' }, String(Math.round(ws.sec / 60))), h('div', { class: 'l' }, t('home.weekMinutes'))))));
 
-  const progs = allPrograms().filter((p) => !p.custom).slice(0, 6);
-  el.append(h('div', { class: 'section' }, h('h2', { class: 'h3' }, t('home.programs')), h('button', { class: 'link-btn', onClick: () => router.openTab('workouts') }, t('home.allPrograms'), icon('chev-r', 16))));
-  el.append(h('div', { class: 'hscroll' }, ...progs.map((p) => h('button', { class: 'pcard', onClick: () => router.go('program', { id: p.id }) },
-    h('div', { class: 't' }, progText(p).name),
-    h('div', { class: 'm' }, `${durationLabel(programEstimate(p))} · ${t('level.' + p.level)}`)))));
-
-  el.append(h('div', { class: 'list', style: { marginTop: '28px' } },
-    link('profile', t('map.title'), t('home.mapHint'), () => router.go('bodymap')),
-    link('catalog', t('home.catalogLink'), t('home.catalogHint'), () => router.openTab('catalog')),
-    link('progress', t('home.progressLink'), t('home.progressHint'), () => router.openTab('progress'))));
   return { el };
 }
 
-function link(ic, title, sub, onClick) {
-  return h('button', { class: 'item', onClick }, icon(ic), h('div', { class: 'grow' }, h('div', { class: 't' }, title), h('div', { class: 's' }, sub)), icon('chev-r', 18));
-}

@@ -2,7 +2,7 @@
 // тексты — в data/content.<lang>.json; русский — базовый, недостающее берётся из него.
 import { CONFIG, BUILD, isStandalone } from './config.js';
 import { getLang } from './i18n.js';
-import { customPrograms } from './store.js';
+import { customPrograms, customEx, store } from './store.js';
 import { buildSteps, estimate, resolveItem } from './engine.js';
 
 export const D = { cards: {}, meta: null, exercises: [], exById: new Map(), programs: [], progById: new Map(), content: { exercises: {}, programs: {} } };
@@ -21,14 +21,27 @@ export async function loadData() {
     exercises: Object.fromEntries(exercises.map((e) => [e.id, { ...base.exercises[e.id], ...(over.exercises?.[e.id] || {}) }])),
     programs: Object.fromEntries(programs.map((p) => [p.id, { ...base.programs[p.id], ...(over.programs?.[p.id] || {}) }])),
   };
+  applyCustomEx();
 }
+
+/** Свои упражнения пользователя: добавляются в индекс (exById), но не в каталог и не в подбор по мышцам. */
+export function applyCustomEx() {
+  for (const [id, e] of [...D.exById]) if (e.custom) { D.exById.delete(id); delete D.content.exercises[id]; }
+  for (const c of customEx.all()) {
+    const time = c.mode === 'time';
+    D.exById.set(c.id, { id: c.id, custom: true, categories: [c.cat || 'fullbody'], muscles: { primary: [], secondary: [] }, level: 'beginner', mode: time ? 'time' : 'reps', sides: 'none', switchSec: 0, review: 'user', access: 'free', equipment: ['none'], defaults: time ? { sets: 3, seconds: 30, rest: 30 } : { sets: 3, reps: 12, rest: 30 } });
+    D.content.exercises[c.id] = { name: c.name, aliases: [], desc: c.note || '', start: '', steps: [], mistakes: [] };
+  }
+}
+store.onChange((_e, k) => { if (k === 'myex' && D.exById.size) applyCustomEx(); });
 
 export const exText = (id) => D.content.exercises[id] || { name: id, steps: [], mistakes: [], aliases: [] };
 export const exName = (id) => exText(id).name;
 
 /** Встроенные программы + собственные пользователя. */
-export const allPrograms = () => [...D.programs, ...customPrograms.all().map((p) => ({ ...p, custom: true, goals: [], level: null }))];
-export const getProgram = (id) => D.progById.get(id) || (customPrograms.get(id) ? { ...customPrograms.get(id), custom: true, goals: [], level: null } : null);
+const mine = (p) => ({ ...p, items: (p.items || []).filter((i) => D.exById.has(i.ex)), custom: true, goals: [], level: null });
+export const allPrograms = () => [...D.programs, ...customPrograms.all().map(mine)];
+export const getProgram = (id) => D.progById.get(id) || (customPrograms.get(id) ? mine(customPrograms.get(id)) : null);
 export const progText = (p) => (p.custom ? { name: p.name, desc: '' } : D.content.programs[p.id] || { name: p.id, desc: '' });
 
 export const stepsOfItems = (items, restBetween) => buildSteps(items, D.exById, restBetween);

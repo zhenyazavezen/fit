@@ -271,3 +271,21 @@ body[data-route="player"] .toast { bottom: calc(var(--safe-bottom) + var(--tg-bo
 .avatar-ed { align-items: center; text-align: center; }
 .crop-canvas { touch-action: none; border-radius: var(--r-l); background: var(--bg); max-width: 100%; cursor: grab; }
 .crop-zoom { width: 100%; max-width: 280px; accent-color: var(--silver); }
+
+/* Дела на сегодня и списки */
+.todo { display: flex; flex-direction: column; gap: var(--sp-3); }
+.bar { height: 8px; border-radius: 4px; background: var(--s3); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--platinum); border-radius: 4px; transition: width .3s var(--ease); }
+.cl { display: flex; flex-direction: column; }
+.cl-row { display: flex; align-items: center; gap: var(--sp-2); border-bottom: 1px solid var(--s3); }
+.cl-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; min-height: 48px; text-align: left; color: var(--text); font-size: var(--fs-l); }
+.cl-box { flex: none; width: 24px; height: 24px; border-radius: 8px; border: 1.5px solid var(--silver); display: inline-flex; align-items: center; justify-content: center; }
+.cl-box .ic { width: 16px; height: 16px; }
+.cl-row.done .cl-box { background: var(--platinum); border-color: var(--platinum); color: var(--on-platinum); }
+.cl-row.done .cl-text { color: var(--text3); text-decoration: line-through; }
+.cl-text { overflow-wrap: anywhere; }
+.cl-addrow { display: flex; gap: var(--sp-2); }
+.cl-add { flex: none; width: var(--btn-h); padding: 0; }
+.note-area { min-height: 120px; padding: var(--sp-3) var(--sp-4); resize: vertical; font-family: inherit; }
+.tab-emoji { font-style: normal; font-size: 20px; line-height: 24px; height: 24px; }
+#tabbar button { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }

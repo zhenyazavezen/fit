@@ -1,15 +1,15 @@
 import { h, icon, uid } from '../util.js';
 import { t } from '../i18n.js';
 import * as router from '../router.js';
-import { D, exName, exText, resolved } from '../data.js';
-import { customPrograms } from '../store.js';
+import { D, exName, exText, resolved, applyCustomEx } from '../data.js';
+import { customPrograms, customEx } from '../store.js';
 import { doseLabel } from '../format.js';
-import { topbar, sheet, stepper, segmented, confirmDialog, toast } from '../ui.js';
+import { topbar, sheet, stepper, segmented, confirmDialog, toast, chip, badge } from '../ui.js';
 import { sortByName, filterExercises, emptyFilter } from '../catalog.js';
 
 export default function builder({ id } = {}) {
   const existing = id ? customPrograms.get(id) : null;
-  const st = { name: existing?.name || '', rest: existing?.restBetween ?? 30, items: existing ? existing.items.map((i) => ({ ...i })) : [] };
+  const st = { name: existing?.name || '', rest: existing?.restBetween ?? 30, items: existing ? existing.items.filter((i) => D.exById.has(i.ex)).map((i) => ({ ...i })) : [] };
   let dirty = false, off = null;
   const touch = () => { dirty = true; renderItems(); validate(); };
 
@@ -61,21 +61,55 @@ export default function builder({ id } = {}) {
   }
   const row = (label, control) => h('div', { class: 'row-flex', style: { justifyContent: 'space-between' } }, h('div', { class: 'h3' }, label), control);
 
+  function newExercise(done) {
+    let mode = 'reps', cat = 'fullbody';
+    const name = h('input', { class: 'input', type: 'text', maxlength: '40', placeholder: t('myex.namePh'), 'aria-label': t('myex.name') });
+    const note = h('textarea', { class: 'input note-area', maxlength: '300', rows: '3', placeholder: t('myex.notePh'), 'aria-label': t('myex.note') });
+    const cats = h('div', { class: 'chips wrap' });
+    const drawCats = () => cats.replaceChildren(...D.meta.categories.map((c) => chip({ label: t('cat.' + c), pressed: cat === c, onClick: () => { cat = c; drawCats(); } })));
+    drawCats();
+    const s = sheet({
+      title: t('myex.new'),
+      body: [h('div', null, h('div', { class: 'eyebrow', style: { marginBottom: '8px' } }, t('myex.name')), name),
+        h('div', null, h('div', { class: 'eyebrow', style: { marginBottom: '8px' } }, t('builder.type')), segmented([{ value: 'reps', label: t('builder.reps') }, { value: 'time', label: t('builder.seconds') }], mode, (v) => { mode = v; })),
+        h('div', null, h('div', { class: 'eyebrow', style: { marginBottom: '8px' } }, t('myex.group')), cats),
+        h('div', null, h('div', { class: 'eyebrow', style: { marginBottom: '8px' } }, t('myex.note')), note)],
+      foot: [h('button', { class: 'btn', onClick: () => {
+        const nm = name.value.trim(); if (!nm) { name.focus(); return; }
+        const rec = { id: 'x_' + uid(), name: nm, mode, cat, note: note.value.trim() };
+        if (!customEx.save(rec)) { toast(t('builder.saveFailed')); return; }
+        applyCustomEx(); s.close(); toast(t('myex.saved')); done(rec);
+      } }, t('myex.save'))],
+    });
+  }
+
   function pick() {
     let q = '', added = 0;
     const input = h('input', { class: 'input', id: 'pick-q', type: 'search', placeholder: t('catalog.search'), 'aria-label': t('catalog.search') });
     const list = h('div', { class: 'list' }), counter = h('div', { class: 'small muted' });
+    const addEx = (ex) => {
+      const d = ex.defaults; st.items.push(d.seconds && ex.mode === 'time' ? { ex: ex.id, sets: d.sets, seconds: d.seconds } : { ex: ex.id, sets: d.sets, reps: d.reps });
+      added++; counter.textContent = t('builder.picked', { n: added }); touch();
+    };
     const draw = () => {
       const f = { ...emptyFilter(), q };
-      const items = sortByName(filterExercises(D.exercises, D.content.exercises, f), D.content.exercises);
-      list.replaceChildren(...items.map((ex) => h('button', { class: 'item', onClick: () => {
-        const d = ex.defaults; st.items.push(d.seconds && ex.mode === 'time' ? { ex: ex.id, sets: d.sets, seconds: d.seconds } : { ex: ex.id, sets: d.sets, reps: d.reps });
-        added++; counter.textContent = t('builder.picked', { n: added }); touch();
-      } }, h('div', { class: 'grow' }, h('div', { class: 't' }, exText(ex.id).name), h('div', { class: 's' }, t('level.' + ex.level))), icon('plus', 20))));
+      const pool = [...[...D.exById.values()].filter((e) => e.custom), ...D.exercises];
+      const items = sortByName(filterExercises(pool, D.content.exercises, f), D.content.exercises);
+      list.replaceChildren(...items.map((ex) => {
+        const body = h('div', { class: 'grow' }, h('div', { class: 't' }, exText(ex.id).name), h('div', { class: 's' }, ex.custom ? t('myex.mine') : t('level.' + ex.level)));
+        if (!ex.custom) return h('button', { class: 'item', onClick: () => addEx(ex) }, body, icon('plus', 20));
+        return h('div', { class: 'item' }, h('button', { class: 'row-flex grow', style: { textAlign: 'left', gap: '12px' }, onClick: () => addEx(ex) }, body, icon('plus', 20)),
+          h('button', { class: 'icon-btn', 'aria-label': t('myex.delete'), onClick: async () => {
+            if (!(await confirmDialog({ title: t('myex.delTitle'), text: t('myex.delText'), confirm: t('myex.delete'), danger: true }))) return;
+            customEx.remove(ex.id);
+            for (const p of customPrograms.all()) if (p.items.some((i) => i.ex === ex.id)) customPrograms.save({ ...p, items: p.items.filter((i) => i.ex !== ex.id) });
+            st.items = st.items.filter((i) => i.ex !== ex.id); applyCustomEx(); renderItems(); validate(); draw();
+          } }, icon('trash', 18)));
+      }));
     };
     input.addEventListener('input', () => { q = input.value; draw(); });
     draw();
-    const s = sheet({ title: t('builder.pick'), body: [input, counter, list], foot: [h('button', { class: 'btn', onClick: () => s.close() }, t('common.done'))] });
+    const s = sheet({ title: t('builder.pick'), body: [h('button', { class: 'btn secondary', onClick: () => newExercise((rec) => { q = ''; input.value = ''; addEx(D.exById.get(rec.id)); draw(); }) }, icon('plus'), t('myex.new')), input, counter, list], foot: [h('button', { class: 'btn', onClick: () => s.close() }, t('common.done'))] });
   }
 
   async function save() {

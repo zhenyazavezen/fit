@@ -20,7 +20,7 @@ export function start({ screen, tabbar, initial }) {
   screenEl = screen; tabbarEl = tabbar;
   tabbar.addEventListener('click', (e) => {
     const b = e.target.closest('[data-tab]');
-    if (b) openTab(b.dataset.tab);
+    if (b && !tabbar.dataset.hold) openTab(b.dataset.tab);
   });
   window.addEventListener('popstate', onPop);
   replaceState(1);
@@ -39,9 +39,11 @@ export function go(name, params = {}, { replace = false } = {}) {
   return show(entry, next);
 }
 
-export function openTab(name) {
-  if (stack.length === 1 && current()?.name === name) { screenEl.scrollTo?.({ top: 0, behavior: 'smooth' }); return; }
-  const entry = { name, params: {}, scroll: 0 };
+export function openTab(key) {
+  const custom = key.startsWith('c_');                       // свои вкладки: один экран «ctab» с параметром id
+  const name = custom ? 'ctab' : key, params = custom ? { id: key } : {};
+  if (stack.length === 1 && current()?.name === name && current()?.params?.id === params.id) { screenEl.scrollTo?.({ top: 0, behavior: 'smooth' }); return; }
+  const entry = { name, params, scroll: 0 };
   replaceState(1);
   return show(entry, [entry]);
 }
@@ -92,10 +94,17 @@ async function show(entry, nextStack, restore = false) {
   screenEl.scrollTop = restore ? entry.scroll || 0 : 0;
   document.body.dataset.route = entry.name;
   tabbarEl.hidden = !def.tabs;
-  const activeTab = def.tab || routes.get(stack[0].name)?.tab;
-  tabbarEl.querySelectorAll('[data-tab]').forEach((b) => b.setAttribute('aria-current', String(b.dataset.tab === activeTab)));
+  syncTabbar();
   syncBackButton();
   try { next.onShow?.(); } catch (e) { console.error(e); }
+}
+
+/** Подсветить активную вкладку (вызывается и после перерисовки панели). */
+export function syncTabbar() {
+  const c = current(); if (!c || !tabbarEl) return;
+  const tabOf = (e) => { const d = routes.get(e.name); return typeof d?.tab === 'function' ? d.tab(e.params) : d?.tab; };
+  const activeTab = tabOf(c) || tabOf(stack[0]);
+  tabbarEl.querySelectorAll('[data-tab]').forEach((b) => b.setAttribute('aria-current', String(b.dataset.tab === activeTab)));
 }
 
 function errorView(e) {

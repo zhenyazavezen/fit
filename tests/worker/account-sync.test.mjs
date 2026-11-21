@@ -196,3 +196,28 @@ test('Удаление аккаунта стирает и фото профил�
   assert.equal((await call(e, req('DELETE', '/me', { token: a.token, body: { confirm: 'DELETE' } }))).status, 200);
   assert.equal(e.DB.raw.prepare("SELECT COUNT(*) n FROM user_docs").get().n, 0);
 });
+
+// ---------- дела, вкладки, свои упражнения
+test('Новые документы: упражнения, дела, вкладки, страницы сохраняются и приходят на втором устройстве', async () => {
+  const e = env(); const a = await tg(e);
+  const docs = {
+    myex: { value: [{ id: 'x_1', name: 'Отжимания на кулаках', mode: 'reps', cat: 'chest', note: '' }], updatedAt: T0 },
+    todos: { value: { '2026-11-21': [{ id: 't_1', t: 'Растяжка', d: true }] }, updatedAt: T0 },
+    tabs: { value: { order: ['home', 'c_1'], hidden: [], custom: [{ id: 'c_1', name: 'Питание', emoji: '🥗' }] }, updatedAt: T0 },
+    pages: { value: { c_1: { note: 'белок', items: [{ id: 't_2', t: 'Вода', d: false }] } }, updatedAt: T0 },
+  };
+  assert.equal((await push(e, a.token, { docs })).status, 200);
+  const dev2 = await tg(e);
+  const got = (await call(e, req('GET', '/sync?since=0', { token: dev2.token }))).body.docs.map((d) => d.key).sort();
+  assert.deepEqual(got, ['myex', 'pages', 'tabs', 'todos']);
+});
+test('Новые документы: некорректные данные отклоняются', async () => {
+  const e = env(); const a = await tg(e);
+  const bad = [
+    ['myex', [{ id: 'x_1', name: '', mode: 'reps', cat: 'chest' }]], ['myex', [{ id: 'x_1', name: 'a', mode: 'bad', cat: 'chest' }]],
+    ['todos', { 'не-дата': [] }], ['todos', { '2026-11-21': [{ id: 't', t: 'x'.repeat(161), d: false }] }],
+    ['tabs', { order: 'home', hidden: [], custom: [] }], ['tabs', { order: [], hidden: [], custom: Array.from({ length: 11 }, (_, i) => ({ id: 'c_' + i, name: 'a' })) }],
+    ['pages', { c_1: { note: 'x'.repeat(3001), items: [] } }],
+  ];
+  for (const [k, v] of bad) { const r = await push(e, a.token, { docs: { [k]: { value: v, updatedAt: T0 } } }); assert.ok(r.status === 400 || r.status === 413, k + ' → ' + r.status); }
+});

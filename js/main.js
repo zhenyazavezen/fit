@@ -7,9 +7,9 @@ import { resume } from './auth.js';
 import { initI18n, t } from './i18n.js';
 import { loadData } from './data.js';
 import * as router from './router.js';
-import { h, icon } from './util.js';
+import { h } from './util.js';
+import { initTabbar } from './tabs.js';
 
-const TABS = [['home', 'home'], ['workouts', 'workouts'], ['catalog', 'catalog'], ['progress', 'progress'], ['profile', 'profile']];
 
 /** Скрипт Telegram подключается только внутри Telegram: в обычном браузере лишнего запроса нет. */
 function loadTelegram() {
@@ -63,10 +63,10 @@ async function boot() {
   try { await initI18n(tg.user?.language_code); await loadData(); } catch (e) { console.error(e); showFatal(t('app.loadError')); return; }
 
   const load = (p) => p.then((m) => m.default);
-  const [home, workouts, catalog, progress, profile, program, builder, exercise, player, about, plan, bodymap, account] = await Promise.all([
+  const [home, workouts, catalog, progress, profile, program, builder, exercise, player, about, plan, bodymap, account, ctab] = await Promise.all([
     load(import('./screens/home.js')), load(import('./screens/workouts.js')), load(import('./screens/catalog.js')), load(import('./screens/progress.js')),
     load(import('./screens/profile.js')), load(import('./screens/program.js')), load(import('./screens/builder.js')), load(import('./screens/exercise.js')),
-    load(import('./screens/player.js')), load(import('./screens/about.js')), load(import('./screens/plan.js')), load(import('./screens/bodymap.js')), load(import('./screens/account.js'))]);
+    load(import('./screens/player.js')), load(import('./screens/about.js')), load(import('./screens/plan.js')), load(import('./screens/bodymap.js')), load(import('./screens/account.js')), load(import('./screens/ctab.js'))]);
 
   router.register('home', home, { tab: 'home' });
   router.register('workouts', workouts, { tab: 'workouts' });
@@ -80,10 +80,11 @@ async function boot() {
   router.register('plan', plan, { tab: 'profile' });
   router.register('bodymap', bodymap, { tab: 'catalog' });
   router.register('account', account, { tab: 'profile' });
+  router.register('ctab', ctab, { tab: (p) => p.id });
   router.register('player', player, { tabs: false });
 
   const tabbar = document.getElementById('tabbar');
-  tabbar.replaceChildren(...TABS.map(([name, ic]) => h('button', { dataset: { tab: name }, type: 'button' }, icon(ic), h('span', null, t('tab.' + name)))));
+  initTabbar(tabbar);
   document.title = CONFIG.appName;
   store.setWriteHook(onLocalWrite);
   startSyncTriggers();

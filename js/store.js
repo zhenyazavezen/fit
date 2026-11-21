@@ -103,6 +103,40 @@ export const customPrograms = {
   remove(id) { store.set('programs', this.all().filter((p) => p.id !== id)); },
 };
 
+// ---- Свои упражнения: [{id:'x_…', name, mode:'reps'|'time', cat, note}]
+export const customEx = {
+  all() { const a = store.get('myex', []); return Array.isArray(a) ? a : []; },
+  save(e) {
+    const list = this.all(), i = list.findIndex((x) => x.id === e.id);
+    if (i >= 0) list[i] = e; else list.push(e);
+    return store.set('myex', list);
+  },
+  remove(id) { store.set('myex', this.all().filter((x) => x.id !== id)); },
+};
+
+// ---- Дела на сегодня: { 'ГГГГ-ММ-ДД': [{id, t, d}] }; хранятся последние 14 дней
+export const todos = {
+  all() { const o = store.get('todos', {}); return o && typeof o === 'object' && !Array.isArray(o) ? o : {}; },
+  get(day) { const a = this.all()[day]; return Array.isArray(a) ? a : []; },
+  set(day, items) {
+    const all = { ...this.all(), [day]: items };
+    for (const k of Object.keys(all).sort().slice(0, -14)) delete all[k];
+    return store.set('todos', all);
+  },
+};
+
+// ---- Нижняя панель: { order:[id…], hidden:[id…], custom:[{id,name,emoji}] }; страницы своих вкладок: { id: {note, items:[{id,t,d}]} }
+export const tabsCfg = {
+  get() { const v = store.get('tabs', null); return v && typeof v === 'object' && !Array.isArray(v) ? { order: v.order || [], hidden: v.hidden || [], custom: v.custom || [] } : { order: [], hidden: [], custom: [] }; },
+  set(c) { return store.set('tabs', c); },
+};
+export const pages = {
+  all() { const o = store.get('pages', {}); return o && typeof o === 'object' && !Array.isArray(o) ? o : {}; },
+  get(id) { const p = this.all()[id]; return { note: p?.note || '', items: Array.isArray(p?.items) ? p.items : [] }; },
+  set(id, p) { return store.set('pages', { ...this.all(), [id]: p }); },
+  remove(id) { const o = { ...this.all() }; delete o[id]; store.set('pages', o); },
+};
+
 // ---- Тренировка, которую можно продолжить
 export const activeSession = {
   get() { return store.get('active', null); },

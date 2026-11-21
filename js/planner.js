@@ -103,7 +103,7 @@ export function exercisesForMuscles(muscles, profile, ctx, { limit = 10 } = {}) 
   const have = new Set(['none', ...profile.equipment]);
   const out = [];
   for (const ex of exById.values()) {
-    if (!isLoad(ex)) continue;
+    if (ex.custom || !isLoad(ex)) continue;
     const prim = ex.muscles.primary.filter((m) => want.has(m)), sec = ex.muscles.secondary.filter((m) => want.has(m));
     if (!prim.length) continue;
     if (LV[ex.level] > LV[profile.level]) continue;

@@ -1,8 +1,7 @@
 import { h, icon } from '../util.js';
 import { t } from '../i18n.js';
 import * as router from '../router.js';
-import { D, progText, programEstimate } from '../data.js';
-import { customPrograms } from '../store.js';
+import { D, progText, programEstimate, allPrograms } from '../data.js';
 import { durationLabel } from '../format.js';
 import { chip, segmented, badge, empty, noteBox } from '../ui.js';
 
@@ -36,7 +35,7 @@ export default function workouts() {
       if (!list.length) body.append(empty({ title: t('workouts.empty') }));
       else body.append(...list.map(programCard));
     } else {
-      const mine = customPrograms.all().map((p) => ({ ...p, custom: true, goals: [], level: null }));
+      const mine = allPrograms().filter((p) => p.custom);
       body.append(h('button', { class: 'btn', onClick: () => router.go('builder', {}) }, icon('plus'), t('workouts.create')));
       if (!mine.length) body.append(empty({ icon: 'workouts', title: t('workouts.mineEmptyTitle'), text: t('workouts.mineEmptyText') }));
       else body.append(...mine.map(programCard));

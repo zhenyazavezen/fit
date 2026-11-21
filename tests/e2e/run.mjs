@@ -247,6 +247,25 @@ await test('Конструктор: своя программа создаётс
   await ctx.close();
 });
 
+await test('Конструктор: своё упражнение создаётся с нуля, попадает в программу и запускается', async () => {
+  const { page, errors, ctx } = await fresh();
+  await tab(page, 'workouts'); await page.getByRole('button', { name: 'Мои', exact: true }).click();
+  await btn(page, 'Создать программу').click(); await page.fill('#prog-name', 'С нуля');
+  await btn(page, 'Добавить упражнение').click();
+  await btn(page, 'Своё упражнение').tap();
+  await page.locator('.sheet input[type=text]').last().fill('Отжимания на кулаках');
+  await btn(page, 'Создать и добавить').tap();
+  await page.waitForSelector('.sheet #pick-q');
+  await btn(page, 'Готово').last().tap();
+  ok((await text(page, '.list')).includes('Отжимания на кулаках'), 'своё упражнение в программе');
+  await page.locator('.btn', { hasText: 'Сохранить программу' }).tap(); await page.waitForSelector('.facts');
+  await btn(page, 'Начать тренировку').tap(); await page.waitForSelector('.player');
+  await run(page, 5100); ok((await text(page, '.player')).includes('Отжимания на кулаках'), 'тренировка запустилась со своим упражнением: ' + (await text(page, '.player')).slice(0, 80));
+  await page.reload(); await page.waitForSelector('#tabbar button');
+  eq(await page.evaluate(() => JSON.parse(localStorage.getItem('seven:myex')).length), 1, 'упражнение сохранено');
+  ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
+});
+
 await test('Профиль: настройки сохраняются, нет экспорта, «О приложении», сброс данных с подтверждением', async () => {
   const { page, errors, ctx } = await fresh();
   await tab(page, 'profile');
@@ -330,6 +349,51 @@ await test('Фото профиля: выбор из галереи, обрез�
   await ctx.close();
 });
 
+await test('Главная: без блока «Программы» и ссылок; «Дела на сегодня» со шкалой прогресса', async () => {
+  const { page, errors, ctx } = await fresh();
+  eq(await page.locator('.hscroll, .pcard').count(), 0, 'блок «Программы» убран');
+  eq(await page.locator('.list .item').count(), 0, 'ссылки под программами убраны');
+  eq(await page.locator('#tabbar button').count(), 5, 'все вкладки на месте');
+  await page.locator('.todo input').fill('Выпить воду'); await page.locator('.todo .cl-add').tap();
+  await page.locator('.todo input').fill('Растяжка'); await page.keyboard.press('Enter');
+  eq(await page.locator('.cl-row').count(), 2, 'два дела');
+  await page.locator('.cl-main').first().tap();
+  eq(await page.locator('.bar i').evaluate((e) => e.style.width), '50%', 'шкала 50%');
+  ok((await text(page, '.todo')).includes('1 из 2'), 'счётчик «1 из 2»');
+  await page.reload(); await page.waitForSelector('.todo');
+  eq(await page.locator('.cl-row').count(), 2, 'дела сохраняются');
+  eq(await page.locator('.cl-row.done').count(), 1, 'отметка сохраняется');
+  await page.locator('.cl-main').nth(1).tap(); ok((await text(page, '.todo')).includes('Всё выполнено'), 'все выполнены');
+  await page.locator('.cl-row .icon-btn').first().tap(); eq(await page.locator('.cl-row').count(), 1, 'дело удалено');
+  ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
+});
+
+await test('Нижняя панель: долгое нажатие, порядок, скрытие, своя вкладка с делами и заметкой', async () => {
+  const { page, errors, ctx } = await fresh();
+  const names = () => page.locator('#tabbar button span').allTextContents();
+  await page.evaluate(() => { const b = document.querySelector('#tabbar [data-tab="workouts"]'), r = b.getBoundingClientRect(); b.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: r.x + 5, clientY: r.y + 5, pointerId: 5 })); });
+  await page.clock.runFor(700);
+  await page.waitForSelector('.sheet');
+  ok(await page.locator('.todo').count() === 1, 'остались на главной (клик по вкладке не сработал)');
+  await page.locator('.sheet .item').nth(0).locator('button[aria-label="Ниже"]').tap();
+  eq((await names()).slice(0, 2).join(), 'Тренировки,Главная', 'порядок изменён');
+  await btn(page, 'Добавить вкладку').tap();
+  await page.locator('.sheet input[type=text]').first().fill('Питание'); await btn(page, 'Готово').tap();
+  ok((await names()).includes('Питание'), 'своя вкладка появилась: ' + (await names()).join());
+  await page.locator('.sheet .item', { hasText: 'Каталог' }).first().locator('.switch').tap().catch(() => {});
+  await page.keyboard.press('Escape');
+  await page.locator('#tabbar [data-tab^="c_"]').tap(); await page.waitForSelector('.note-area');
+  await page.locator('.pad input').fill('Белок 120 г'); await page.keyboard.press('Enter');
+  await page.locator('.note-area').fill('План на неделю'); await page.locator('.note-area').blur();
+  eq(await page.locator('#tabbar [aria-current="true"]').count(), 1, 'активна одна вкладка');
+  await page.reload(); await page.waitForSelector('#tabbar button');
+  eq((await names()).slice(0, 2).join(), 'Тренировки,Главная', 'порядок сохранился');
+  await page.locator('#tabbar [data-tab^="c_"]').tap(); await page.waitForSelector('.note-area');
+  eq(await page.locator('.note-area').inputValue(), 'План на неделю', 'заметка сохранилась');
+  eq(await page.locator('.cl-row').count(), 1, 'дело во вкладке сохранилось');
+  ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
+});
+
 await test('Повреждённое хранилище не ломает приложение; копия сохраняется', async () => {
   const { page, errors, ctx } = await fresh({ pre: () => { try { if (!localStorage.getItem('seven:x')) { localStorage.setItem('seven:history', '{битый json'); localStorage.setItem('seven:x', '1'); } } catch { /* */ } } });
   await tab(page, 'progress');
@@ -355,7 +419,7 @@ await test('Telegram Mini App (эмуляция): ready/expand, цвета, Back
   ok(log0.includes('ready') && log0.includes('expand') && log0.includes('noswipe'), 'ready/expand/noswipe: ' + log0.join());
   eq(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--app-h').trim()), '700px', '--app-h');
   eq(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--tg-top').trim()), '24px', '--tg-top');
-  await page.locator('.pcard').first().click(); await page.waitForSelector('.facts');
+  await tab(page, 'workouts'); await page.locator('.pcard-wide').first().click(); await page.waitForSelector('.facts');
   ok((await page.evaluate(() => window.__tg)).includes('back:show'), 'BackButton показан на вложенном экране');
   await btn(page, 'Начать тренировку').click(); await page.waitForSelector('.player');
   ok((await page.evaluate(() => window.__tg)).includes('confirm:on'), 'подтверждение закрытия включено');
