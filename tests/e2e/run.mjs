@@ -401,6 +401,27 @@ await test('Нижняя панель: зажать и перетащить вк
   ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
 });
 
+await test('Личные данные: у разных аккаунтов Telegram на одном телефоне данные не смешиваются', async () => {
+  const mock = () => {
+    const id = Number(/u=(\d+)/.exec(location.hash)?.[1] || 0), n = () => {};
+    window.Telegram = { WebApp: { platform: 'android', initDataUnsafe: { user: { id, first_name: 'U' + id, language_code: 'ru' } }, ready: n, expand: n, setHeaderColor: n, setBackgroundColor: n, setBottomBarColor: n, disableVerticalSwipes: n, onEvent: n,
+      viewportStableHeight: 700, viewportHeight: 700, safeAreaInset: { top: 0, bottom: 0 }, contentSafeAreaInset: { top: 0, bottom: 0 }, enableClosingConfirmation: n, disableClosingConfirmation: n, openTelegramLink: n,
+      HapticFeedback: { impactOccurred: n, notificationOccurred: n, selectionChanged: n }, BackButton: { show: n, hide: n, onClick: n, offClick: n } } };
+  };
+  const { page, errors, ctx } = await fresh({ tgMock: mock });
+  const openAs = async (id) => { await page.goto('about:blank'); await page.goto(srv.url + '#tgWebAppData=mock&u=' + id); await page.waitForSelector('.todo'); };
+  await openAs(1); await page.locator('.todo input').fill('Секрет первого'); await page.keyboard.press('Enter');
+  eq(await page.locator('.cl-row').count(), 1, 'первый добавил дело');
+  await openAs(2);
+  eq(await page.locator('.cl-row').count(), 0, 'второй аккаунт не видит чужие дела');
+  await page.locator('.todo input').fill('Дело второго'); await page.keyboard.press('Enter');
+  await openAs(1);
+  eq((await text(page, '.cl')).includes('Секрет первого') && !(await text(page, '.cl')).includes('Дело второго'), true, 'у первого только его дело');
+  await openAs(2);
+  eq((await text(page, '.cl')).includes('Дело второго') && !(await text(page, '.cl')).includes('Секрет'), true, 'у второго только его дело');
+  ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
+});
+
 await test('Повреждённое хранилище не ломает приложение; копия сохраняется', async () => {
   const { page, errors, ctx } = await fresh({ pre: () => { try { if (!localStorage.getItem('seven:x')) { localStorage.setItem('seven:history', '{битый json'); localStorage.setItem('seven:x', '1'); } } catch { /* */ } } });
   await tab(page, 'progress');

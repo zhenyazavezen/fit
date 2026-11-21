@@ -1,7 +1,7 @@
 // Точка входа: Telegram → хранилище → язык → данные → маршруты.
 import { CONFIG } from './config.js';
 import { tg } from './tg.js';
-import { migrate, store } from './store.js';
+import { migrate, store, useNamespace } from './store.js';
 import { onLocalWrite, startSyncTriggers } from './sync.js';
 import { resume } from './auth.js';
 import { initI18n, t } from './i18n.js';
@@ -59,6 +59,7 @@ async function refreshIfStale(build) {
 async function boot() {
   await loadTelegram();
   tg.init();
+  useNamespace(tg.user?.id);                   // личное пространство данных: у каждого аккаунта Telegram свои
   migrate();
   try { await initI18n(tg.user?.language_code); await loadData(); } catch (e) { console.error(e); showFatal(t('app.loadError')); return; }
 

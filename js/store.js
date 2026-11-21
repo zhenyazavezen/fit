@@ -12,7 +12,15 @@ try { ls = window.localStorage; ls.setItem('__t', '1'); ls.removeItem('__t'); } 
 
 const listeners = new Set();
 let writeHook = null;
-const K = (k) => CONFIG.storePrefix + k;
+// Личное пространство: на одном телефоне в Telegram может быть несколько аккаунтов, а localStorage у них общий.
+// Поэтому ключи делятся по id пользователя Telegram («seven:u123:…»): данные одного аккаунта не видны другому.
+let prefix = CONFIG.storePrefix;
+const OTHER_USER = /^u\d+:/;
+export function useNamespace(userId) {
+  const id = String(userId ?? '').replace(/\D/g, '');
+  prefix = CONFIG.storePrefix + (id ? 'u' + id + ':' : '');
+}
+const K = (k) => prefix + k;
 const rawGet = (key) => (ls ? ls.getItem(key) : (mem.get(key) ?? null));
 const rawSet = (key, val) => { if (ls) ls.setItem(key, val); else mem.set(key, val); };
 
@@ -47,9 +55,9 @@ export const store = {
   setWriteHook(fn) { writeHook = fn; },
   keys() {
     const out = [];
-    const prefix = CONFIG.storePrefix;
-    if (ls) for (let i = 0; i < ls.length; i++) { const k = ls.key(i); if (k.startsWith(prefix) && !k.includes(':corrupt:')) out.push(k.slice(prefix.length)); }
-    else mem.forEach((_, k) => { if (k.startsWith(prefix) && !k.includes(':corrupt:')) out.push(k.slice(prefix.length)); });
+    const mine = (k) => k.startsWith(prefix) && !k.includes(':corrupt:') && (prefix !== CONFIG.storePrefix || !OTHER_USER.test(k.slice(prefix.length)));
+    if (ls) for (let i = 0; i < ls.length; i++) { const k = ls.key(i); if (mine(k)) out.push(k.slice(prefix.length)); }
+    else mem.forEach((_, k) => { if (mine(k)) out.push(k.slice(prefix.length)); });
     return out;
   },
 };

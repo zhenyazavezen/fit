@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0A0A0B">
 <meta name="color-scheme" content="dark">
-<meta name="build" content="f178a45f">
+<meta name="build" content="3b3e5719">
 <title>ZAVEZEN_FIT</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230A0A0B'/%3E%3Cpath d='M18 20h28L30 46' fill='none' stroke='%23ECEDEF' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
@@ -501,7 +501,15 @@ try { ls = window.localStorage; ls.setItem('__t', '1'); ls.removeItem('__t'); } 
 
 const listeners = new Set();
 let writeHook = null;
-const K = (k) => CONFIG.storePrefix + k;
+// Личное пространство: на одном телефоне в Telegram может быть несколько аккаунтов, а localStorage у них общий.
+// Поэтому ключи делятся по id пользователя Telegram («seven:u123:…»): данные одного аккаунта не видны другому.
+let prefix = CONFIG.storePrefix;
+const OTHER_USER = /^u\d+:/;
+function useNamespace(userId) {
+  const id = String(userId ?? '').replace(/\D/g, '');
+  prefix = CONFIG.storePrefix + (id ? 'u' + id + ':' : '');
+}
+const K = (k) => prefix + k;
 const rawGet = (key) => (ls ? ls.getItem(key) : (mem.get(key) ?? null));
 const rawSet = (key, val) => { if (ls) ls.setItem(key, val); else mem.set(key, val); };
 
@@ -536,9 +544,9 @@ const store = {
   setWriteHook(fn) { writeHook = fn; },
   keys() {
     const out = [];
-    const prefix = CONFIG.storePrefix;
-    if (ls) for (let i = 0; i < ls.length; i++) { const k = ls.key(i); if (k.startsWith(prefix) && !k.includes(':corrupt:')) out.push(k.slice(prefix.length)); }
-    else mem.forEach((_, k) => { if (k.startsWith(prefix) && !k.includes(':corrupt:')) out.push(k.slice(prefix.length)); });
+    const mine = (k) => k.startsWith(prefix) && !k.includes(':corrupt:') && (prefix !== CONFIG.storePrefix || !OTHER_USER.test(k.slice(prefix.length)));
+    if (ls) for (let i = 0; i < ls.length; i++) { const k = ls.key(i); if (mine(k)) out.push(k.slice(prefix.length)); }
+    else mem.forEach((_, k) => { if (mine(k)) out.push(k.slice(prefix.length)); });
     return out;
   },
 };
@@ -638,7 +646,7 @@ const LOCAL_ONLY = ['auth', 'syncmeta', 'active', 'schema', 'authPromptAt'];
 
 function resetAll() { for (const k of store.keys()) store.remove(k); }
 
-;return { store, migrate, settings, history, favorites, customPrograms, customEx, todos, tabsCfg, pages, activeSession, LOCAL_ONLY, resetAll };
+;return { useNamespace, store, migrate, settings, history, favorites, customPrograms, customEx, todos, tabsCfg, pages, activeSession, LOCAL_ONLY, resetAll };
 })();
 // ── js/api.js
 __m[3] = (function () {
@@ -3647,7 +3655,7 @@ __m[42] = (function () {
 // Точка входа: Telegram → хранилище → язык → данные → маршруты.
 const { CONFIG } = __m[0];
 const { tg } = __m[4];
-const { migrate, store } = __m[2];
+const { migrate, store, useNamespace } = __m[2];
 const { onLocalWrite, startSyncTriggers } = __m[5];
 const { resume } = __m[6];
 const { initI18n, t } = __m[8];
@@ -3705,6 +3713,7 @@ async function refreshIfStale(build) {
 async function boot() {
   await loadTelegram();
   tg.init();
+  useNamespace(tg.user?.id);                   // личное пространство данных: у каждого аккаунта Telegram свои
   migrate();
   try { await initI18n(tg.user?.language_code); await loadData(); } catch (e) { console.error(e); showFatal(t('app.loadError')); return; }
 
