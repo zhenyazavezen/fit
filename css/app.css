@@ -337,3 +337,4 @@ body[data-route="player"] .toast { bottom: calc(var(--safe-bottom) + var(--tg-bo
 /* Соревнования */
 .item.me { background: var(--s2); }
 .item.me .lead { color: var(--platinum); }
+.danger-title { color: var(--danger); }

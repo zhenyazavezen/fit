@@ -2,14 +2,14 @@ import { openTabsEditor } from '../tabs.js';
 import { h, icon } from '../util.js';
 import { t } from '../i18n.js';
 import * as router from '../router.js';
-import { CONFIG, BUILD } from '../config.js';
+import { CONFIG } from '../config.js';
 import { tg } from '../tg.js';
 import { auth } from '../auth.js';
-import { settings, history, favorites, resetAll } from '../store.js';
+import { settings, history, favorites } from '../store.js';
 import { getAvatar, openAvatarEditor } from '../avatar.js';
 import { streak } from '../stats.js';
 import { spentLabel } from '../format.js';
-import { toggle, confirmDialog, toast } from '../ui.js';
+import { toggle } from '../ui.js';
 
 // Аватар: своё фото (синхронизируется) → фото Telegram (только показ, адрес t.me) → буква. Нажатие открывает смену фото.
 function avatarEl(u, name) {
@@ -39,25 +39,26 @@ export default function profile() {
       fact(String(hist.length), t('profile.total')), fact(total ? spentLabel(total) : '0', t('profile.totalTime')), fact(String(streak(hist)), t('progress.streak'))));
 
   const sw = (key, ic, label) => h('div', { class: 'item' }, icon(ic), h('div', { class: 'grow t' }, label), toggle(set[key], (v) => settings.set({ [key]: v }), label));
-  el.append(h('h2', { class: 'h3 group-title' }, t('plan.title')),
-    h('div', { class: 'list' }, row('profile', t('profile.account'), auth.signedIn ? '✓' : t('profile.accountOff'), () => router.go('account')), row('profile', t('plan.title'), '', () => router.go('plan')), row('trophy', t('comp.title'), '', () => router.go('compete')), row('catalog', t('map.title'), '', () => router.go('bodymap')), row('workouts', t('tabs.title'), '', () => openTabsEditor())));
+  const group = (title, ...items) => el.append(h('h2', { class: 'h3 group-title' }, title), h('div', { class: 'list' }, ...items));
 
-  el.append(h('h2', { class: 'h3 group-title' }, t('profile.settings')),
-    h('div', { class: 'list' }, sw('sound', 'sound', t('profile.sound')), sw('haptics', 'vibrate', t('profile.haptics')), sw('wake', 'screen', t('profile.wake')),
-      h('div', { class: 'item' }, icon('globe'), h('div', { class: 'grow t' }, t('profile.language')), h('div', { class: 'value' }, t('profile.languageValue')))));
+  group(t('profile.mine'),
+    row('calendar', t('plan.title'), '', () => router.go('plan')),
+    row('heart', t('profile.favorites'), String(favorites.all().length), () => router.go('catalog', { favs: true })),
+    row('trophy', t('comp.title'), '', () => router.go('compete')),
+    row('target', t('map.title'), '', () => router.go('bodymap')));
 
-  el.append(h('h2', { class: 'h3 group-title' }, t('profile.data')),
-    h('div', { class: 'list' },
-      row('heart', t('profile.favorites'), String(favorites.all().length), () => router.go('catalog', { favs: true })),
-      h('button', { class: 'item', style: { color: 'var(--danger)' }, onClick: async () => {
-        if (await confirmDialog({ title: t('profile.resetTitle'), text: t('profile.resetText'), confirm: t('common.delete'), danger: true })) { resetAll(); toast(t('profile.resetDone')); router.refresh(); }
-      } }, icon('trash'), h('div', { class: 'grow t' }, t('profile.reset')))));
+  group(t('profile.settings'),
+    sw('sound', 'sound', t('profile.sound')), sw('haptics', 'vibrate', t('profile.haptics')), sw('wake', 'screen', t('profile.wake')),
+    row('list', t('tabs.title'), '', () => openTabsEditor()),
+    h('div', { class: 'item' }, icon('globe'), h('div', { class: 'grow t' }, t('profile.language')), h('div', { class: 'value' }, t('profile.languageValue'))));
 
-  el.append(h('h2', { class: 'h3 group-title' }, t('profile.about')),
-    h('div', { class: 'list' },
-      row('help', t('profile.support'), t('profile.supportHint'), () => tg.openLink(CONFIG.supportUrl), 'external'),
-      row('info', t('profile.about'), '', () => router.go('about'))));
-  el.append(h('p', { class: 'small muted', style: { textAlign: 'center', marginTop: '24px' } }, 'Сборка ' + BUILD));
+  group(t('profile.accountData'),
+    row('profile', t('profile.account'), auth.signedIn ? t('profile.accountOn') : t('profile.accountOff'), () => router.go('account')),
+    row('download', t('data.title'), '', () => router.go('data')));
+
+  group(t('profile.about'),
+    row('help', t('profile.support'), t('profile.supportHint'), () => tg.openLink(CONFIG.supportUrl), 'external'),
+    row('info', t('profile.about'), '', () => router.go('about')));
   return { el };
 }
 

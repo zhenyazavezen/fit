@@ -284,8 +284,12 @@ await test('Профиль: настройки сохраняются, нет э
   eq(await page.title(), 'ZAVEZEN_FIT', 'заголовок страницы');
   await shot(page, 'about');
   await page.goBack(); await page.waitForSelector('.avatar');
-  await btn(page, 'Удалить все данные').click();
-  ok((await text(page, '.sheet')).includes('Отменить это нельзя'), 'подтверждение');
+  ok(!(await text(page, '#screen')).match(/Сборка|Dev/i), 'внизу профиля нет надписи о сборке');
+  ok(!(await text(page, '#screen')).includes('Google'), 'Google в профиле не упоминается');
+  await page.getByRole('button', { name: /Данные на устройстве/ }).click();
+  await shot(page, 'data');
+  await page.getByRole('button', { name: /Удалить данные на устройстве/ }).click();
+  ok((await text(page, '.sheet')).includes('нельзя отменить'), 'подтверждение с предупреждением');
   await page.locator('.sheet .btn.danger').click();
   eq(await page.evaluate(() => localStorage.getItem('seven:settings')), null, 'данные удалены');
   eq(errors.length, 0, errors.join(' | '));

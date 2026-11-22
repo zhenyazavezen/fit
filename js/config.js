@@ -11,8 +11,6 @@ export const CONFIG = {
   storePrefix: 'seven:',
   // Серверная часть (Cloudflare Worker «fit»). Пустая строка выключает вход и синхронизацию: приложение работает локально.
   apiBase: 'https://fit.zavezenz.workers.dev',
-  // Публичный OAuth Client ID Google (не секрет). Пусто — вход через Google выключен до настройки (см. docs/GOOGLE_OAUTH.md).
-  googleClientId: '',
   // Модель доступа: упражнения бесплатны, часть программ — Premium (поле access в data/programs.json).
   // Пока оплата не подключена, false: все программы открыты, Premium лишь помечены. Включайте true вместе с платежами.
   premiumEnforced: false,

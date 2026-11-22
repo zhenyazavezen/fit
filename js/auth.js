@@ -29,7 +29,6 @@ export async function loginWithTelegram() {
   if (!initData) throw new ApiError(0, 'not_in_telegram', 'Откройте приложение внутри Telegram');
   return accept(await api('/auth/telegram', { method: 'POST', body: { initData } }));
 }
-export async function loginWithGoogle(idToken, nonce) { return accept(await api('/auth/google', { method: 'POST', body: { idToken, nonce } })); }
 
 export async function logout() {
   const tok = auth.token;
@@ -54,43 +53,7 @@ export async function refreshAccount() {
   return me;
 }
 
-// ---- привязка второго способа входа
-export const startLink = () => api('/link/start', { method: 'POST', token: auth.token });
-export const previewLink = (code) => api('/link/preview', { method: 'POST', token: auth.token, body: { code } });
-export async function completeLink(code) {
-  const res = await api('/link/complete', { method: 'POST', token: auth.token, body: { code, confirm: true } });
-  return accept(res);
-}
-export async function unlink(provider) {
-  const r = await api('/link/unlink', { method: 'POST', token: auth.token, body: { provider } });
-  store.setSilent('auth', { ...auth.state, account: r.account }); emit();
-  return r.account;
-}
 export async function deleteAccount() {
   await api('/me', { method: 'DELETE', token: auth.token, body: { confirm: 'DELETE' } });
   disableSync(); store.remove('auth'); store.remove('syncmeta'); emit();
 }
-
-// ---- Google Identity Services (кнопка «Продолжить через Google»)
-let gsiPromise = null;
-const loadGsi = () => gsiPromise || (gsiPromise = new Promise((resolve, reject) => {
-  if (window.google?.accounts?.id) return resolve();
-  const s = document.createElement('script');
-  s.src = 'https://accounts.google.com/gsi/client'; s.async = true;
-  s.onload = () => resolve(); s.onerror = () => { gsiPromise = null; reject(new ApiError(0, 'gsi_blocked', 'Google недоступен')); };
-  document.head.append(s);
-}));
-export const googleConfigured = () => !!CONFIG.googleClientId && !!CONFIG.apiBase;
-/** Внутри Telegram OAuth Google часто блокируется во встроенном браузере: предлагается открыть внешний браузер. */
-export const googleNeedsExternalBrowser = () => tg.available;
-
-export async function renderGoogleButton(container, { onDone, onError }) {
-  const nonce = crypto.randomUUID?.() || String(Math.random()).slice(2);
-  await loadGsi();
-  window.google.accounts.id.initialize({
-    client_id: CONFIG.googleClientId, nonce, ux_mode: 'popup', auto_select: false,
-    callback: async (r) => { try { onDone(await loginWithGoogle(r.credential, nonce)); } catch (e) { onError(e); } },
-  });
-  window.google.accounts.id.renderButton(container, { type: 'standard', theme: 'filled_black', size: 'large', text: 'continue_with', shape: 'pill', width: Math.min(320, container.clientWidth || 320) });
-}
-export const openGoogleInBrowser = () => tg.openLink(CONFIG.siteUrl + '?auth=google');
