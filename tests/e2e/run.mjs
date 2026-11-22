@@ -34,7 +34,7 @@ const run = (p, ms) => p.clock.runFor(ms);
 for (const [w, h] of [[360, 780], [390, 844], [430, 932]]) {
   await test(`Запуск ${w}×${h}: без ошибок консоли и горизонтальной прокрутки, 5 вкладок`, async () => {
     const { page, errors, failed, ctx } = await fresh({ w, h });
-    eq(await page.locator('#tabbar [data-tab]').count(), 5, 'вкладок');
+    eq(await page.locator('#tabbar [data-tab]').count(), 6, 'вкладок');
     for (const name of ['workouts', 'catalog', 'progress', 'profile', 'home']) {
       await tab(page, name); await page.waitForTimeout(80);
       ok(!/SEVEN/i.test(await page.locator('body').innerText()), `в интерфейсе вкладки «${name}» нет старого названия`);
@@ -343,10 +343,13 @@ await test('Фото профиля: выбор из галереи, обрез�
   await shot(page, 'avatar-profile');
   await page.reload(); await page.waitForSelector('#tabbar button'); await tab(page, 'profile'); await page.waitForSelector('.avatar img');
   // поддержка
-  await page.getByRole('button', { name: /Поддержка/ }).click();
+  await page.getByRole('button', { name: /Написать нам/ }).click();
   ok((await page.evaluate(() => window.__tg)).some((x) => x.includes('t.me/zhenya_zavezen')), 'поддержка открывает t.me/zhenya_zavezen: ' + await page.evaluate(() => window.__tg.join()));
   // удаление фото
-  await btn(page, 'Изменить фото профиля').click(); await btn(page, 'Убрать фото').click();
+  await btn(page, 'Изменить фото профиля').click();
+  await page.waitForSelector('.sheet .avatar-big img');
+  ok(!/null/.test(await text(page, '.sheet')), 'в карточке фото нет «null»');
+  await btn(page, 'Убрать фото').click();
   eq(await page.evaluate(() => JSON.parse(localStorage.getItem('seven:avatar')).img), '', 'фото убрано');
   eq(errors.length, 0, errors.join(' | '));
   await ctx.close();
@@ -359,7 +362,7 @@ await test('Главная: без блока «Программы» и ссыл
   eq(await page.locator('.list .item').count(), 0, 'ссылки под программами убраны');
   ok(!(await text(page, '#screen')).includes('Домашние тренировки'), 'заголовок «Домашние тренировки» убран');
   eq(await page.locator('.dot i').allTextContents().then((a) => a.every((x) => /^\d{1,2}$/.test(x)) && a.length === 7), true, 'в кружках числа месяца');
-  eq(await page.locator('#tabbar [data-tab]').count(), 5, 'все вкладки на месте');
+  eq(await page.locator('#tabbar [data-tab]').count(), 6, 'все вкладки на месте');
   await page.locator('.todo input').fill('Выпить воду'); await page.locator('.todo .cl-add').tap();
   await page.locator('.todo input').fill('Растяжка'); await page.keyboard.press('Enter');
   eq(await page.locator('.cl-row').count(), 2, 'два дела');
@@ -370,7 +373,7 @@ await test('Главная: без блока «Программы» и ссыл
   eq(await page.locator('.cl-row').count(), 2, 'дела сохраняются');
   eq(await page.locator('.cl-row.done').count(), 1, 'отметка сохраняется');
   await page.locator('.cl-main').nth(1).tap(); ok((await text(page, '.todo')).includes('Всё выполнено'), 'все выполнены');
-  await page.locator('.cl-row .icon-btn').first().tap(); eq(await page.locator('.cl-row').count(), 1, 'дело удалено');
+  await page.locator('.cl-row .icon-btn').nth(1).tap(); eq(await page.locator('.cl-row').count(), 1, 'дело удалено');
   ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
 });
 
@@ -383,10 +386,10 @@ await test('Нижняя панель: зажать и перетащить вк
   await page.clock.runFor(500);
   await page.mouse.move(by.x + by.width / 2 + 25, by.y + 20, { steps: 12 });
   await page.mouse.up(); await page.clock.runFor(600);
-  eq((await names()).slice(0, 5).join(), 'Тренировки,Упражнения,Прогресс,Главная,Профиль', 'вкладка «Главная» перетащена');
+  eq((await names()).slice(0, 5).join(), 'Тренировки,Упражнения,Прогресс,Главная,Рейтинг', 'вкладка «Главная» перетащена');
   ok(await page.locator('.todo').count() === 1, 'клик после перетаскивания не открыл вкладку');
   await page.reload(); await page.waitForSelector('#tabbar button');
-  eq((await names()).slice(0, 5).join(), 'Тренировки,Упражнения,Прогресс,Главная,Профиль', 'порядок сохранился');
+  eq((await names()).slice(0, 5).join(), 'Тренировки,Упражнения,Прогресс,Главная,Рейтинг', 'порядок сохранился');
   // быстрое нажатие по-прежнему открывает вкладку
   await tab(page, 'workouts'); await page.waitForSelector('.page-title');
   // своя вкладка: Профиль → Нижняя панель
@@ -562,12 +565,40 @@ await test('Тренировки: простой список по уровня�
   await ctx.close();
 });
 
-await test('Соревнования: пункт в профиле; без входа — просьба войти, без ошибок', async () => {
+await test('Рейтинг: вкладка в нижней панели; без входа — просьба войти, без «null»', async () => {
   const { page, errors, ctx } = await fresh();
-  await tab(page, 'profile');
-  await page.getByText('Соревнования', { exact: true }).click();
-  await page.waitForSelector('.empty, .note, .pad');
+  await tab(page, 'compete');
+  await page.waitForSelector('.empty');
   ok((await text(page, '#screen')).includes('Нужен вход'), 'просит войти');
+  ok(!/null|undefined/.test(await text(page, '#screen')), 'нет «null»');
+  await tab(page, 'profile');
+  const prof = await text(page, '#screen');
+  ok(!/Избранные|Карта тела|Соревнования/.test(prof), 'в профиле нет избранного, карты тела и соревнований');
+  ok(prof.includes('Есть вопрос, отзыв или предложение?') && prof.includes('Написать нам'), 'блок поддержки');
+  await tab(page, 'catalog');
+  await page.getByRole('button', { name: /Карта тела/ }).click();
+  ok((await text(page, '#screen')).length > 20, 'карта тела открывается из «Упражнений»');
+  ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
+});
+
+await test('Дела: постоянные (ежедневные) возвращаются в новый день без отметки; удаление убирает навсегда', async () => {
+  const { page, errors, ctx } = await fresh({ pre: () => {
+    if (localStorage.getItem('seven:todos')) return;
+    const y = new Date(Date.now() - 86400000), k = y.getFullYear() + '-' + String(y.getMonth() + 1).padStart(2, '0') + '-' + String(y.getDate()).padStart(2, '0');
+    localStorage.setItem('seven:todos', JSON.stringify({ daily: [{ id: 'r_1', t: 'Зарядка', d: false }], [k]: [{ id: 'a', t: 'Зарядка', d: true, src: 'r_1' }, { id: 'b', t: 'Разовое', d: false }] }));
+  } });
+  const rows = await page.locator('.cl-row .cl-text').allTextContents();
+  eq(rows.join('|'), 'Зарядка', 'сегодня только постоянное дело, разовое со вчера не переносится');
+  eq(await page.locator('.cl-row.done').count(), 0, 'отметка «сделано» не переносится');
+  await page.locator('.cl-main').first().tap();
+  eq(await page.locator('.cl-row.done').count(), 1, 'можно отметить');
+  await page.locator('.todo input').fill('Читать'); await page.keyboard.press('Enter');
+  await page.locator('.cl-row').nth(1).locator('.rep').tap();
+  const daily = await page.evaluate(() => JSON.parse(localStorage.getItem('seven:todos')).daily.map((x) => x.t));
+  eq(daily.join('|'), 'Зарядка|Читать', 'новое дело стало постоянным');
+  await page.locator('.cl-row').first().locator('.icon-btn').last().tap();
+  const after = await page.evaluate(() => JSON.parse(localStorage.getItem('seven:todos')).daily.map((x) => x.t));
+  eq(after.join('|'), 'Читать', 'удалённое дело больше не повторяется');
   ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
 });
 

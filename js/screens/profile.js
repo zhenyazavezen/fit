@@ -5,25 +5,16 @@ import * as router from '../router.js';
 import { CONFIG } from '../config.js';
 import { tg } from '../tg.js';
 import { auth } from '../auth.js';
-import { settings, history, favorites } from '../store.js';
-import { getAvatar, openAvatarEditor } from '../avatar.js';
+import { settings, history } from '../store.js';
+import { photoOf, avatarNode, openAvatarEditor } from '../avatar.js';
 import { streak } from '../stats.js';
 import { spentLabel } from '../format.js';
 import { toggle } from '../ui.js';
 
-// Аватар: своё фото (синхронизируется) → фото Telegram (только показ, адрес t.me) → буква. Нажатие открывает смену фото.
+// Аватар: своё фото → фото Telegram → буква. Нажатие открывает смену фото.
 function avatarEl(u, name) {
-  const letter = (name[0] || 'S').toUpperCase();
-  const box = h('div', { class: 'avatar' }, letter);
-  const show = (src, extra = {}) => {
-    const img = h('img', { src, alt: '', decoding: 'async', ...extra });
-    img.addEventListener('load', () => { box.textContent = ''; box.append(img); });
-  };
-  const mine = getAvatar(), url = u && typeof u.photo_url === 'string' ? u.photo_url : '';
-  if (mine) show(mine);
-  else if (/^https:\/\/(t\.me|telegram\.org)\//.test(url)) show(url, { referrerpolicy: 'no-referrer' });
   return h('button', { class: 'avatar-btn', type: 'button', 'aria-label': t('avatar.change'), onClick: () => openAvatarEditor(() => router.refresh()) },
-    box, h('span', { class: 'avatar-badge' }, icon('edit', 12)));
+    avatarNode(photoOf(u), name), h('span', { class: 'avatar-badge' }, icon('edit', 12)));
 }
 
 export default function profile() {
@@ -43,21 +34,18 @@ export default function profile() {
 
   group(t('profile.mine'),
     row('calendar', t('plan.title'), '', () => router.go('plan')),
-    row('heart', t('profile.favorites'), String(favorites.all().length), () => router.go('catalog', { favs: true })),
-    row('trophy', t('comp.title'), '', () => router.go('compete')),
-    row('target', t('map.title'), '', () => router.go('bodymap')));
+    row('profile', t('profile.account'), auth.signedIn ? t('profile.accountOn') : t('profile.accountOff'), () => router.go('account')));
 
   group(t('profile.settings'),
     sw('sound', 'sound', t('profile.sound')), sw('haptics', 'vibrate', t('profile.haptics')), sw('wake', 'screen', t('profile.wake')),
     row('list', t('tabs.title'), '', () => openTabsEditor()),
     h('div', { class: 'item' }, icon('globe'), h('div', { class: 'grow t' }, t('profile.language')), h('div', { class: 'value' }, t('profile.languageValue'))));
 
-  group(t('profile.accountData'),
-    row('profile', t('profile.account'), auth.signedIn ? t('profile.accountOn') : t('profile.accountOff'), () => router.go('account')));
-
-  group(t('profile.about'),
-    row('help', t('profile.support'), t('profile.supportHint'), () => tg.openLink(CONFIG.supportUrl), 'external'),
-    row('info', t('profile.about'), '', () => router.go('about')));
+  el.append(h('h2', { class: 'h3 group-title' }, t('profile.help')),
+    h('div', { class: 'card stack', style: { gap: '10px' } },
+      h('div', { class: 'h3' }, t('profile.supportTitle')), h('p', { class: 'muted small' }, t('profile.supportText')),
+      h('button', { class: 'btn secondary', onClick: () => tg.openLink(CONFIG.supportUrl) }, icon('external'), t('profile.supportBtn'))),
+    h('div', { class: 'list', style: { marginTop: '12px' } }, row('info', t('profile.about'), '', () => router.go('about'))));
   return { el };
 }
 

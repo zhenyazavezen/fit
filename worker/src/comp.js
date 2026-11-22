@@ -21,6 +21,7 @@ export async function ensureSchema(db) {
     db.prepare('CREATE INDEX IF NOT EXISTS idx_comp_members_acc ON comp_members(account_id)'),
     db.prepare('CREATE INDEX IF NOT EXISTS idx_workouts_at ON workout_sessions(at)'),
   ]);
+  try { await db.prepare('ALTER TABLE comp_profile ADD COLUMN photo TEXT').run(); } catch { /* колонка уже есть */ }
   done.add(db);
 }
 
@@ -28,6 +29,12 @@ export function cleanNick(v) {
   const s = typeof v === 'string' ? v.replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim() : '';
   if (s.length < 2 || s.length > 20) throw new HttpError(400, 'bad_nick', 'Ник — от 2 до 20 символов');
   return s;
+}
+/** Фото в рейтинге: маленький JPEG (data-URL ≤ 4000 символов) или ссылка на фото Telegram. */
+export function cleanPhoto(v) {
+  if (v == null || v === '') return null;
+  if (typeof v === 'string' && ((v.length <= 4000 && /^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(v)) || (v.length <= 300 && /^https:\/\/(t\.me|telegram\.org)\/[\w\-./%?=&]+$/.test(v)))) return v;
+  throw new HttpError(400, 'bad_photo', 'Некорректное фото');
 }
 const cleanName = (v) => {
   const s = typeof v === 'string' ? v.replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim() : '';
@@ -44,27 +51,34 @@ export function periodRange(period, now) {
   return { from, to: from + 7 * DAY };
 }
 
-async function upsertNick(db, accountId, nick, now, global = null) {
-  await db.prepare(`INSERT INTO comp_profile (account_id, nick, global, updated_at) VALUES (?1, ?2, COALESCE(?3, 0), ?4)
-    ON CONFLICT(account_id) DO UPDATE SET nick = excluded.nick, global = COALESCE(?3, comp_profile.global), updated_at = excluded.updated_at`).bind(accountId, nick, global, now).run();
+async function upsertNick(db, accountId, nick, now, global = null, photo) {
+  const keep = photo === undefined ? 1 : 0, ph = photo === undefined ? null : cleanPhoto(photo);
+  await db.prepare(`INSERT INTO comp_profile (account_id, nick, global, updated_at, photo) VALUES (?1, ?2, COALESCE(?3, 0), ?4, ?6)
+    ON CONFLICT(account_id) DO UPDATE SET nick = excluded.nick, global = COALESCE(?3, comp_profile.global), updated_at = excluded.updated_at,
+      photo = CASE WHEN ?5 = 1 THEN comp_profile.photo ELSE excluded.photo END`).bind(accountId, nick, global, now, keep, ph).run();
 }
-async function needNick(db, accountId, nick, now) {
+async function needNick(db, accountId, nick, now, photo) {
   const p = await db.prepare('SELECT nick FROM comp_profile WHERE account_id = ?1').bind(accountId).first();
-  if (nick != null) { const n = cleanNick(nick); await upsertNick(db, accountId, n, now); return n; }
+  if (nick != null) { const n = cleanNick(nick); await upsertNick(db, accountId, n, now, null, photo); return n; }
+  if (photo !== undefined && p) await setPhoto(db, accountId, photo, now);
   if (!p) throw new HttpError(400, 'bad_nick', 'Выберите ник');
   return p.nick;
 }
 
+export async function setPhoto(db, accountId, photo, now) {
+  await db.prepare('UPDATE comp_profile SET photo = ?2, updated_at = ?3 WHERE account_id = ?1').bind(accountId, cleanPhoto(photo), now).run();
+}
+
 export async function me(db, accountId) {
-  const p = await db.prepare('SELECT nick, global FROM comp_profile WHERE account_id = ?1').bind(accountId).first();
+  const p = await db.prepare('SELECT nick, global, photo FROM comp_profile WHERE account_id = ?1').bind(accountId).first();
   const rooms = await db.prepare(`SELECT r.id, r.name, r.code, (r.owner_id = ?1) AS mine,
       (SELECT COUNT(*) FROM comp_members x WHERE x.room_id = r.id) AS members
     FROM comp_members m JOIN comp_rooms r ON r.id = m.room_id WHERE m.account_id = ?1 ORDER BY m.joined_at`).bind(accountId).all();
-  return { nick: p ? p.nick : null, global: !!(p && p.global), rooms: rooms.results.map((r) => ({ id: r.id, name: r.name, code: r.code, mine: !!r.mine, members: r.members })) };
+  return { nick: p ? p.nick : null, photo: (p && p.photo) || '', global: !!(p && p.global), rooms: rooms.results.map((r) => ({ id: r.id, name: r.name, code: r.code, mine: !!r.mine, members: r.members })) };
 }
 
-export async function setGlobal(db, accountId, on, nick, now) {
-  if (on) { const n = await needNick(db, accountId, nick, now); await upsertNick(db, accountId, n, now, 1); }
+export async function setGlobal(db, accountId, on, nick, now, photo) {
+  if (on) { const n = await needNick(db, accountId, nick, now, photo); await upsertNick(db, accountId, n, now, 1); }
   else await db.prepare('UPDATE comp_profile SET global = 0, updated_at = ?2 WHERE account_id = ?1').bind(accountId, now).run();
 }
 export async function setNick(db, accountId, nick, now) { await upsertNick(db, accountId, cleanNick(nick), now); }
@@ -72,9 +86,9 @@ export async function setNick(db, accountId, nick, now) { await upsertNick(db, a
 async function memberCount(db, roomId) { return (await db.prepare('SELECT COUNT(*) AS n FROM comp_members WHERE room_id = ?1').bind(roomId).first()).n; }
 async function joinedCount(db, accountId) { return (await db.prepare('SELECT COUNT(*) AS n FROM comp_members WHERE account_id = ?1').bind(accountId).first()).n; }
 
-export async function createRoom(db, accountId, name, nick, now) {
+export async function createRoom(db, accountId, name, nick, now, photo) {
   const nm = cleanName(name);
-  await needNick(db, accountId, nick, now);
+  await needNick(db, accountId, nick, now, photo);
   const owned = (await db.prepare('SELECT COUNT(*) AS n FROM comp_rooms WHERE owner_id = ?1').bind(accountId).first()).n;
   if (owned >= MAX_ROOMS_OWNED || await joinedCount(db, accountId) >= MAX_ROOMS_JOINED) throw new HttpError(409, 'too_many_rooms', 'Слишком много комнат');
   const id = randomId('rm_');
@@ -90,12 +104,12 @@ export async function createRoom(db, accountId, name, nick, now) {
   }
 }
 
-export async function joinRoom(db, accountId, code, nick, now) {
+export async function joinRoom(db, accountId, code, nick, now, photo) {
   await rateLimit(db, 'comp:join:' + accountId, 20, 600, now);
   const c = typeof code === 'string' ? code.replace(/[\s-]/g, '').toUpperCase() : '';
   const room = /^[A-Z0-9]{6}$/.test(c) ? await db.prepare('SELECT id, name FROM comp_rooms WHERE code = ?1').bind(c).first() : null;
   if (!room) throw new HttpError(404, 'room_not_found', 'Комната с таким кодом не найдена');
-  await needNick(db, accountId, nick, now);
+  await needNick(db, accountId, nick, now, photo);
   const already = await db.prepare('SELECT 1 AS x FROM comp_members WHERE room_id = ?1 AND account_id = ?2').bind(room.id, accountId).first();
   if (!already) {
     if (await memberCount(db, room.id) >= MAX_ROOM_MEMBERS) throw new HttpError(409, 'room_full', 'В комнате нет мест');
@@ -123,16 +137,16 @@ export async function board(db, accountId, scope, period, now) {
   if (scope === 'global') {
     const mine = await db.prepare('SELECT global FROM comp_profile WHERE account_id = ?1').bind(accountId).first();
     if (!mine || !mine.global) throw new HttpError(403, 'not_member', 'Вы не участвуете в общем рейтинге');
-    rows = (await db.prepare(`SELECT p.account_id AS a, p.nick, COALESCE(s.n, 0) AS n, COALESCE(s.sec, 0) AS sec FROM comp_profile p LEFT JOIN (${sums}) s ON s.a = p.account_id
+    rows = (await db.prepare(`SELECT p.account_id AS a, p.nick, p.photo, COALESCE(s.n, 0) AS n, COALESCE(s.sec, 0) AS sec FROM comp_profile p LEFT JOIN (${sums}) s ON s.a = p.account_id
       WHERE p.global = 1 ORDER BY sec DESC, n DESC, p.nick LIMIT 1000`).bind(from, to).all()).results;
   } else {
     const room = await db.prepare('SELECT r.name FROM comp_rooms r JOIN comp_members m ON m.room_id = r.id WHERE r.id = ?1 AND m.account_id = ?2').bind(scope, accountId).first();
     if (!room) throw new HttpError(403, 'not_member', 'Вы не участвуете в этой комнате');
     title = room.name;
-    rows = (await db.prepare(`SELECT p.account_id AS a, p.nick, COALESCE(s.n, 0) AS n, COALESCE(s.sec, 0) AS sec FROM comp_members m JOIN comp_profile p ON p.account_id = m.account_id
+    rows = (await db.prepare(`SELECT p.account_id AS a, p.nick, p.photo, COALESCE(s.n, 0) AS n, COALESCE(s.sec, 0) AS sec FROM comp_members m JOIN comp_profile p ON p.account_id = m.account_id
       LEFT JOIN (${sums}) s ON s.a = m.account_id WHERE m.room_id = ?3 ORDER BY sec DESC, n DESC, p.nick LIMIT 1000`).bind(from, to, scope).all()).results;
   }
-  const ranked = rows.map((r, i) => ({ rank: i + 1, nick: r.nick, workouts: r.n, minutes: Math.round(r.sec / 60), me: r.a === accountId }));
+  const ranked = rows.map((r, i) => ({ rank: i + 1, nick: r.nick, photo: r.photo || '', workouts: r.n, minutes: Math.round(r.sec / 60), me: r.a === accountId }));
   const top = ranked.slice(0, BOARD_LIMIT), mine = ranked.find((r) => r.me) || null;
   return { scope, title, period: per, from, to, total: ranked.length, rows: top, me: mine };
 }

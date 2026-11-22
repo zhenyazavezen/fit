@@ -1,6 +1,15 @@
 // Мелкие помощники для DOM. Текст всегда вставляется через textContent — innerHTML не используется.
 const SVGNS = 'http://www.w3.org/2000/svg';
 
+// Встроенные append/prepend/replaceChildren превращают null в текст «null»: пустые значения отбрасываем.
+if (typeof Element !== 'undefined' && !Element.prototype.__cleanKids) {
+  for (const m of ['append', 'prepend', 'replaceChildren']) {
+    const orig = Element.prototype[m];
+    Element.prototype[m] = function (...a) { return orig.apply(this, a.filter((x) => x != null && x !== false)); };
+  }
+  Element.prototype.__cleanKids = true;
+}
+
 export function append(el, kids) {
   for (const k of kids.flat(Infinity)) {
     if (k == null || k === false) continue;

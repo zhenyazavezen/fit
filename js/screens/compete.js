@@ -7,6 +7,7 @@ import { tg } from '../tg.js';
 import { topbar, sheet, confirmDialog, segmented, toggle, toast, empty } from '../ui.js';
 import { api, apiEnabled } from '../api.js';
 import { auth } from '../auth.js';
+import { avatarNode, thumbOf } from '../avatar.js';
 
 const call = (path, method = 'GET', body) => api('/comp' + path, { method, body, token: auth.token });
 const errText = (e) => { const k = 'comp.err.' + (e?.code || 'x'), v = t(k); return v === k ? t('comp.err.x') : v; };
@@ -33,11 +34,17 @@ export default function compete() {
     return { el };
   }
 
+  const photo = { v: undefined };
   const guard = async (fn) => { try { await fn(); } catch (e) { toast(errText(e)); } };
   const nickFor = async () => (st.me.nick ? undefined : await askNick());   // undefined — ник уже есть; null — отказ
 
   async function load() {
-    try { st.me = await call('/me'); draw(); } catch (e) { body.replaceChildren(h('p', { class: 'muted' }, errText(e)), h('button', { class: 'btn secondary', onClick: load }, t('common.retry'))); }
+    try {
+      photo.v = await thumbOf(tg.user);
+      st.me = await call('/me');
+      if (st.me.nick && (st.me.photo || '') !== photo.v) st.me = await call('/photo', 'POST', { photo: photo.v });   // фото в рейтинге всегда актуально
+      draw();
+    } catch (e) { body.replaceChildren(h('p', { class: 'muted' }, errText(e)), h('button', { class: 'btn secondary', onClick: load }, t('common.retry'))); }
   }
 
   function draw() {
@@ -46,7 +53,7 @@ export default function compete() {
     const globalRow = h('div', { class: 'item' }, icon('trophy'), h('div', { class: 'grow' }, h('div', { class: 't' }, t('comp.global')), h('div', { class: 's' }, t('comp.globalHint'))),
       toggle(m.global, (v) => guard(async () => {
         let nick; if (v) { nick = await nickFor(); if (nick === null) { draw(); return; } }
-        st.me = await call('/global', 'POST', { on: v, nick }); draw();
+        st.me = await call('/global', 'POST', { on: v, nick, photo: photo.v }); draw();
       }), t('comp.global')));
     const rooms = m.rooms.map((r) => h('button', { class: 'item', onClick: () => { st.view = r.id; draw(); } }, icon('list'),
       h('div', { class: 'grow' }, h('div', { class: 't' }, r.name), h('div', { class: 's' }, t('comp.members', { n: r.members }))), icon('chev-r', 18)));
@@ -65,12 +72,12 @@ export default function compete() {
   async function createRoom() {
     const nick = await nickFor(); if (nick === null) return;
     const name = await ask({ title: t('comp.create'), label: t('comp.roomName'), maxlength: 30, confirm: t('comp.create') }); if (!name) return;
-    const r = await call('/rooms', 'POST', { name, nick }); st.me = r.me; st.view = r.id; draw();
+    const r = await call('/rooms', 'POST', { name, nick, photo: photo.v }); st.me = r.me; st.view = r.id; draw();
   }
   async function joinRoom() {
     const nick = await nickFor(); if (nick === null) return;
     const code = await ask({ title: t('comp.join'), text: t('comp.joinText'), label: t('comp.code'), maxlength: 9, confirm: t('comp.joinDo'), transform: (v) => v.toUpperCase() }); if (!code) return;
-    const r = await call('/rooms/join', 'POST', { code, nick }); st.me = r.me; st.view = r.id; draw();
+    const r = await call('/rooms/join', 'POST', { code, nick, photo: photo.v }); st.me = r.me; st.view = r.id; draw();
   }
 
   async function drawBoard() {
@@ -90,7 +97,7 @@ export default function compete() {
       list.replaceChildren(h('p', { class: 'muted small' }, t('common.loading')));
       try {
         const r = await call(`/board?scope=${encodeURIComponent(scope)}&period=${st.period}`);
-        list.replaceChildren(r.rows.length ? h('div', { class: 'list' }, ...r.rows.map((x) => h('div', { class: 'item' + (x.me ? ' me' : '') }, h('div', { class: 'lead' }, String(x.rank)),
+        list.replaceChildren(r.rows.length ? h('div', { class: 'list' }, ...r.rows.map((x) => h('div', { class: 'item' + (x.me ? ' me' : '') }, h('div', { class: 'lead' }, String(x.rank)), avatarNode(x.photo, x.nick, 'sm'),
           h('div', { class: 'grow' }, h('div', { class: 't' }, x.nick + (x.me ? ' · ' + t('comp.you') : '')), h('div', { class: 's' }, t('comp.workouts', { n: x.workouts }))),
           h('div', { class: 'end num' }, t('comp.minutes', { n: x.minutes }))))) : h('p', { class: 'muted' }, t('comp.emptyBoard')),
           r.me && r.me.rank > r.rows.length ? h('p', { class: 'small muted' }, t('comp.yourPlace', { n: r.me.rank, total: r.total })) : null);

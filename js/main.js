@@ -81,7 +81,7 @@ async function boot() {
   router.register('plan', plan, { tab: 'profile' });
   router.register('bodymap', bodymap, { tab: 'catalog' });
   router.register('account', account, { tab: 'profile' });
-  router.register('compete', compete, { tab: 'profile' });
+  router.register('compete', compete, { tab: 'compete' });
   router.register('ctab', ctab, { tab: (p) => p.id });
   router.register('calendar', calendar, { tab: 'home' });
   router.register('player', player, { tabs: false });
@@ -97,7 +97,7 @@ async function boot() {
 }
 
 // Ссылки вида t.me/ZAVEZEN_FIT_BOT/app?startapp=plan открывают нужный экран. Только белый список, остальное игнорируется.
-const START_SCREENS = { home: 'home', workouts: 'workouts', catalog: 'catalog', progress: 'progress', profile: 'profile', plan: 'plan', map: 'bodymap', account: 'account' };
+const START_SCREENS = { compete: 'compete', home: 'home', workouts: 'workouts', catalog: 'catalog', progress: 'progress', profile: 'profile', plan: 'plan', map: 'bodymap', account: 'account' };
 function startScreen() { return START_SCREENS[tg.startParam] || 'home'; }
 
 boot().catch((e) => { console.error(e); showFatal(String(e?.message || e)); });

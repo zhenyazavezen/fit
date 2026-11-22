@@ -336,5 +336,9 @@ body[data-route="player"] .toast { bottom: calc(var(--safe-bottom) + var(--tg-bo
 
 /* Соревнования */
 .item.me { background: var(--s2); }
+.avatar.sm { width: 40px; height: 40px; font-size: var(--fs-m); flex: none; }
 .item.me .lead { color: var(--platinum); }
 .danger-title { color: var(--danger); }
+
+.cl-row .rep { color: var(--text3); }
+.cl-row .rep.on { color: var(--platinum); }

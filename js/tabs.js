@@ -6,7 +6,7 @@ import { tabsCfg, pages, store } from './store.js';
 import { sheet, toggle, confirmDialog } from './ui.js';
 import { dragSort } from './dragsort.js';
 
-export const BUILTIN = ['home', 'workouts', 'catalog', 'progress', 'profile'];
+export const BUILTIN = ['home', 'workouts', 'catalog', 'progress', 'compete', 'profile'];
 export const MAX_CUSTOM = 10;
 export const TAB_ICONS = ['star', 'flame', 'drop', 'leaf', 'book', 'target', 'moon', 'sun', 'list', 'calendar', 'trophy', 'heart', 'bolt', 'clock'];
 

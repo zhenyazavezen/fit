@@ -84,10 +84,11 @@ export async function handle(request, env, opts = {}) {
     if (method === 'GET' && path === '/comp/board') return json(await comp.board(db, a, url.searchParams.get('scope') || 'global', url.searchParams.get('period') || 'week', now));
     if (method === 'POST') {
       const b = await readJson(request);
-      if (path === '/comp/global') { await comp.setGlobal(db, a, b.on === true, b.nick, now); return json(await comp.me(db, a)); }
+      if (path === '/comp/global') { await comp.setGlobal(db, a, b.on === true, b.nick, now, b.photo); return json(await comp.me(db, a)); }
+      if (path === '/comp/photo') { await comp.setPhoto(db, a, b.photo, now); return json(await comp.me(db, a)); }
       if (path === '/comp/nick') { await comp.setNick(db, a, b.nick, now); return json(await comp.me(db, a)); }
-      if (path === '/comp/rooms') { const r = await comp.createRoom(db, a, b.name, b.nick, now); return json({ ...r, me: await comp.me(db, a) }); }
-      if (path === '/comp/rooms/join') { const r = await comp.joinRoom(db, a, b.code, b.nick, now); return json({ ...r, me: await comp.me(db, a) }); }
+      if (path === '/comp/rooms') { const r = await comp.createRoom(db, a, b.name, b.nick, now, b.photo); return json({ ...r, me: await comp.me(db, a) }); }
+      if (path === '/comp/rooms/join') { const r = await comp.joinRoom(db, a, b.code, b.nick, now, b.photo); return json({ ...r, me: await comp.me(db, a) }); }
       if (path === '/comp/rooms/leave') { await comp.leaveRoom(db, a, String(b.id || '')); return json(await comp.me(db, a)); }
     }
   }

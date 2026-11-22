@@ -4,9 +4,33 @@ import { h } from './util.js';
 import { t } from './i18n.js';
 import { store } from './store.js';
 import { auth } from './auth.js';
+import { tg } from './tg.js';
 import { sheet, toast } from './ui.js';
 import { VIEW, OUT, MAX_ZOOM, TARGET_DATA_URL, baseScale, clampOffset, sourceRect, isAvatarImg } from './avatar-math.js';
 
+const TG_PHOTO = /^https:\/\/(t\.me|telegram\.org)\//;
+/** Фото, которое видит человек сейчас: своё → фото Telegram → '' (тогда показывается буква). */
+export function photoOf(u) { const mine = getAvatar(); if (mine) return mine; const url = u && typeof u.photo_url === 'string' ? u.photo_url : ''; return TG_PHOTO.test(url) ? url : ''; }
+/** Элемент-кружок с фото или буквой. */
+export function avatarNode(src, name, cls = '') {
+  const box = h('div', { class: 'avatar ' + cls }, (name || '?').trim().charAt(0).toUpperCase());
+  if (src) {
+    const img = h('img', { src, alt: '', decoding: 'async', referrerpolicy: 'no-referrer' });
+    img.addEventListener('load', () => { box.textContent = ''; box.append(img); });
+  }
+  return box;
+}
+/** Маленькое фото (для рейтинга): своё уменьшается до ~56 px, фото Telegram передаётся ссылкой. */
+export async function thumbOf(u) {
+  const mine = getAvatar();
+  if (!mine) { const url = photoOf(u); return url; }
+  try {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = mine; });
+    const c = document.createElement('canvas'); c.width = c.height = 56; c.getContext('2d').drawImage(img, 0, 0, 56, 56);
+    for (let q = 0.7; q > 0.2; q -= 0.1) { const url = c.toDataURL('image/jpeg', q); if (url.length <= 3800) return url; }
+  } catch { /* без фото */ }
+  return '';
+}
 export function getAvatar() { const v = store.get('avatar', null); return v && typeof v.img === 'string' && v.img && isAvatarImg(v.img) ? v.img : ''; }
 const put = (img) => store.set('avatar', { img });
 
@@ -38,9 +62,10 @@ export function openAvatarEditor(onChange) {
   const input = h('input', { type: 'file', accept: 'image/*', style: { display: 'none' } });
 
   const menu = () => {
-    const cur = getAvatar();
+    const cur = getAvatar(), shown = photoOf(tg.user);
+    const nm = tg.user ? [tg.user.first_name, tg.user.last_name].filter(Boolean).join(' ') : '';
     body.replaceChildren(
-      h('div', { class: 'avatar avatar-big' }, cur ? h('img', { src: cur, alt: '' }) : null),
+      avatarNode(shown, nm, 'avatar-big'),
       h('button', { class: 'btn', onClick: () => input.click() }, t('avatar.pick')),
       cur ? h('button', { class: 'btn secondary', onClick: () => { put(''); toast(t('avatar.removed')); onChange?.(); s.close(); } }, t('avatar.remove')) : null,
       h('p', { class: 'small muted' }, auth.signedIn ? t('avatar.syncNote') : t('avatar.localNote')),

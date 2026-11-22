@@ -1,4 +1,4 @@
-import { h, icon } from '../util.js';
+import { h, icon, uid } from '../util.js';
 import { t } from '../i18n.js';
 import * as router from '../router.js';
 import { tg } from '../tg.js';
@@ -41,7 +41,14 @@ function todoCard() {
     if (n && d === n) count.replaceChildren(icon('check', 16), t('todo.allDone'));
     else count.textContent = !n ? t('todo.none') : t('todo.progress', { d, n });
   };
-  const cl = checklist({ items: todos.get(day), save: (l) => todos.set(day, l), placeholder: t('todo.add'), onUpdate: upd });
+  // «Повторять каждый день»: дело запоминается в постоянном списке и появляется в каждом новом дне, пока его не удалят.
+  const repeat = { toggle: (x) => {
+    const daily = todos.daily();
+    if (x.src) { todos.setDaily(daily.filter((r) => r.id !== x.src)); delete x.src; }
+    else { const id = 'r_' + uid(); todos.setDaily([...daily, { id, t: x.t, d: false }]); x.src = id; }
+  } };
+  const onRemove = (x) => { if (x.src) todos.setDaily(todos.daily().filter((r) => r.id !== x.src)); };
+  const cl = checklist({ items: todos.forDay(day), save: (l) => todos.set(day, l), placeholder: t('todo.add'), onUpdate: upd, repeat, onRemove });
   return h('section', { class: 'card todo htile', dataset: { key: 'todo' }, 'aria-label': t('todo.title') },
     h('div', { class: 'row-flex', style: { justifyContent: 'space-between' } }, h('h2', { class: 'h3' }, t('todo.title')), count),
     h('div', { class: 'bar', role: 'progressbar', 'aria-label': t('todo.title') }, bar), cl.el);

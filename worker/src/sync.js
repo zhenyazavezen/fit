@@ -48,7 +48,7 @@ export function validateDoc(key, value) {
   const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
   const cleanItems = (a) => {
     if (!Array.isArray(a) || a.length > 60) throw bad('ожидается список дел');
-    return a.map((x) => { if (!isObj(x) || !str(x.id, 64) || !ID_RE.test(x.id) || !str(x.t, 160)) throw bad('некорректное дело'); return { id: x.id, t: x.t, d: x.d === true }; });
+    return a.map((x) => { if (!isObj(x) || !str(x.id, 64) || !ID_RE.test(x.id) || !str(x.t, 160)) throw bad('некорректное дело'); if (x.src != null && !(str(x.src, 64) && ID_RE.test(x.src))) throw bad('некорректное дело'); return x.src ? { id: x.id, t: x.t, d: x.d === true, src: x.src } : { id: x.id, t: x.t, d: x.d === true }; });
   };
   if (key === 'myex') {
     if (!Array.isArray(value) || value.length > 200) throw bad('ожидается список упражнений');
@@ -59,7 +59,7 @@ export function validateDoc(key, value) {
   }
   if (key === 'todos') {
     if (!isObj(value) || Object.keys(value).length > 30) throw bad('ожидается объект по дням');
-    return Object.fromEntries(Object.entries(value).map(([day, items]) => { if (!DAY_RE.test(day)) throw bad('некорректный день'); return [day, cleanItems(items)]; }));
+    return Object.fromEntries(Object.entries(value).map(([day, items]) => { if (day !== 'daily' && !DAY_RE.test(day)) throw bad('некорректный день'); return [day, cleanItems(items)]; }));
   }
   if (key === 'tabs') {
     if (!isObj(value)) throw bad('ожидается объект');

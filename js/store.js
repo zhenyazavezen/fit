@@ -126,9 +126,18 @@ export const customEx = {
 export const todos = {
   all() { const o = store.get('todos', {}); return o && typeof o === 'object' && !Array.isArray(o) ? o : {}; },
   get(day) { const a = this.all()[day]; return Array.isArray(a) ? a : []; },
+  /** Постоянные (ежедневные) дела: хранятся под ключом 'daily' и каждый день появляются в списке заново, пока их не удалят. */
+  daily() { const a = this.all().daily; return Array.isArray(a) ? a : []; },
+  setDaily(items) { return store.set('todos', { ...this.all(), daily: items }); },
+  /** Список дня: свои дела + ежедневные (без отметок «сделано» с прошлых дней). */
+  forDay(day) {
+    const list = this.get(day).map((x) => ({ ...x })), have = new Set(list.map((x) => x.src).filter(Boolean));
+    for (const r of this.daily()) if (!have.has(r.id)) list.push({ id: day + '_' + r.id, t: r.t, d: false, src: r.id });
+    return list;
+  },
   set(day, items) {
     const all = { ...this.all(), [day]: items };
-    for (const k of Object.keys(all).sort().slice(0, -14)) delete all[k];
+    for (const k of Object.keys(all).filter((x) => x !== 'daily').sort().slice(0, -14)) delete all[k];
     return store.set('todos', all);
   },
 };

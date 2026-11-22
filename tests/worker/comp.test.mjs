@@ -62,3 +62,18 @@ test('удаление аккаунта убирает его из рейтин�
   assert.equal((await call(e, req('DELETE', '/me', { token: a.token, body: { confirm: 'DELETE' } }))).status, 200);
   assert.deepEqual((await get(e, b.token, '/comp/board?scope=global')).body.rows.map((x) => x.nick), ['Бета']);
 });
+
+test('фото в рейтинге: маленький JPEG или ссылка Telegram; чужие форматы отклоняются; видно другим участникам', async () => {
+  const e = env();
+  const a = await login(e, 1, 'A'), b = await login(e, 2, 'B');
+  const jpeg = 'data:image/jpeg;base64,/9j/4AAQSkZJRg==';
+  assert.equal((await post(e, a.token, '/comp/global', { on: true, nick: 'Альфа', photo: jpeg })).status, 200);
+  assert.equal((await post(e, b.token, '/comp/global', { on: true, nick: 'Бета', photo: 'https://t.me/i/userpic/320/x.jpg' })).status, 200);
+  assert.equal((await post(e, b.token, '/comp/photo', { photo: 'https://evil.example/x.jpg' })).status, 400);
+  assert.equal((await post(e, b.token, '/comp/photo', { photo: 'data:image/svg+xml;base64,AAAA' })).status, 400);
+  assert.equal((await post(e, b.token, '/comp/photo', { photo: 'data:image/jpeg;base64,' + 'A'.repeat(5000) })).status, 400);
+  const rows = (await get(e, a.token, '/comp/board?scope=global')).body.rows;
+  assert.deepEqual(rows.map((r) => [r.nick, r.photo]).sort(), [['Альфа', jpeg], ['Бета', 'https://t.me/i/userpic/320/x.jpg']]);
+  await post(e, b.token, '/comp/photo', { photo: '' });
+  assert.equal((await get(e, b.token, '/comp/me')).body.photo, '');
+});
