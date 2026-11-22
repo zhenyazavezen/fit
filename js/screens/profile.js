@@ -53,8 +53,7 @@ export default function profile() {
     h('div', { class: 'item' }, icon('globe'), h('div', { class: 'grow t' }, t('profile.language')), h('div', { class: 'value' }, t('profile.languageValue'))));
 
   group(t('profile.accountData'),
-    row('profile', t('profile.account'), auth.signedIn ? t('profile.accountOn') : t('profile.accountOff'), () => router.go('account')),
-    row('download', t('data.title'), '', () => router.go('data')));
+    row('profile', t('profile.account'), auth.signedIn ? t('profile.accountOn') : t('profile.accountOff'), () => router.go('account')));
 
   group(t('profile.about'),
     row('help', t('profile.support'), t('profile.supportHint'), () => tg.openLink(CONFIG.supportUrl), 'external'),

@@ -7,9 +7,18 @@ import { tg } from '../tg.js';
 import { topbar, confirmDialog, noteBox, toast } from '../ui.js';
 import { apiEnabled } from '../api.js';
 import { auth, loginWithTelegram, logout, refreshAccount, deleteAccount } from '../auth.js';
+import { history, favorites, customEx, resetAll } from '../store.js';
 import { syncStatus, onSyncStatus, syncNow } from '../sync.js';
 
 const errText = (e) => { const k = 'auth.err.' + (e?.code || 'x'), v = t(k); return v === k ? t('auth.err.x') : v; };
+
+const fact = (v, l) => h('div', { class: 'fact' }, h('div', { class: 'v' }, String(v)), h('div', { class: 'l' }, l));
+const dataBlock = () => [h('h2', { class: 'h3 group-title' }, t('account.data')), h('p', { class: 'small muted' }, t('account.dataIntro')),
+  h('div', { class: 'facts' }, fact(history.all().length, t('data.workouts')), fact(favorites.all().length, t('data.favs')), fact(customEx.all().length, t('data.custom')))];
+const clearRow = () => h('button', { class: 'item', style: { color: 'var(--danger)' }, onClick: async () => {
+  if (!await confirmDialog({ title: t('data.clearTitle'), text: t('data.clearText') + ' ' + (auth.signedIn ? t('data.clearSigned') : t('data.clearLocal')), confirm: t('data.clearConfirm'), danger: true })) return;
+  resetAll(); toast(t('data.cleared')); router.refresh();
+} }, icon('trash'), h('div', { class: 'grow' }, h('div', { class: 't' }, t('data.clear')), h('div', { class: 's' }, t('data.clearHint'))));
 
 function gate(done) {
   const box = h('div', { class: 'stack', style: { gap: '12px' } });
@@ -37,12 +46,13 @@ function signedIn(refresh) {
       h('button', { class: 'item', onClick: async () => { await syncNow(); await refreshAccount().catch(() => {}); toast(stText(syncStatus()), 2000); } }, icon('clock'), h('div', { class: 'grow' }, h('div', { class: 't' }, t('sync.now')), st))),
     h('p', { class: 'small muted' }, t('sync.note')));
 
+  box.append(...dataBlock());
   box.append(h('h2', { class: 'h3 group-title' }, t('account.session')),
     h('div', { class: 'list' }, h('button', { class: 'item', onClick: async () => { await logout(); toast(t('account.loggedOut')); refresh(); } }, icon('x'),
       h('div', { class: 'grow' }, h('div', { class: 't' }, t('account.logout')), h('div', { class: 's' }, t('account.logoutHint'))))));
 
   box.append(h('h2', { class: 'h3 group-title danger-title' }, t('account.danger')),
-    h('div', { class: 'list' }, h('button', { class: 'item', style: { color: 'var(--danger)' }, onClick: async () => {
+    h('div', { class: 'list' }, clearRow(), h('button', { class: 'item', style: { color: 'var(--danger)' }, onClick: async () => {
       if (!await confirmDialog({ title: t('account.deleteTitle'), text: t('account.deleteText'), confirm: t('account.deleteConfirm'), danger: true })) return;
       try { await deleteAccount(); toast(t('account.deleted')); refresh(); } catch (e) { toast(errText(e), 3500); }
     } }, icon('trash'), h('div', { class: 'grow' }, h('div', { class: 't' }, t('account.delete')), h('div', { class: 's' }, t('account.deleteHint'))))));
@@ -54,7 +64,7 @@ export default function account() {
   let off = null;
   const render = () => {
     off?.(); off = null; pad.replaceChildren();
-    if (auth.signedIn) { const r = signedIn(render); off = r.off; pad.append(r.box); } else pad.append(gate(() => { toast(t('auth.welcome')); render(); }));
+    if (auth.signedIn) { const r = signedIn(render); off = r.off; pad.append(r.box); } else pad.append(gate(() => { toast(t('auth.welcome')); render(); }), h('div', { class: 'stack', style: { gap: '12px', marginTop: '24px' } }, ...dataBlock(), h('h2', { class: 'h3 group-title danger-title' }, t('account.danger')), h('div', { class: 'list' }, clearRow())));
   };
   el.append(topbar({ title: t('account.nav') }), pad);
   render();
