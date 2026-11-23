@@ -65,8 +65,7 @@ export default function compete() {
       rooms.length ? h('div', { class: 'list' }, ...rooms) : h('p', { class: 'muted small' }, t('comp.noRooms')),
       h('button', { class: 'btn', onClick: () => guard(createRoom) }, icon('plus'), t('comp.create')),
       h('button', { class: 'btn secondary', onClick: () => guard(joinRoom) }, t('comp.join')),
-      m.nick ? h('button', { class: 'link-btn', onClick: () => guard(async () => { const n = await askNick(m.nick); if (n) { st.me = await call('/nick', 'POST', { nick: n }); draw(); } }) }, t('comp.nickChange', { nick: m.nick })) : null,
-      h('p', { class: 'small muted' }, t('comp.privacy')));
+      m.nick ? h('button', { class: 'link-btn', onClick: () => guard(async () => { const n = await askNick(m.nick); if (n) { st.me = await call('/nick', 'POST', { nick: n }); draw(); } }) }, t('comp.nickChange', { nick: m.nick })) : null);
   }
 
   async function createRoom() {

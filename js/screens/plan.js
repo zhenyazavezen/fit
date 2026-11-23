@@ -7,7 +7,6 @@ import { userProfile, LEVELS, PROFILE_GOALS, PROFILE_EQUIP, PROFILE_LIMITS, bmi 
 import { recommendPrograms } from '../planner.js';
 import { topbar, chip, segmented, noteBox } from '../ui.js';
 import { durationLabel } from '../format.js';
-import { authPromptCard } from '../auth-prompt.js';
 
 const reasonText = (r) => t('rec.' + r.key, { ...r, min: r.min, list: (r.list || []).map((e) => t('equip.' + e)).join(', ') , n: r.n });
 
@@ -43,7 +42,6 @@ export default function plan() {
 
   const b = bmi(p);
   el.append(topbar({ title: t('plan.title') }),
-    authPromptCard(),
     single(t('plan.level'), LEVELS, 'level', 'level.'),
     single(t('plan.goal'), PROFILE_GOALS, 'goal', 'pgoal.'),
     single(t('plan.minutes'), [10, 15, 20, 30, 45, 60].map(String), 'minutes', 'min.'),

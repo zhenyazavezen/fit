@@ -43,8 +43,7 @@ function signedIn(refresh) {
   box.append(h('h2', { class: 'h3 group-title' }, t('account.signedAs')),
     h('div', { class: 'list' },
       h('div', { class: 'item' }, icon('check'), h('div', { class: 'grow' }, h('div', { class: 't' }, t('auth.provider.telegram')), who ? h('div', { class: 's' }, who) : null)),
-      h('button', { class: 'item', onClick: async () => { await syncNow(); await refreshAccount().catch(() => {}); toast(stText(syncStatus()), 2000); } }, icon('clock'), h('div', { class: 'grow' }, h('div', { class: 't' }, t('sync.now')), st))),
-    h('p', { class: 'small muted' }, t('sync.note')));
+      h('button', { class: 'item', onClick: async () => { await syncNow(); await refreshAccount().catch(() => {}); toast(stText(syncStatus()), 2000); } }, icon('clock'), h('div', { class: 'grow' }, h('div', { class: 't' }, t('sync.now')), st))));
 
   box.append(...dataBlock());
   box.append(h('h2', { class: 'h3 group-title' }, t('account.session')),

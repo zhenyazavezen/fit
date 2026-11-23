@@ -30,8 +30,6 @@ export default function calendar() {
           onClick: () => { st.day = st.day === b.key ? null : b.key; draw(); } }, String(b.i + 1));
       }),
     ];
-    const dd = Math.round((p.total.sec - p.prev.sec) / 60), dw = p.total.workouts - p.prev.workouts;
-    const fmt = (n) => (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(n);
     const activeDays = p.bars.filter((b) => b.workouts).length;
     const groups = groupByDay(hist).filter((g) => g.ts >= p.start && g.ts < p.end && (!st.day || g.key === st.day));
     body.replaceChildren(...[
@@ -44,10 +42,6 @@ export default function calendar() {
         h('div', { class: 'cal-grid' }, ...cells)),
       h('div', { class: 'facts' },
         fact(String(p.total.workouts), t('cal.workouts')), fact(String(activeDays), t('cal.days')), fact(p.total.sec ? spentLabel(p.total.sec) : '0', t('cal.time'))),
-      (p.prev.workouts || p.total.workouts) ? h('div', { class: 'card stack', style: { gap: '6px' } },
-        h('div', { class: 'eyebrow' }, t('cal.progress')),
-        h('div', { class: 'h3' }, t('cal.vsPrev', { w: fmt(dw), m: fmt(dd) })),
-        st.offset === 0 ? h('div', { class: 'small muted' }, t('home.streakDays', { n: streak(hist, now) }) + ' · ' + t('progress.streak')) : null) : null,
       h('h2', { class: 'h3', style: { margin: '8px 0 0' } }, st.day ? t('cal.dayList') : t('cal.monthList')),
       groups.length ? h('div', { class: 'stack' }, ...groups.flatMap((g) => [
         h('div', { class: 'day-title' }, new Date(g.ts).toLocaleDateString(getLang(), { weekday: 'long', day: 'numeric', month: 'long' })),
