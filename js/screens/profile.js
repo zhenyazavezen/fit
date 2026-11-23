@@ -32,8 +32,7 @@ export default function profile() {
   const sw = (key, ic, label) => h('div', { class: 'item' }, icon(ic), h('div', { class: 'grow t' }, label), toggle(set[key], (v) => settings.set({ [key]: v }), label));
   const group = (title, ...items) => el.append(h('h2', { class: 'h3 group-title' }, title), h('div', { class: 'list' }, ...items));
 
-  group(t('profile.mine'),
-    row('calendar', t('plan.title'), '', () => router.go('plan')),
+  group(t('profile.accountGroup'),
     row('profile', t('profile.account'), auth.signedIn ? t('profile.accountOn') : t('profile.accountOff'), () => router.go('account')));
 
   group(t('profile.settings'),
@@ -41,10 +40,10 @@ export default function profile() {
     row('list', t('tabs.title'), '', () => openTabsEditor()),
     h('div', { class: 'item' }, icon('globe'), h('div', { class: 'grow t' }, t('profile.language')), h('div', { class: 'value' }, t('profile.languageValue'))));
 
-  el.append(h('h2', { class: 'h3 group-title' }, t('profile.help')),
+  el.append(h('h2', { class: 'h3 group-title' }, t('profile.supportGroup')),
     h('div', { class: 'card stack', style: { gap: '10px' } },
       h('div', { class: 'h3' }, t('profile.supportTitle')), h('p', { class: 'muted small' }, t('profile.supportText')),
-      h('button', { class: 'btn secondary', onClick: () => tg.openLink(CONFIG.supportUrl) }, icon('external'), t('profile.supportBtn'))),
+      h('button', { class: 'btn secondary', onClick: () => tg.openLink(CONFIG.supportUrl) }, icon('external'), t('profile.supportBtn', { nick: '@' + CONFIG.supportUrl.split('/').pop() }))),
     h('div', { class: 'list', style: { marginTop: '12px' } }, row('info', t('profile.about'), '', () => router.go('about'))));
   return { el };
 }

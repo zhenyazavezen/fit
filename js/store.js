@@ -122,18 +122,36 @@ export const customEx = {
   remove(id) { store.set('myex', this.all().filter((x) => x.id !== id)); },
 };
 
+/** День недели по ключу ГГГГ-ММ-ДД: 1 = понедельник … 7 = воскресенье. */
+export function weekdayOf(day) { const [y, m, d] = day.split('-').map(Number); return ((new Date(y, m - 1, d).getDay() + 6) % 7) + 1; }
+
 // ---- Дела на сегодня: { 'ГГГГ-ММ-ДД': [{id, t, d}] }; хранятся последние 14 дней
 export const todos = {
   all() { const o = store.get('todos', {}); return o && typeof o === 'object' && !Array.isArray(o) ? o : {}; },
   get(day) { const a = this.all()[day]; return Array.isArray(a) ? a : []; },
-  /** Постоянные (ежедневные) дела: хранятся под ключом 'daily' и каждый день появляются в списке заново, пока их не удалят. */
-  daily() { const a = this.all().daily; return Array.isArray(a) ? a : []; },
+  /** Постоянные дела (расписание): [{id, t, days:[1..7]}], 1 = понедельник. Без days — каждый день. */
+  daily() {
+    const a = this.all().daily;
+    return (Array.isArray(a) ? a : []).map((r) => ({ id: r.id, t: r.t, d: false, days: Array.isArray(r.days) && r.days.length ? r.days : [1, 2, 3, 4, 5, 6, 7] }));
+  },
   setDaily(items) { return store.set('todos', { ...this.all(), daily: items }); },
-  /** Список дня: свои дела + ежедневные (без отметок «сделано» с прошлых дней). */
+  /** Список дня: свои дела + дела расписания на этот день недели (без отметок с прошлых дней). */
   forDay(day) {
-    const list = this.get(day).map((x) => ({ ...x })), have = new Set(list.map((x) => x.src).filter(Boolean));
-    for (const r of this.daily()) if (!have.has(r.id)) list.push({ id: day + '_' + r.id, t: r.t, d: false, src: r.id });
+    const list = this.get(day).map((x) => ({ ...x })), have = new Set(list.map((x) => x.src).filter(Boolean)), wd = weekdayOf(day);
+    for (const r of this.daily()) if (r.days.includes(wd) && !have.has(r.id)) list.push({ id: day + '_' + r.id, t: r.t, d: false, src: r.id });
     return list;
+  },
+  /** История: уникальные дела из сохранённых дней, свежие сверху. */
+  history(limit = 40) {
+    const all = this.all(), seen = new Set(), out = [];
+    for (const day of Object.keys(all).filter((k) => k !== 'daily').sort().reverse()) {
+      for (const x of Array.isArray(all[day]) ? all[day] : []) {
+        const k = String(x.t).trim().toLowerCase();
+        if (!k || seen.has(k)) continue;
+        seen.add(k); out.push({ t: x.t, day, d: !!x.d });
+      }
+    }
+    return out.slice(0, limit);
   },
   set(day, items) {
     const all = { ...this.all(), [day]: items };

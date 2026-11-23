@@ -342,3 +342,9 @@ body[data-route="player"] .toast { bottom: calc(var(--safe-bottom) + var(--tg-bo
 
 .cl-row .rep { color: var(--text3); }
 .cl-row .rep.on { color: var(--platinum); }
+
+/* Плашки уровней в «Тренировках» */
+.level-plate { display: flex; align-items: center; gap: var(--sp-3); width: 100%; text-align: left; }
+.level-plate.yours { border-color: var(--platinum); }
+.days-row { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.days-row .chip { padding: 0; justify-content: center; min-width: 0; }

@@ -59,7 +59,16 @@ export function validateDoc(key, value) {
   }
   if (key === 'todos') {
     if (!isObj(value) || Object.keys(value).length > 30) throw bad('ожидается объект по дням');
-    return Object.fromEntries(Object.entries(value).map(([day, items]) => { if (day !== 'daily' && !DAY_RE.test(day)) throw bad('некорректный день'); return [day, cleanItems(items)]; }));
+    const cleanDaily = (a) => {
+      if (!Array.isArray(a) || a.length > 60) throw bad('ожидается расписание');
+      return a.map((x) => {
+        if (!isObj(x) || !str(x.id, 64) || !ID_RE.test(x.id) || !str(x.t, 160)) throw bad('некорректное дело');
+        const days = Array.isArray(x.days) ? [...new Set(x.days)] : [1, 2, 3, 4, 5, 6, 7];
+        if (!days.length || days.length > 7 || !days.every((n) => Number.isInteger(n) && n >= 1 && n <= 7)) throw bad('некорректные дни');
+        return { id: x.id, t: x.t, d: false, days: days.sort() };
+      });
+    };
+    return Object.fromEntries(Object.entries(value).map(([day, items]) => { if (day === 'daily') return [day, cleanDaily(items)]; if (!DAY_RE.test(day)) throw bad('некорректный день'); return [day, cleanItems(items)]; }));
   }
   if (key === 'tabs') {
     if (!isObj(value)) throw bad('ожидается объект');

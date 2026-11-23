@@ -119,7 +119,7 @@ await test('Карточка: «Попробовать» запускает тр
 await test('Программа «Экспресс-круг (средний)»: 7:55, стороны боковой планки, прохождение до конца и запись в историю', async () => {
   const { page, errors, ctx } = await fresh();
   await tab(page, 'workouts');
-  await page.locator('.pcard-wide', { hasText: 'Экспресс-круг (средний)' }).click();
+  await page.locator('.level-plate:not(.plan-plate)', { hasText: 'Средний' }).click(); await page.locator('.pcard-wide', { hasText: 'Экспресс-круг (средний)' }).click();
   await page.waitForSelector('.facts');
   ok((await text(page, '.facts')).includes('7:55'), 'длительность 7:55 на карточке: ' + await text(page, '.facts'));
   ok(!(await text(page, 'body')).includes('7 минут'), 'нет названия «7 минут»');
@@ -165,7 +165,7 @@ await test('Программа «Экспресс-круг (средний)»: 7
 
 await test('Пауза не сдвигает таймер; возврат из фона засчитывает фактическое время', async () => {
   const { page, ctx } = await fresh();
-  await tab(page, 'workouts'); await page.locator('.pcard-wide', { hasText: 'Экспресс-круг' }).click(); await btn(page, 'Начать тренировку').click();
+  await tab(page, 'workouts'); await page.locator('.level-plate:not(.plan-plate)', { hasText: 'Средний' }).click(); await page.locator('.pcard-wide', { hasText: 'Экспресс-круг' }).click(); await btn(page, 'Начать тренировку').click();
   await run(page, 5000 + 10_000);
   await btn(page, 'Пауза').click();
   eq(await text(page, '.p-phase'), 'ПАУЗА', 'пауза включена');
@@ -184,7 +184,7 @@ await test('Пауза не сдвигает таймер; возврат из �
 
 await test('Выход: «продолжу позже» → карточка на главной → продолжение; отмена очищает', async () => {
   const { page, ctx } = await fresh();
-  await tab(page, 'workouts'); await page.locator('.pcard-wide', { hasText: 'Всё тело A (начальный)' }).click(); await btn(page, 'Начать тренировку').click();
+  await tab(page, 'workouts'); await page.locator('.level-plate:not(.plan-plate)', { hasText: 'Начальный' }).click(); await page.locator('.pcard-wide', { hasText: 'Всё тело A (начальный)' }).click(); await btn(page, 'Начать тренировку').click();
   await run(page, 5000 + 3000);
   await btn(page, 'Выйти из тренировки').click();
   await btn(page, 'Выйти, продолжу позже').click();
@@ -343,7 +343,7 @@ await test('Фото профиля: выбор из галереи, обрез�
   await shot(page, 'avatar-profile');
   await page.reload(); await page.waitForSelector('#tabbar button'); await tab(page, 'profile'); await page.waitForSelector('.avatar img');
   // поддержка
-  await page.getByRole('button', { name: /Написать нам/ }).click();
+  await page.getByRole('button', { name: /Написать @zhenya_zavezen/ }).click();
   ok((await page.evaluate(() => window.__tg)).some((x) => x.includes('t.me/zhenya_zavezen')), 'поддержка открывает t.me/zhenya_zavezen: ' + await page.evaluate(() => window.__tg.join()));
   // удаление фото
   await btn(page, 'Изменить фото профиля').click();
@@ -552,17 +552,53 @@ await test('Каталог без оборудования: нет рюкзак�
   eq(errors.length, 0, errors.join(' | '));
   await ctx.close();
 });
-await test('Тренировки: простой список по уровням, без оборудования; программа запускается', async () => {
+await test('Тренировки: «Мой план», три плашки уровней, программы уровня; программа запускается', async () => {
   const { page, ctx, errors } = await fresh();
-  await tab(page, 'workouts'); await page.waitForSelector('.pcard-wide');
+  await tab(page, 'workouts'); await page.waitForSelector('.level-plate');
   const txt = await text(page, '#screen');
-  for (const w of ['Для начинающих', 'Средний уровень', 'Растяжка и восстановление', 'Создать свою тренировку']) ok(txt.includes(w), 'нет: ' + w);
+  for (const w of ['Мой план', 'Начальный', 'Средний', 'Продвинутый', 'Ваш уровень', 'Растяжка и восстановление', 'Создать свою тренировку']) ok(txt.includes(w), 'есть «' + w + '»');
+  eq(await page.locator('.level-plate:not(.plan-plate)').count(), 3, 'три плашки уровней');
   ok(!/рюкзак|гантел|резинк|Premium/i.test(txt), 'нет инвентаря и Premium');
+  await page.locator('.level-plate:not(.plan-plate)', { hasText: 'Средний' }).click(); await page.waitForSelector('.pcard-wide');
   await page.locator('.pcard-wide', { hasText: 'Верх тела (средний)' }).click(); await page.waitForSelector('.facts');
   ok(!/рюкзак/i.test(await text(page, '#screen')), 'в программе нет рюкзака');
   await btn(page, /Начать тренировку/).click(); await page.waitForSelector('.player');
   eq(errors.length, 0, errors.join(' | '));
   await ctx.close();
+});
+
+await test('Мой план: из «Тренировок», не из профиля; выбор уровня меняет метку «Ваш уровень»', async () => {
+  const { page, ctx, errors } = await fresh();
+  await tab(page, 'profile');
+  ok(!(await text(page, '#screen')).includes('Мой план'), 'в профиле «Мой план» нет');
+  ok((await text(page, '#screen')).includes('Поддержка') && (await text(page, '#screen')).includes('@zhenya_zavezen'), 'поддержка с ником');
+  await tab(page, 'workouts'); await page.locator('.plan-plate').click(); await page.waitForSelector('.seg');
+  await page.locator('.seg').first().getByText('Продвинутый').click();
+  await tab(page, 'workouts');
+  eq(await page.locator('.level-plate.yours').innerText().then((x) => x.includes('Продвинутый')), true, 'метка у выбранного уровня');
+  eq(errors.length, 0, errors.join(' | ')); await ctx.close();
+});
+
+await test('Мой день: расписание по дням недели, история, добавление вручную', async () => {
+  const { page, errors, ctx } = await fresh({ pre: () => {
+    if (localStorage.getItem('seven:todos')) return;
+    const y = new Date(Date.now() - 86400000), k = y.getFullYear() + '-' + String(y.getMonth() + 1).padStart(2, '0') + '-' + String(y.getDate()).padStart(2, '0');
+    localStorage.setItem('seven:todos', JSON.stringify({ [k]: [{ id: 'a', t: 'Выпить воду', d: true }] }));
+  } });
+  await page.getByRole('button', { name: /Расписание и история/ }).click(); await page.waitForSelector('.days-row');
+  ok((await text(page, '#screen')).includes('Выпить воду'), 'вчерашнее дело в истории');
+  await page.locator('.days-row .chip').nth(0).click();                                     // Пн
+  await page.locator('.cl-addrow input').fill('Зарядка'); await page.keyboard.press('Enter');
+  await page.locator('.days-row .chip').nth(1).click();                                     // Вт
+  eq(await page.locator('.item:has(.s)').count(), 0, 'во вторник «Зарядки» нет');
+  await page.locator('.days-row .chip').nth(0).click();
+  eq(await page.locator('.item:has(.s)', { hasText: 'Зарядка' }).count(), 1, 'в понедельник есть');
+  await page.getByRole('button', { name: 'Добавить на сегодня' }).first().click();
+  await page.goBack(); await page.waitForSelector('.todo');
+  ok((await page.locator('.cl-row .cl-text').allTextContents()).includes('Выпить воду'), 'из истории добавлено на сегодня');
+  const sched = await page.evaluate(() => JSON.parse(localStorage.getItem('seven:todos')).daily);
+  eq(JSON.stringify(sched.map((x) => [x.t, x.days])), JSON.stringify([['Зарядка', [1]]]), 'расписание сохранено по дням');
+  eq(errors.length, 0, errors.join(' | ')); await ctx.close();
 });
 
 await test('Рейтинг: вкладка в нижней панели; без входа — просьба войти, без «null»', async () => {
@@ -574,7 +610,7 @@ await test('Рейтинг: вкладка в нижней панели; без 
   await tab(page, 'profile');
   const prof = await text(page, '#screen');
   ok(!/Избранные|Карта тела|Соревнования/.test(prof), 'в профиле нет избранного, карты тела и соревнований');
-  ok(prof.includes('Есть вопрос, отзыв или предложение?') && prof.includes('Написать нам'), 'блок поддержки');
+  ok(prof.includes('Есть вопрос, отзыв или предложение?') && prof.includes('Написать @zhenya_zavezen'), 'блок поддержки');
   await tab(page, 'catalog');
   await page.getByRole('button', { name: /Карта тела/ }).click();
   ok((await text(page, '#screen')).length > 20, 'карта тела открывается из «Упражнений»');

@@ -45,13 +45,14 @@ function todoCard() {
   const repeat = { toggle: (x) => {
     const daily = todos.daily();
     if (x.src) { todos.setDaily(daily.filter((r) => r.id !== x.src)); delete x.src; }
-    else { const id = 'r_' + uid(); todos.setDaily([...daily, { id, t: x.t, d: false }]); x.src = id; }
+    else { const id = 'r_' + uid(); todos.setDaily([...daily, { id, t: x.t, days: [1, 2, 3, 4, 5, 6, 7] }]); x.src = id; }
   } };
   const onRemove = (x) => { if (x.src) todos.setDaily(todos.daily().filter((r) => r.id !== x.src)); };
   const cl = checklist({ items: todos.forDay(day), save: (l) => todos.set(day, l), placeholder: t('todo.add'), onUpdate: upd, repeat, onRemove });
   return h('section', { class: 'card todo htile', dataset: { key: 'todo' }, 'aria-label': t('todo.title') },
     h('div', { class: 'row-flex', style: { justifyContent: 'space-between' } }, h('h2', { class: 'h3' }, t('todo.title')), count),
-    h('div', { class: 'bar', role: 'progressbar', 'aria-label': t('todo.title') }, bar), cl.el);
+    h('div', { class: 'bar', role: 'progressbar', 'aria-label': t('todo.title') }, bar), cl.el,
+    h('button', { class: 'link-btn row-flex', style: { gap: '4px', alignSelf: 'flex-start' }, type: 'button', onClick: () => router.go('myday') }, t('myday.open'), icon('chev-r', 16)));
 }
 
 function weekTile(hist, now) {

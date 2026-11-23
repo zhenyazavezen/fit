@@ -26,7 +26,7 @@ const askNick = (cur) => ask({ title: t('comp.nickTitle'), text: t('comp.nickTex
 
 export default function compete() {
   const el = h('div'), body = h('div', { class: 'pad stack' });
-  el.append(topbar({ title: t('comp.title') }), body);
+  el.append(topbar({ title: t('comp.title'), back: false }), body);
   const st = { me: null, view: null, period: 'week' };
 
   if (!apiEnabled() || !auth.signedIn) {

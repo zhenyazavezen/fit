@@ -221,3 +221,14 @@ test('Новые документы: некорректные данные от�
   ];
   for (const [k, v] of bad) { const r = await push(e, a.token, { docs: { [k]: { value: v, updatedAt: T0 } } }); assert.ok(r.status === 400 || r.status === 413, k + ' → ' + r.status); }
 });
+
+test('Расписание дел: дни недели 1–7 принимаются, некорректные отклоняются', async () => {
+  const e = env(), a = await tg(e);
+  const put = (daily) => push(e, a.token, { docs: { todos: { value: { daily }, updatedAt: T0 } } });
+  assert.equal((await put([{ id: 'r_1', t: 'Зарядка', days: [3, 1, 3] }])).status, 200);
+  const got = (await call(e, req('GET', '/sync?since=0', { token: a.token }))).body.docs.find((d) => d.key === 'todos').value.daily;
+  assert.deepEqual(got[0].days, [1, 3]);
+  assert.equal((await put([{ id: 'r_1', t: 'X', days: [0] }])).status, 400);
+  assert.equal((await put([{ id: 'r_1', t: 'X', days: [] }])).status, 400);
+  assert.equal((await put([{ id: 'r_1', t: 'X', days: [8] }])).status, 400);
+});
