@@ -70,7 +70,7 @@ export default function catalog(params = {}) {
 
   input.addEventListener('input', debounce(() => { F.q = input.value; clear.hidden = !F.q; draw(); }, 120));
   input.addEventListener('input', () => { clear.hidden = !input.value; });
-  el.append(h('div', { class: 'catalog-head' }, h('div', { class: 'row-flex', style: { justifyContent: 'space-between' } }, h('h1', { class: 'h1 page-title' }, t('catalog.title')), h('button', { class: 'chip', type: 'button', onClick: () => router.go('bodymap') }, icon('target'), t('map.title'))),
+  el.append(h('div', { class: 'catalog-head' }, h('h1', { class: 'h1 page-title' }, t('catalog.title')),
     h('div', { class: 'search' }, icon('search'), input, clear), h('div', { style: { height: '12px' } }), chipsBox), count, list);
   drawChips(); draw();
   return { el };

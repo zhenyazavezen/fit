@@ -160,6 +160,14 @@ export const todos = {
   },
 };
 
+// ---- Расписание тренировок: { days: { '1': id программы | 'rest' } }, 1 = понедельник
+export const weekPlan = {
+  all() { const v = store.get('week', null); return v && typeof v === 'object' && v.days && typeof v.days === 'object' ? v.days : {}; },
+  get(wd) { const x = this.all()[wd]; return typeof x === 'string' && x ? x : null; },
+  set(wd, id) { const days = { ...this.all() }; if (id) days[wd] = id; else delete days[wd]; return store.set('week', { days }); },
+  any() { return Object.values(this.all()).some(Boolean); },
+};
+
 // ---- Нижняя панель: { order:[id…], hidden:[id…], custom:[{id,name,icon}] }; страницы своих вкладок: { id: {note, items:[{id,t,d}]} }
 export const tabsCfg = {
   get() { const v = store.get('tabs', null); return v && typeof v === 'object' && !Array.isArray(v) ? { order: v.order || [], hidden: v.hidden || [], custom: v.custom || [] } : { order: [], hidden: [], custom: [] }; },

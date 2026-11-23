@@ -43,7 +43,6 @@ export default function plan() {
 
   const b = bmi(p);
   el.append(topbar({ title: t('plan.title') }),
-    noteBox(t('plan.intro')),
     authPromptCard(),
     single(t('plan.level'), LEVELS, 'level', 'level.'),
     single(t('plan.goal'), PROFILE_GOALS, 'goal', 'pgoal.'),
@@ -53,8 +52,7 @@ export default function plan() {
     h('h2', { class: 'h3 group-title' }, t('plan.params')),
     h('div', { class: 'row-flex', style: { gap: '12px' } }, field(t('plan.age'), 'age', 14, 99), field(t('plan.height'), 'heightCm', 100, 230), field(t('plan.weight'), 'weightKg', 30, 300)),
     b ? h('p', { class: 'small muted' }, t('plan.bmiNote')) : null,
-    recBox,
-    h('button', { class: 'btn ghost', style: { marginTop: '12px', width: '100%' }, onClick: () => router.go('bodymap') }, t('plan.openMap')));
+    recBox);
   renderRecs();
   return { el };
 }

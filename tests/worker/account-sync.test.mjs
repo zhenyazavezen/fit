@@ -232,3 +232,12 @@ test('Расписание дел: дни недели 1–7 принимают�
   assert.equal((await put([{ id: 'r_1', t: 'X', days: [] }])).status, 400);
   assert.equal((await put([{ id: 'r_1', t: 'X', days: [8] }])).status, 400);
 });
+
+test('Расписание тренировок: дни 1–7 и id программы или «rest»; лишнее отклоняется', async () => {
+  const e = env(), a = await tg(e);
+  const put = (days) => push(e, a.token, { docs: { week: { value: { days }, updatedAt: T0 } } });
+  assert.equal((await put({ 1: 'p_full_a', 3: 'rest', 7: 'u_abc' })).status, 200);
+  assert.equal((await put({ 8: 'x' })).status, 400);
+  assert.equal((await put({ 1: '<script>' })).status, 400);
+  assert.equal((await put({ 1: 5 })).status, 400);
+});

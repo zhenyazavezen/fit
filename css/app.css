@@ -348,3 +348,6 @@ body[data-route="player"] .toast { bottom: calc(var(--safe-bottom) + var(--tg-bo
 .level-plate.yours { border-color: var(--platinum); }
 .days-row { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
 .days-row .chip { padding: 0; justify-content: center; min-width: 0; }
+
+.stepper .icon-btn { touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.plan-today { gap: var(--sp-2); display: flex; flex-direction: column; }

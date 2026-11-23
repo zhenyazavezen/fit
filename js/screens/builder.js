@@ -9,7 +9,7 @@ import { sortByName, filterExercises, emptyFilter } from '../catalog.js';
 
 export default function builder({ id } = {}) {
   const existing = id ? customPrograms.get(id) : null;
-  const st = { name: existing?.name || '', rest: existing?.restBetween ?? 30, items: existing ? existing.items.filter((i) => D.exById.has(i.ex)).map((i) => ({ ...i })) : [] };
+  const st = { name: existing?.name || '', rest: Math.max(1, existing?.restBetween ?? 30), items: existing ? existing.items.filter((i) => D.exById.has(i.ex)).map((i) => ({ ...i })) : [] };
   let dirty = false, off = null;
   const touch = () => { dirty = true; renderItems(); validate(); };
 
@@ -43,7 +43,7 @@ export default function builder({ id } = {}) {
     const drawVal = () => {
       valBox.replaceChildren(kind === 'reps'
         ? row(t('builder.reps'), stepper({ value: reps, min: 1, max: 100, onChange: (v) => { reps = v; }, label: t('builder.reps') }))
-        : row(t('builder.seconds'), stepper({ value: secs, min: 5, max: 600, step: 5, onChange: (v) => { secs = v; }, label: t('builder.seconds') })));
+        : row(t('builder.seconds'), stepper({ value: secs, min: 1, max: 600, step: 1, onChange: (v) => { secs = v; }, label: t('builder.seconds') })));
     };
     drawVal();
     const s = sheet({
@@ -83,6 +83,11 @@ export default function builder({ id } = {}) {
     });
   }
 
+  const addById = (ex) => {
+    const d = ex.defaults; st.items.push(d.seconds && ex.mode === 'time' ? { ex: ex.id, sets: d.sets, seconds: d.seconds } : { ex: ex.id, sets: d.sets, reps: d.reps });
+    touch();
+  };
+
   function pick() {
     let q = '', added = 0;
     const input = h('input', { class: 'input', id: 'pick-q', type: 'search', placeholder: t('catalog.search'), 'aria-label': t('catalog.search') });
@@ -109,7 +114,7 @@ export default function builder({ id } = {}) {
     };
     input.addEventListener('input', () => { q = input.value; draw(); });
     draw();
-    const s = sheet({ title: t('builder.pick'), body: [h('button', { class: 'btn secondary', onClick: () => newExercise((rec) => { q = ''; input.value = ''; addEx(D.exById.get(rec.id)); draw(); }) }, icon('plus'), t('myex.new')), input, counter, list], foot: [h('button', { class: 'btn', onClick: () => s.close() }, t('common.done'))] });
+    const s = sheet({ title: t('builder.pick'), body: [input, counter, list], foot: [h('button', { class: 'btn', onClick: () => s.close() }, t('common.done'))] });
   }
 
   async function save() {
@@ -124,9 +129,11 @@ export default function builder({ id } = {}) {
   el.append(topbar({ title: existing ? t('builder.edit') : t('builder.new') }),
     h('div', { class: 'pad stack' },
       h('div', null, h('label', { class: 'eyebrow', for: 'prog-name', style: { display: 'block', marginBottom: '8px' } }, t('builder.name')), nameInput),
-      row(t('builder.rest'), stepper({ value: st.rest, min: 0, max: 180, step: 5, onChange: (v) => { st.rest = v; dirty = true; renderItems(); }, label: t('builder.rest') })),
-      h('h2', { class: 'h3' }, t('builder.items')), itemsBox,
+      row(t('builder.rest'), stepper({ value: st.rest, min: 1, max: 180, step: 1, onChange: (v) => { st.rest = v; dirty = true; renderItems(); }, label: t('builder.rest') })),
+      h('h2', { class: 'h3' }, t('builder.items')),
+      h('button', { class: 'btn secondary', onClick: () => newExercise((rec) => addById(D.exById.get(rec.id))) }, icon('plus'), t('builder.createEx')),
       h('button', { class: 'btn secondary', onClick: pick }, icon('plus'), t('builder.add')),
+      itemsBox,
       hint, saveBtn));
   renderItems(); validate();
 

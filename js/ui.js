@@ -35,12 +35,24 @@ export function toggle(checked, onChange, label) {
   return b;
 }
 
+/** Нажатие — один шаг; удержание — шаги повторяются сами и ускоряются (на больших диапазонах). */
+function holdRepeat(btn, fn, range) {
+  let timer = null, iv = null, held = false, n = 0;
+  const stop = () => { clearTimeout(timer); clearInterval(iv); timer = iv = null; };
+  const tick = () => { if (btn.disabled) { stop(); return; } n += 1; fn(range > 60 && n > 30 ? 5 : range > 20 && n > 12 ? 2 : 1); };
+  btn.addEventListener('pointerdown', () => { if (btn.disabled) return; held = false; n = 0; timer = setTimeout(() => { held = true; tick(); iv = setInterval(tick, 85); }, 400); });
+  for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) btn.addEventListener(ev, stop);
+  btn.addEventListener('contextmenu', (e) => e.preventDefault());
+  btn.addEventListener('click', (e) => { if (held) { held = false; e.preventDefault(); return; } fn(1); });
+}
+
 export function stepper({ value, min, max, step = 1, onChange, format = String, label = '' }) {
   let v = value;
   const out = h('div', { class: 'val num', 'aria-live': 'polite' }, format(v));
   const set = (n) => { v = Math.min(max, Math.max(min, n)); out.textContent = format(v); minus.disabled = v <= min; plus.disabled = v >= max; onChange(v); };
-  const minus = h('button', { class: 'icon-btn', type: 'button', 'aria-label': label + ' −', onClick: () => set(v - step) }, icon('minus'));
-  const plus = h('button', { class: 'icon-btn', type: 'button', 'aria-label': label + ' +', onClick: () => set(v + step) }, icon('plus'));
+  const minus = h('button', { class: 'icon-btn', type: 'button', 'aria-label': label + ' −' }, icon('minus'));
+  const plus = h('button', { class: 'icon-btn', type: 'button', 'aria-label': label + ' +' }, icon('plus'));
+  holdRepeat(minus, (k) => set(v - step * k), max - min); holdRepeat(plus, (k) => set(v + step * k), max - min);
   minus.disabled = v <= min; plus.disabled = v >= max;
   return h('div', { class: 'stepper' }, minus, out, plus);
 }

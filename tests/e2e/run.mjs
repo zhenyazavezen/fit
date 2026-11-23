@@ -250,12 +250,10 @@ await test('Конструктор: своё упражнение создаёт
   const { page, errors, ctx } = await fresh();
   await tab(page, 'workouts'); 
   await btn(page, 'Создать свою тренировку').click(); await page.fill('#prog-name', 'С нуля');
-  await btn(page, 'Добавить упражнение').click();
-  await btn(page, 'Своё упражнение').tap();
+  await btn(page, 'Создать своё упражнение').click();
   await page.locator('.sheet input[type=text]').last().fill('Отжимания на кулаках');
   await btn(page, 'Создать и добавить').tap();
-  await page.waitForSelector('.sheet #pick-q');
-  await btn(page, 'Готово').last().tap();
+  await page.waitForSelector('.item .lead');
   ok((await text(page, '.list')).includes('Отжимания на кулаках'), 'своё упражнение в программе');
   await page.locator('.btn', { hasText: 'Сохранить программу' }).tap(); await page.waitForSelector('.facts');
   await btn(page, 'Начать тренировку').tap(); await page.waitForSelector('.player');
@@ -572,7 +570,7 @@ await test('Мой план: из «Тренировок», не из профи
   await tab(page, 'profile');
   ok(!(await text(page, '#screen')).includes('Мой план'), 'в профиле «Мой план» нет');
   ok((await text(page, '#screen')).includes('Поддержка') && (await text(page, '#screen')).includes('@zhenya_zavezen'), 'поддержка с ником');
-  await tab(page, 'workouts'); await page.locator('.plan-plate').click(); await page.waitForSelector('.seg');
+  await tab(page, 'workouts'); await page.locator('.plan-plate', { hasText: 'Мой план' }).click(); await page.waitForSelector('.seg');
   await page.locator('.seg').first().getByText('Продвинутый').click();
   await tab(page, 'workouts');
   eq(await page.locator('.level-plate.yours').innerText().then((x) => x.includes('Продвинутый')), true, 'метка у выбранного уровня');
@@ -601,6 +599,44 @@ await test('Мой день: расписание по дням недели, и
   eq(errors.length, 0, errors.join(' | ')); await ctx.close();
 });
 
+await test('Расписание тренировок: составить неделю, на главной — тренировка на сегодня', async () => {
+  const { page, errors, ctx } = await fresh();
+  await tab(page, 'workouts');
+  const order = await page.locator('#screen > .pad > *').evaluateAll((n) => n.slice(0, 3).map((e) => e.innerText.split('\n')[0]));
+  ok(/Создать свою тренировку/.test(order.join('|')) && order.join('|').indexOf('Создать') < order.join('|').indexOf('Карта тела'), 'кнопка «Создать» выше карты тела');
+  await page.getByRole('button', { name: /Расписание тренировок/ }).click(); await page.waitForSelector('.item .lead');
+  const today = await page.locator('.item.me').count();
+  eq(today, 1, 'сегодняшний день отмечен');
+  await page.locator('.item.me').click();
+  await page.locator('.sheet .item', { hasText: /Экспресс-круг/ }).first().click();
+  ok((await text(page, '.item.me')).includes('Экспресс-круг'), 'программа выбрана на сегодня');
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('seven:week')).days);
+  eq(Object.keys(saved).length, 1, 'расписание сохранено');
+  await tab(page, 'home');
+  await page.waitForSelector('.plan-today');
+  ok((await text(page, '.plan-today')).includes('Экспресс-круг'), 'на главной тренировка на сегодня');
+  await page.locator('.plan-today .btn').click(); await page.waitForSelector('.facts');
+  ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
+});
+
+await test('Конструктор: «Создать своё упражнение» и «Добавить упражнение»; отдых от 1 с, удержание меняет значение', async () => {
+  const { page, errors, ctx } = await fresh();
+  await tab(page, 'workouts'); await btn(page, /Создать свою тренировку/).click(); await page.waitForSelector('.stepper');
+  const names = await page.locator('.pad > .btn').allTextContents();
+  eq(names.slice(0, 2).join('|'), 'Создать своё упражнение|Добавить упражнение', 'две плашки по порядку');
+  const val = () => page.locator('.stepper .val').first().innerText();
+  eq(await val(), '30', 'отдых по умолчанию 30');
+  const minus = page.locator('.stepper .icon-btn').first();
+  const box = await minus.boundingBox();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await page.mouse.down();
+  await page.clock.runFor(400 + 85 * 40); await page.mouse.up();
+  eq(await val(), '1', 'при удержании доходит до 1 секунды и останавливается');
+  ok(await minus.isDisabled(), 'ниже 1 не опускается');
+  await page.locator('.stepper .icon-btn').nth(1).click();
+  eq(await val(), '2', 'один шаг = одна секунда');
+  ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
+});
+
 await test('Рейтинг: вкладка в нижней панели; без входа — просьба войти, без «null»', async () => {
   const { page, errors, ctx } = await fresh();
   await tab(page, 'compete');
@@ -611,9 +647,9 @@ await test('Рейтинг: вкладка в нижней панели; без 
   const prof = await text(page, '#screen');
   ok(!/Избранные|Карта тела|Соревнования/.test(prof), 'в профиле нет избранного, карты тела и соревнований');
   ok(prof.includes('Есть вопрос, отзыв или предложение?') && prof.includes('Написать @zhenya_zavezen'), 'блок поддержки');
-  await tab(page, 'catalog');
+  await tab(page, 'workouts');
   await page.getByRole('button', { name: /Карта тела/ }).click();
-  ok((await text(page, '#screen')).length > 20, 'карта тела открывается из «Упражнений»');
+  ok((await text(page, '#screen')).length > 20, 'карта тела открывается из «Тренировок»');
   ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
 });
 
