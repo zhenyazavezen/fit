@@ -40,7 +40,10 @@ export default function catalog(params = {}) {
   }
 
   function draw() {
-    const res = sortByName(filtered(), D.content.exercises);
+    // Избранное — сверху: чем позже добавлено, тем выше; остальные по алфавиту.
+    const favOrder = favorites.all(), rank = (id) => favOrder.indexOf(id);
+    const sorted = sortByName(filtered(), D.content.exercises);
+    const res = [...sorted.filter((e) => rank(e.id) >= 0).sort((a, b) => rank(b.id) - rank(a.id)), ...sorted.filter((e) => rank(e.id) < 0)];
     count.textContent = t('catalog.found', { n: res.length });
     if (!res.length) {
       list.replaceChildren(empty({ icon: 'search', title: t('catalog.emptyTitle'), text: F.favsOnly && !favorites.all().length ? t('catalog.emptyFavs') : t('catalog.emptyText'),

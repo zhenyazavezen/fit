@@ -637,6 +637,27 @@ await test('Конструктор: «Создать своё упражнени
   ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
 });
 
+await test('Избранное поднимается наверх списка упражнений; расписание: окно выбора не схлопывается, свои тренировки доступны', async () => {
+  const { page, errors, ctx } = await fresh({ pre: () => {
+    if (localStorage.getItem('seven:programs')) return;
+    localStorage.setItem('seven:programs', JSON.stringify([{ id: 'u_mine', name: 'Моя зарядка', restBetween: 20, items: [{ ex: 'squat', sets: 2, reps: 10 }], custom: true }]));
+  } });
+  await tab(page, 'catalog'); await page.waitForSelector('.list .item');
+  const names = () => page.locator('.list .item .t').allTextContents();
+  const before = await names(); const target = before[5];
+  await page.locator('.list .item', { hasText: target }).first().click(); await page.waitForSelector('.fav-btn');
+  await page.locator('.fav-btn').click();
+  await page.goBack(); await page.waitForSelector('.list .item');
+  eq((await names())[0], target, 'добавленное в избранное стало первым');
+  await tab(page, 'workouts'); await page.getByRole('button', { name: /Расписание тренировок/ }).click(); await page.waitForSelector('.item .lead');
+  await page.locator('.item.me').click(); await page.waitForSelector('.sheet .item');
+  const hs = await page.locator('.sheet .list').evaluateAll((n) => n.map((e) => e.scrollHeight - e.clientHeight));
+  ok(hs.every((d) => d <= 1), 'списки в окне не обрезаются: ' + hs.join());
+  await page.locator('.sheet .item', { hasText: 'Моя зарядка' }).click();
+  ok((await text(page, '.item.me')).includes('Моя зарядка'), 'своя тренировка выбрана в расписании');
+  ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
+});
+
 await test('Рейтинг: вкладка в нижней панели; без входа — просьба войти, без «null»', async () => {
   const { page, errors, ctx } = await fresh();
   await tab(page, 'compete');
