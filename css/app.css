@@ -22,7 +22,7 @@ h1, h2, h3, p { margin: 0; }
   height: var(--app-h, 100%); max-width: var(--maxw); margin: 0 auto; display: flex; flex-direction: column;
   background: var(--bg); position: relative; overflow: hidden;
 }
-#screen { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding-top: var(--tg-top); outline: none; }
+#screen { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; margin-top: var(--tg-top); outline: none; }
 #screen.enter > * { animation: rise .26s var(--ease); }
 @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { #screen.enter > *, .sheet, .scrim, .toast { animation: none !important; } * { transition: none !important; } }
@@ -313,7 +313,7 @@ body[data-route="player"] .toast { bottom: calc(var(--safe-bottom) + var(--tg-bo
 /* Нижняя панель прокручивается; в конце «+» */
 #tabbar { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; touch-action: pan-x; overscroll-behavior-x: contain; }
 #tabbar::-webkit-scrollbar { display: none; }
-#tabbar button { flex: 1 0 72px; min-width: 72px; }
+#tabbar button { flex: 1 0 70px; min-width: 70px; }
 #tabbar button.tab-add { flex: 0 0 64px; min-width: 64px; }
 
 /* Календарь */
@@ -351,3 +351,5 @@ body[data-route="player"] .toast { bottom: calc(var(--safe-bottom) + var(--tg-bo
 
 .stepper .icon-btn { touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .plan-today { gap: var(--sp-2); display: flex; flex-direction: column; }
+.seg button { min-width: 0; padding-inline: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 360px) { .seg button { font-size: var(--fs-s); } }

@@ -18,11 +18,11 @@ export default function builder({ id } = {}) {
   const itemsBox = h('div'), hint = h('p', { class: 'small muted' }, t('builder.hint'));
   const saveBtn = h('button', { class: 'btn', type: 'button', onClick: save }, t('builder.save'));
 
-  function validate() { const ok = st.name.trim().length > 0 && st.items.length > 0; saveBtn.disabled = !ok; hint.hidden = ok; }
+  function validate() { const ok = st.name.trim().length >= 2 && st.items.length > 0; saveBtn.disabled = !ok; hint.hidden = ok; }
 
   function renderItems() {
     itemsBox.replaceChildren();
-    if (!st.items.length) { itemsBox.append(h('p', { class: 'muted small' }, t('builder.itemsEmpty'))); return; }
+    if (!st.items.length) return;
     itemsBox.append(h('div', { class: 'list' }, ...st.items.map((it, i) => {
       const r = resolved(it, st.rest);
       return h('div', { class: 'item' },

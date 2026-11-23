@@ -582,7 +582,6 @@
   "week.restSub": "Без тренировки",
   "week.none": "Не выбрано",
   "week.clear": "Очистить день",
-  "week.choose": "что делаем",
   "week.today": "Сегодня",
   "week.todayPlan": "Сегодня по расписанию",
   "week.restToday": "Сегодня день отдыха",
@@ -590,5 +589,6 @@
   "week.open": "Открыть расписание",
   "week.start": "Начать",
   "week.done": "Тренировка выполнена",
-  "week.todayIs": "Сегодня: {name}"
+  "week.todayIs": "Сегодня: {name}",
+  "week.chooseFor": "{day}: что тренируем?"
 }

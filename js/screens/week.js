@@ -23,7 +23,7 @@ export default function week() {
     const progs = allPrograms();
     const group = (title, list) => (list.length ? [h('h3', { class: 'eyebrow', style: { margin: '12px 0 6px' } }, title), h('div', { class: 'list' }, ...list.map((p) => mk(p.id, progText(p).name, durationLabel(programEstimate(p)))))] : []);
     const ready = progs.filter((p) => !p.custom);
-    const s = sheet({ title: t('day.' + (wd - 1)) + ' · ' + t('week.choose'), body: [
+    const s = sheet({ title: t('week.chooseFor', { day: t('day.' + (wd - 1)) }), body: [
       h('div', { class: 'list' }, mk('rest', t('week.rest'), t('week.restSub'), 'moon'), weekPlan.get(wd) ? h('button', { class: 'item', onClick: () => { weekPlan.set(wd, null); s.close(); draw(); } }, icon('x'), h('div', { class: 'grow t' }, t('week.clear'))) : null),
       ...group(t('workouts.mineTitle'), progs.filter((p) => p.custom)),
       ...['beginner', 'intermediate', 'advanced'].flatMap((lv) => group(t('level.' + lv), ready.filter((p) => p.level === lv && !p.id.startsWith('r')))),
