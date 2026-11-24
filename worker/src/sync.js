@@ -85,8 +85,9 @@ export function validateDoc(key, value) {
         if (!/^[1-7]$/.test(k) || !isObj(p) || !Array.isArray(p.items) || p.items.length > 60) throw bad('некорректный план дня');
         plans[k] = { items: p.items.map((it) => {
           if (!isObj(it) || !str(it.ex, 64) || !ID_RE.test(it.ex)) throw bad('некорректное упражнение');
-          const o = { ex: it.ex }, sets = num(it.sets, 1, 20), reps = num(it.reps, 1, 500), seconds = num(it.seconds, 1, 3600);
-          if (sets) o.sets = sets; if (reps) o.reps = reps; if (seconds) o.seconds = seconds;
+          const o = { ex: it.ex }, sets = num(it.sets, 1, 20), reps = num(it.reps, 1, 500), seconds = num(it.seconds, 1, 3600), rest = num(it.rest, 1, 600);
+          if (sets) o.sets = sets; if (reps) o.reps = reps; if (seconds) o.seconds = seconds; if (rest) o.rest = rest;
+          if (finite(it.kg, 0.1, 1000)) o.kg = Math.round(it.kg * 10) / 10;
           return o;
         }) };
       }
@@ -125,6 +126,14 @@ export function cleanSession(s) {
   if (finite(s.exercisesDone, 0, 200)) o.exercisesDone = Math.round(s.exercisesDone);
   if (Array.isArray(s.exerciseIds)) o.exerciseIds = s.exerciseIds.filter((x) => str(x, 64)).slice(0, 100);
   if (typeof s.completed === 'boolean') o.completed = s.completed;
+  if (Array.isArray(s.log)) o.log = s.log.slice(0, 60).filter((x) => isObj(x) && str(x.ex, 64) && ID_RE.test(x.ex)).map((x) => {
+    const e = { ex: x.ex };
+    if (finite(x.sets, 1, 50)) e.sets = Math.round(x.sets);
+    if (finite(x.reps, 1, 1000)) e.reps = Math.round(x.reps);
+    if (finite(x.seconds, 1, 7200)) e.seconds = Math.round(x.seconds);
+    if (finite(x.kg, 0.1, 1000)) e.kg = Math.round(x.kg * 10) / 10;
+    return e;
+  });
   return o;
 }
 

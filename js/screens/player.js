@@ -183,7 +183,8 @@ export default function player(params = {}) {
     let savedOk = true;
     if (r.setsDone > 0) {
       savedOk = !!history.add({ at: now, startedAt: now - r.durationSec * 1000, durationSec: r.durationSec, title: plan.title, programId: plan.programId, kind: plan.kind,
-        setsDone: r.setsDone, exercisesDone: r.exercisesDone, exerciseIds: r.exerciseIds, completed: r.completed });
+        setsDone: r.setsDone, exercisesDone: r.exercisesDone, exerciseIds: r.exerciseIds, completed: r.completed,
+        log: r.exerciseIds.map((id) => plan.items.find((i) => i.ex === id)).filter(Boolean).map((i) => { const x = resolved(i, plan.restBetween); const o = { ex: x.ex, sets: x.sets }; if (x.kind === 'reps') o.reps = x.reps; else o.seconds = x.seconds; if (x.kg) o.kg = x.kg; return o; }) });
     }
     activeSession.clear();
     tg.confirmClose(false);

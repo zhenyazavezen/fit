@@ -4,7 +4,7 @@ import * as router from '../router.js';
 import { history } from '../store.js';
 import { period, groupByDay, streak } from '../stats.js';
 import { dayKey, startOfDay, addDays } from '../dates.js';
-import { spentLabel } from '../format.js';
+import { spentLabel, doseLabel } from '../format.js';
 import { exName } from '../data.js';
 import { segmented, empty, sheet, confirmDialog, toast } from '../ui.js';
 
@@ -77,13 +77,14 @@ export default function progress() {
   };
   const tile = (v, l) => h('div', { class: 'fact' }, h('div', { class: 'v' }, v), h('div', { class: 'l' }, l));
 
+  const logOf = (s, id, i) => { const l = (s.log || [])[i]?.ex === id ? s.log[i] : (s.log || []).find((x) => x.ex === id); return l ? doseLabel({ kind: l.seconds != null ? 'timed' : 'reps', ...l }) : ''; };
   function openRecord(s) {
     const ids = s.exerciseIds || [];
     const sh = sheet({
       title: s.title || t('progress.customWorkout'),
       body: [h('div', { class: 'small muted' }, `${fmtDate(s.at, { weekday: 'long', day: 'numeric', month: 'long' })}, ${timeOf(s.at)} · ${s.completed ? t('progress.completed') : t('progress.partial')}`),
         h('div', { class: 'facts' }, tile(spentLabel(s.durationSec), t('progress.time')), tile(String(s.setsDone), t('progress.sets')), tile(String(s.exercisesDone), t('player.finishExercises'))),
-        ids.length ? h('div', { class: 'list' }, ...ids.map((id, i) => h('div', { class: 'item', style: { minHeight: '52px' } }, h('div', { class: 'lead' }, String(i + 1)), h('div', { class: 't' }, exName(id)))))
+        ids.length ? h('div', { class: 'list' }, ...ids.map((id, i) => h('div', { class: 'item', style: { minHeight: '52px' } }, h('div', { class: 'lead' }, String(i + 1)), h('div', { class: 'grow' }, h('div', { class: 't' }, exName(id)), logOf(s, id, i) ? h('div', { class: 's' }, logOf(s, id, i)) : null))))
           : h('p', { class: 'small muted' }, t('progress.noExercises'))],
       foot: [h('button', { class: 'btn danger', onClick: async () => {
         if (await confirmDialog({ title: t('progress.deleteTitle'), text: t('progress.deleteText'), confirm: t('common.delete'), danger: true })) { history.remove(s.id); sh.close(); toast(t('progress.deleted')); router.refresh(); }

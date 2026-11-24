@@ -22,6 +22,7 @@ export function doseLabel(it, { withSides = true } = {}) {
   let s;
   if (it.kind === 'timed') s = it.sets > 1 ? t('dose.timed', { sets: it.sets, sec: it.seconds }) : t('dose.timed1', { sec: it.seconds });
   else s = it.sets > 1 ? t('dose.reps', { sets: it.sets, reps: it.reps }) : t('dose.reps1', { reps: it.reps });
+  if (it.kg > 0) s += ' · ' + t('dose.kg', { kg: it.kg });
   if (withSides && it.sides === 'sequential') s += ' · ' + t('dose.perSide');
   else if (withSides && it.sides === 'alternating') s += ' · ' + t('dose.alternating');
   return s;

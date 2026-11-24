@@ -184,7 +184,7 @@ test('Все программы собираются, ссылки на упра
 
 test('resolveItem: значения по умолчанию, приоритет элемента программы над упражнением', () => {
   const ex = exById.get('plank');
-  assert.deepEqual(resolveItem({ ex: 'plank' }, ex, 25), { ex: 'plank', kind: 'timed', sets: 3, reps: null, seconds: 30, rest: 25, sides: 'none', switchSec: 0 });
+  assert.deepEqual(resolveItem({ ex: 'plank' }, ex, 25), { ex: 'plank', kind: 'timed', sets: 3, reps: null, seconds: 30, rest: 25, kg: 0, sides: 'none', switchSec: 0 });
   assert.equal(resolveItem({ ex: 'plank', sets: 1, seconds: 15, rest: 5 }, ex, 25).rest, 5);
   assert.equal(resolveItem({ ex: 'pushup', seconds: 30 }, exById.get('pushup')).kind, 'timed');
 });

@@ -17,6 +17,7 @@ export function itemFromEx(ex) {
 /** Окно правки одного упражнения. onSave(новыйЭлемент). */
 export function editItem(it, rest, onSave) {
   const ex = D.exById.get(it.ex), r = resolved(it, rest);
+  let kg = it.kg > 0 ? it.kg : 0, restSec = r.rest;
   let kind = r.kind, sets = r.sets, reps = r.reps ?? ex.defaults.reps ?? 10, secs = r.seconds ?? ex.defaults.seconds ?? 30;
   const valBox = h('div');
   const drawVal = () => {
@@ -31,9 +32,12 @@ export function editItem(it, rest, onSave) {
       row(t('builder.sets'), stepper({ value: sets, min: 1, max: 10, onChange: (v) => { sets = v; }, label: t('builder.sets') })),
       h('div', null, h('div', { class: 'eyebrow', style: { marginBottom: '8px' } }, t('builder.type')),
         segmented([{ value: 'reps', label: t('builder.reps') }, { value: 'timed', label: t('builder.seconds') }], kind, (v) => { kind = v; drawVal(); })),
-      valBox],
+      valBox,
+      row(t('builder.kg'), stepper({ value: kg, min: 0, max: 300, step: 0.5, onChange: (v) => { kg = v; }, label: t('builder.kg') })),
+      row(t('builder.restEx'), stepper({ value: restSec, min: 1, max: 300, step: 5, onChange: (v) => { restSec = v; }, label: t('builder.restEx') }))],
     foot: [h('button', { class: 'btn', onClick: () => {
       const next = { ex: it.ex, sets }; if (kind === 'reps') next.reps = reps; else next.seconds = secs;
+      if (kg > 0) next.kg = kg; if (restSec !== r.rest || it.rest != null) next.rest = restSec;
       s.close(); onSave(next);
     } }, t('common.done'))],
   });

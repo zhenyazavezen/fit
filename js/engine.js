@@ -25,6 +25,7 @@ export function resolveItem(item, ex, restBetween) {
     reps: kind === 'reps' ? (item.reps ?? d.reps ?? 10) : null,
     seconds: kind === 'timed' ? (item.seconds ?? d.seconds ?? 30) : null,
     rest: item.rest ?? restBetween ?? d.rest ?? ENGINE.restFallback,
+    kg: item.kg > 0 ? item.kg : 0,
     sides: ex.sides || 'none',
     switchSec: item.switchSec ?? ex.switchSec ?? 0,
   };

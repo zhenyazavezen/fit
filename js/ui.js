@@ -49,7 +49,7 @@ function holdRepeat(btn, fn, range) {
 export function stepper({ value, min, max, step = 1, onChange, format = String, label = '' }) {
   let v = value;
   const out = h('div', { class: 'val num', 'aria-live': 'polite' }, format(v));
-  const set = (n) => { v = Math.min(max, Math.max(min, n)); out.textContent = format(v); minus.disabled = v <= min; plus.disabled = v >= max; onChange(v); };
+  const set = (n) => { v = Math.round(Math.min(max, Math.max(min, n)) * 10) / 10; out.textContent = format(v); minus.disabled = v <= min; plus.disabled = v >= max; onChange(v); };
   const minus = h('button', { class: 'icon-btn', type: 'button', 'aria-label': label + ' −' }, icon('minus'));
   const plus = h('button', { class: 'icon-btn', type: 'button', 'aria-label': label + ' +' }, icon('plus'));
   holdRepeat(minus, (k) => set(v - step * k), max - min); holdRepeat(plus, (k) => set(v + step * k), max - min);

@@ -615,7 +615,9 @@ await test('Расписание тренировок: составить нед
   await page.locator('.item .icon-btn[aria-label="Ниже"]').first().click();
   const n1 = await names(); eq(n1[0], n0[1], 'порядок изменён'); eq(n1[1], n0[0], 'порядок изменён (2)');
   await page.locator('.list .item .grow').first().click(); await page.waitForSelector('.sheet .stepper');
+  await page.locator('.sheet .stepper').nth(2).getByRole('button', { name: /\+/ }).click();
   await page.locator('.sheet .btn', { hasText: 'Готово' }).click();
+  ok((await page.locator('.list .item').first().innerText()).includes('0.5 кг'), 'рабочий вес показан в списке дня');
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('seven:week')));
   eq(saved.plans[Object.keys(saved.plans)[0]].items.length, 2, 'расписание сохранено сразу');
   await page.locator('.item .icon-btn[aria-label="Убрать"]').first().click();
