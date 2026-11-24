@@ -26,12 +26,9 @@ export default function myday({ kind } = {}) {
 
   function draw() {
     const mine = todos.daily().filter((r) => r.days.includes(st.wd));
-    const input = h('textarea', { class: 'input cl-input', rows: '1', maxlength: '2000', placeholder: t(P + '.add'), 'aria-label': t(P + '.add'), enterkeyhint: 'enter' });
-    input.addEventListener('input', () => { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 140) + 'px'; });
-    const add = () => {
-      const lines = input.value.split(/\r?\n/).map((x) => x.replace(/^\s*(?:[-•*]|\d+[.)])\s+/, '').trim().slice(0, 160)).filter(Boolean).slice(0, 30);
-      if (lines.length) schedule(lines, st.all ? ALL : [st.wd]);
-    };
+    const input = h('input', { class: 'input', type: 'text', maxlength: '160', placeholder: t(P + '.add'), 'aria-label': t(P + '.add'), enterkeyhint: 'done', autocomplete: 'off' });
+    const add = () => { const v = input.value.replace(/\s+/g, ' ').trim(); if (v) schedule(v, st.all ? ALL : [st.wd]); };
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); add(); } });
     const todayTexts = new Set(todos.forDay(today).map((x) => x.t.trim().toLowerCase()));
     const hist = todos.history().filter((x) => x.t.trim());
 

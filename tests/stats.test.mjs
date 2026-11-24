@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { summary, streak, weekDots, period, groupByDay, recommend, byDay } from '../js/stats.js';
+import { summary, streak, weekDots, period, groupByDay, recommend, byDay, bestStreak, bestWeekSec, monthActive } from '../js/stats.js';
 import { programs } from './helpers.mjs';
 
 const at = (y, m, d, h = 12) => new Date(y, m - 1, d, h).getTime();
@@ -66,4 +66,18 @@ test('recommend: новичку — программа начального ур
 test('byDay объединяет несколько тренировок за день', () => {
   const m = byDay([rec(at(2026, 11, 12, 8)), rec(at(2026, 11, 12, 20))]);
   assert.equal(m.size, 1); assert.equal([...m.values()][0].workouts, 2);
+});
+
+test('bestStreak: самая длинная серия, разрывы и дубли дней', () => {
+  assert.equal(bestStreak([]), 0);
+  const h = [at(2026, 11, 1), at(2026, 11, 2), at(2026, 11, 2, 18), at(2026, 11, 3), at(2026, 11, 5), at(2026, 11, 6)].map((x) => rec(x));
+  assert.equal(bestStreak(h), 3);
+});
+
+test('bestWeekSec: неделя с наибольшим временем; monthActive: итог и среднее в день', () => {
+  const h = [rec(at(2026, 11, 2), { durationSec: 600 }), rec(at(2026, 11, 3), { durationSec: 900 }), rec(at(2026, 11, 10), { durationSec: 1200 })];
+  assert.equal(bestWeekSec(h), 1500);
+  assert.equal(bestWeekSec([]), 0);
+  const m = monthActive(h, at(2026, 11, 10));
+  assert.equal(m.sec, 2700); assert.equal(m.avgSec, 270);
 });

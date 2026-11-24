@@ -2,7 +2,7 @@ import { h, icon } from '../util.js';
 import { t, getLang } from '../i18n.js';
 import * as router from '../router.js';
 import { history } from '../store.js';
-import { period, groupByDay, streak } from '../stats.js';
+import { period, groupByDay, streak, bestStreak, bestWeekSec, monthActive } from '../stats.js';
 import { dayKey, startOfDay, addDays } from '../dates.js';
 import { spentLabel, doseLabel } from '../format.js';
 import { exName } from '../data.js';
@@ -68,12 +68,21 @@ export default function progress() {
       h('div', { class: 'tiles' },
         tile(String(p.total.workouts), t('progress.workouts')), tile(p.total.sec ? spentLabel(p.total.sec) : '0', t('progress.time')), tile(String(p.total.sets), t('progress.sets'))),
       h('div', { class: 'card', style: { marginTop: '12px' } }, h('div', { class: 'eyebrow', style: { marginBottom: '8px' } }, t('progress.chartTitle')), chart(p), vs ? h('div', { class: 'small muted', style: { marginTop: '8px' } }, vs) : null),
-      h('div', { class: 'card row-flex', style: { marginTop: '12px' } }, icon('bolt'), h('div', { class: 'grow' }, h('div', { class: 'h3' }, t('home.streakDays', { n: streak(hist, now) })), h('div', { class: 'small muted' }, t('progress.streak')))),
+      ...stats(now),
       h('h2', { class: 'h3', style: { margin: '28px 0 0' } }, t('progress.history')),
       ...groupByDay(hist).flatMap((g) => [h('div', { class: 'day-title' }, dayTitle(g.ts, now)),
         h('div', { class: 'list' }, ...g.items.map((s) => h('button', { class: 'item', onClick: () => openRecord(s) },
           h('div', { class: 'grow' }, h('div', { class: 't' }, s.title || t('progress.customWorkout')), h('div', { class: 's' }, `${timeOf(s.at)} · ${t('n.sets', { n: s.setsDone })}`)),
           h('div', { class: 'end' }, spentLabel(s.durationSec)), icon('chev-r', 18))))]));
+  };
+  const row = (label, value) => h('div', { class: 'item', style: { cursor: 'default' } }, h('div', { class: 'grow t' }, label), h('div', { class: 'value' }, value));
+  const mins = (sec) => (sec >= 60 ? spentLabel(sec) : t('dur.s', { s: Math.round(sec) }));
+  const stats = (now) => {
+    const ma = monthActive(hist, now), cur = streak(hist, now), best = Math.max(bestStreak(hist), cur);
+    const group = (title, ...rows) => [h('h2', { class: 'h3 group-title' }, title), h('div', { class: 'list' }, ...rows)];
+    return [...group(t('progress.records'), row(t('progress.bestWeek'), mins(bestWeekSec(hist))), row(t('progress.totalWorkouts'), String(hist.length))),
+      ...group(t('progress.activeTime'), row(t('progress.monthActive'), mins(ma.sec)), row(t('progress.avgDay'), t('progress.avgDayValue', { n: Math.round(ma.avgSec / 60) }))),
+      ...group(t('progress.streakTitle'), row(t('progress.streakNow'), t('progress.days', { n: cur })), row(t('progress.streakBest'), t('progress.days', { n: best })))];
   };
   const tile = (v, l) => h('div', { class: 'fact' }, h('div', { class: 'v' }, v), h('div', { class: 'l' }, l));
 

@@ -41,7 +41,7 @@ export default function builder({ id } = {}) {
 
   async function save() {
     if (saveBtn.disabled) return;
-    const rec = { id: existing?.id || 'u_' + uid(), name: st.name.trim(), restBetween: st.rest, items: st.items, custom: true };
+    const rec = { id: existing?.id || 'u_' + uid(), name: st.name.trim(), restBetween: st.rest, items: st.items, custom: true, at: existing?.at || Date.now() };
     if (!customPrograms.save(rec)) { toast(t('builder.saveFailed')); return; }
     dirty = false; toast(t('builder.saved'));
     if (existing) router.back(); else router.go('program', { id: rec.id }, { replace: true });

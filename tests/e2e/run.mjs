@@ -112,7 +112,7 @@ await test('Карточка: «Попробовать» запускает тр
     if (i < 2) { eq(await text(page, '.p-phase'), 'ОТДЫХ', 'отдых после подхода'); await run(page, 45_100); }
   }
   await page.waitForSelector('.p-finish');
-  ok((await text(page, '.p-finish')).includes('3/3'), 'итог: подходы');
+  ok((await text(page, '.p-finish')).includes('Отлично!') && (await text(page, '.p-finish')).includes('подходов'), 'итог: подходы');
   eq(errors.length, 0, errors.join(' | '));
   await ctx.close();
 });
@@ -149,14 +149,19 @@ await test('Программа «Экспресс-круг (средний)»: 7
   ok((await text(page, '.p-meta')).includes('Левая сторона'), 'затем левая сторона');
   await run(page, 15_000);
   await page.waitForSelector('.p-finish');
-  ok((await text(page, '.p-finish')).includes('12/12'), 'все 12 упражнений: ' + await text(page, '.p-finish'));
+  const fin = await text(page, '.p-finish');
+  ok(fin.includes('Отлично!') && fin.includes('минут') && fin.includes('подходов') && fin.includes('дней подряд'), 'экран итога: ' + fin);
+  eq(await page.locator('.p-finish .list .item').count(), 12, 'в «Что изменилось» все 12 упражнений'); ok(fin.includes('Новое'), 'первый раз — «Новое»');
+  ok(await btn(page, 'Поделиться результатом').count() === 1, 'есть «Поделиться результатом»');
   const hist = await page.evaluate(() => JSON.parse(localStorage.getItem('seven:history')));
   eq(hist.length, 1, 'запись в истории'); eq(hist[0].durationSec, 475, 'время тренировки 475 с (подготовка не входит)');
   eq(hist[0].completed, true, 'completed');
   eq(await page.evaluate(() => localStorage.getItem('seven:active')), null, 'активная сессия очищена');
   await shot(page, 'player-finish');
-  await btn(page, 'Смотреть прогресс').click();
+  await btn(page, 'Готово').click(); await tab(page, 'progress');
   await page.waitForSelector('.chart');
+  const pr = await text(page, '#screen');
+  for (const w of ['Рекорды', 'Лучшая неделя', 'Всего тренировок', 'Активное время', 'За месяц', 'В среднем', 'Серия дней', 'Текущая серия', 'Личный рекорд']) ok(pr.includes(w), 'в «Прогрессе» есть «' + w + '»');
   ok((await text(page, '.tiles')).includes('1'), 'прогресс показывает 1 тренировку');
   await shot(page, 'progress-filled');
   eq(errors.length, 0, errors.join(' | '));
@@ -219,7 +224,7 @@ await test('Системная «Назад»: в тренировке откр�
 await test('Конструктор: своя программа создаётся, редактируется, запускается и удаляется', async () => {
   const { page, errors, ctx } = await fresh();
   await tab(page, 'workouts'); 
-  await btn(page, /Собрать тренировку/).click();
+  await btn(page, /Создать свою тренировку/).click();
   ok(await page.locator('.btn', { hasText: 'Сохранить программу' }).isDisabled(), 'сохранение заблокировано');
   await page.fill('#prog-name', 'Моя проверка');
   await btn(page, 'Добавить упражнение').click();
@@ -238,7 +243,7 @@ await test('Конструктор: своя программа создаётс
   await btn(page, 'Выйти из тренировки').click(); await btn(page, 'Отменить без сохранения').click();
   await tab(page, 'home'); await page.waitForSelector('.todo');
   await tab(page, 'workouts'); 
-  await page.locator('.pcard-wide', { hasText: 'Моя проверка' }).click();
+  await page.locator('.mine-main', { hasText: 'Моя проверка' }).click();
   await btn(page, 'Удалить').click(); await page.locator('.sheet .btn.danger').click();
   await page.waitForSelector('.pad');
   eq(await page.evaluate(() => JSON.parse(localStorage.getItem('seven:programs') || '[]').length), 0, 'программа удалена');
@@ -249,7 +254,7 @@ await test('Конструктор: своя программа создаётс
 await test('Конструктор: своё упражнение создаётся с нуля, попадает в программу и запускается', async () => {
   const { page, errors, ctx } = await fresh();
   await tab(page, 'workouts'); 
-  await btn(page, /Собрать тренировку/).click(); await page.fill('#prog-name', 'С нуля');
+  await btn(page, /Создать свою тренировку/).click(); await page.fill('#prog-name', 'С нуля');
   await btn(page, 'Создать своё упражнение').click();
   await page.locator('.sheet input[type=text]').last().fill('Отжимания на кулаках');
   await btn(page, 'Создать и добавить').tap();
@@ -361,8 +366,8 @@ await test('Главная: без блока «Программы» и ссыл
   ok(!(await text(page, '#screen')).includes('Домашние тренировки'), 'заголовок «Домашние тренировки» убран');
   eq(await page.locator('.dot i').allTextContents().then((a) => a.every((x) => /^\d{1,2}$/.test(x)) && a.length === 7), true, 'в кружках числа месяца');
   eq(await page.locator('#tabbar [data-tab]').count(), 6, 'все вкладки на месте');
-  await page.locator('.todo textarea').fill('Выпить воду'); await page.locator('.todo .cl-add').tap();
-  await page.locator('.todo textarea').fill('Растяжка'); await page.locator('.cl-add').first().click();
+  await page.locator('.todo input').fill('Выпить воду'); await page.locator('.todo .cl-add').tap();
+  await page.locator('.todo input').fill('Растяжка'); await page.locator('.cl-add').first().click();
   eq(await page.locator('.cl-row').count(), 2, 'два дела');
   await page.locator('.cl-main').first().tap();
   eq(await page.locator('.bar i').evaluate((e) => e.style.width), '50%', 'шкала 50%');
@@ -395,7 +400,7 @@ await test('Нижняя панель: зажать и перетащить вк
   await page.locator('.sheet input[type=text]').first().fill('Питание'); await btn(page, 'Готово').tap();
   await page.waitForSelector('.note-area');
   ok((await names()).includes('Питание'), 'своя вкладка появилась: ' + (await names()).join());
-  await page.locator('.cl-addrow textarea').fill('Белок 120 г'); await page.locator('.cl-add').first().click();
+  await page.locator('.cl-addrow input').fill('Белок 120 г'); await page.locator('.cl-add').first().click();
   await page.locator('.note-area').fill('План на неделю'); await page.locator('.note-area').blur();
   eq(await page.locator('#tabbar [aria-current="true"]').count(), 1, 'активна одна вкладка');
   await page.reload(); await page.waitForSelector('#tabbar button');
@@ -414,11 +419,11 @@ await test('Личные данные: у разных аккаунтов Telegr
   };
   const { page, errors, ctx } = await fresh({ tgMock: mock });
   const openAs = async (id) => { await page.goto('about:blank'); await page.goto(srv.url + '#tgWebAppData=mock&u=' + id); await page.waitForSelector('.todo'); };
-  await openAs(1); await page.locator('.todo textarea').fill('Секрет первого'); await page.locator('.cl-add').first().click();
+  await openAs(1); await page.locator('.todo input').fill('Секрет первого'); await page.locator('.cl-add').first().click();
   eq(await page.locator('.cl-row').count(), 1, 'первый добавил дело');
   await openAs(2);
   eq(await page.locator('.cl-row').count(), 0, 'второй аккаунт не видит чужие дела');
-  await page.locator('.todo textarea').fill('Дело второго'); await page.locator('.cl-add').first().click();
+  await page.locator('.todo input').fill('Дело второго'); await page.locator('.cl-add').first().click();
   await openAs(1);
   eq((await text(page, '.cl')).includes('Секрет первого') && !(await text(page, '.cl')).includes('Дело второго'), true, 'у первого только его дело');
   await openAs(2);
@@ -588,7 +593,7 @@ await test('Мой день: расписание по дням недели, и
   await page.getByRole('button', { name: /Расписание и история/ }).click(); await page.waitForSelector('.days-row');
   ok((await text(page, '#screen')).includes('Выпить воду'), 'вчерашнее дело в истории');
   await page.locator('.days-row .chip').nth(0).click();                                     // Пн
-  await page.locator('.cl-addrow textarea').fill('Зарядка'); await page.locator('.cl-add').first().click();
+  await page.locator('.cl-addrow input').fill('Зарядка'); await page.locator('.cl-add').first().click();
   await page.locator('.days-row .chip').nth(1).click();                                     // Вт
   eq(await page.locator('.item:has(.s)').count(), 0, 'во вторник «Зарядки» нет');
   await page.locator('.days-row .chip').nth(0).click();
@@ -605,9 +610,11 @@ await test('Тренировки на сегодня: добавить, отме
   const { page, errors, ctx } = await fresh();
   await tab(page, 'workouts');
   ok(/Тренировки на сегодня/.test(await text(page, '.todo')), 'блок «Тренировки на сегодня» есть');
-  const inp = page.locator('.todo textarea');
-  await inp.fill('Отжимания 3×15\nБицепс\n\n2. Пресс'); await page.locator('.todo .cl-add').click();
-  eq((await page.locator('.todo .cl-text').allTextContents()).join('|'), 'Отжимания 3×15|Бицепс|Пресс', 'каждая строка — отдельная запись, порядок сохранён');
+  const inp = page.locator('.todo input');
+  await inp.fill('Отжимания 3×15'); await page.locator('.todo .cl-add').click();
+  eq(await inp.inputValue(), '', 'поле очищается после «+»');
+  await inp.fill('Бицепс'); await inp.press('Enter'); await inp.fill('  Пресс  '); await page.locator('.todo .cl-add').click();
+  eq((await page.locator('.todo .cl-text').allTextContents()).join('|'), 'Отжимания 3×15|Бицепс|Пресс', 'записи в порядке ввода');
   await page.locator('.todo .cl-main').first().click();
   await page.locator('.todo .rep').nth(1).click();
   await tab(page, 'home'); await tab(page, 'workouts');
@@ -620,7 +627,7 @@ await test('Тренировки на сегодня: добавить, отме
 
 await test('Конструктор: «Создать своё упражнение» и «Добавить упражнение»; отдых от 1 с, удержание меняет значение', async () => {
   const { page, errors, ctx } = await fresh();
-  await tab(page, 'workouts'); await btn(page, /Собрать тренировку/).click(); await page.waitForSelector('.stepper');
+  await tab(page, 'workouts'); await btn(page, /Создать свою тренировку/).click(); await page.waitForSelector('.stepper');
   const names = await page.locator('.pad > .btn').allTextContents();
   eq(names.slice(0, 2).join('|'), 'Создать своё упражнение|Добавить упражнение', 'две плашки по порядку');
   const val = () => page.locator('.stepper .val').first().innerText();
@@ -678,7 +685,7 @@ await test('Дела: постоянные (ежедневные) возвращ
   eq(await page.locator('.cl-row.done').count(), 0, 'отметка «сделано» не переносится');
   await page.locator('.cl-main').first().tap();
   eq(await page.locator('.cl-row.done').count(), 1, 'можно отметить');
-  await page.locator('.todo textarea').fill('Читать'); await page.locator('.cl-add').first().click();
+  await page.locator('.todo input').fill('Читать'); await page.locator('.cl-add').first().click();
   await page.locator('.cl-row').nth(1).locator('.rep').tap();
   const daily = await page.evaluate(() => JSON.parse(localStorage.getItem('seven:todos')).daily.map((x) => x.t));
   eq(daily.join('|'), 'Зарядка|Читать', 'новое дело стало постоянным');
@@ -697,7 +704,30 @@ await test('Автономный файл открывается напряму�
   await ctx.close();
 });
 
+await test('Главная: карточка «Сегодня» предлагает тренировку и запускает её; «Создать свою тренировку» — карточки своих', async () => {
+  const { page, errors, ctx } = await fresh();
+  ok(/сегодня/i.test(await text(page, '.card.today')), 'карточка «Сегодня»');
+  await page.locator('.card.today .btn').click(); await page.waitForSelector('.player');
+  await ctx.close();
+  const f2 = await fresh(), page2 = f2.page;
+  await tab(page2, 'workouts');
+  await btn(page2, /Создать свою тренировку/).click(); await page2.waitForSelector('#prog-name');
+  await page2.fill('#prog-name', 'Моя тренировка');
+  await btn(page2, /^Добавить упражнение/).click(); await page2.waitForSelector('#pick-q');
+  await page2.locator('.sheet .item').nth(0).click(); await page2.locator('.sheet .item').nth(1).click();
+  await page2.locator('.sheet .btn', { hasText: 'Готово' }).click();
+  await btn(page2, 'Сохранить').click(); await page2.waitForSelector('.facts');
+  await tab(page2, 'workouts'); await page2.waitForSelector('.mine-card');
+  const card = await text(page2, '.mine-card');
+  ok(card.includes('Моя тренировка') && card.includes('2 упр') || card.includes('2 упражнения'), 'карточка своей тренировки: ' + card);
+  eq(await page2.locator('.mine-card .icon-btn').count(), 2, 'изменить и удалить');
+  await page2.locator('.mine-card .icon-btn').nth(1).click(); await btn(page2, 'Удалить').last().click();
+  await page2.waitForTimeout(300); eq(await page2.locator('.mine-card').count(), 0, 'удалена');
+  ok(!f2.errors.length, 'ошибки: ' + f2.errors.join(' | ')); await f2.ctx.close();
+});
+
 await browser.close(); srv.close();
 console.log(results.join('\n'));
 console.log(`\nИтого: ${pass} пройдено, ${fail} провалено`);
 process.exit(fail ? 1 : 0);
+

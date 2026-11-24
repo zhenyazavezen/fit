@@ -9,6 +9,25 @@ import { D, exText, exName, stepsOfItems, resolved } from '../data.js';
 import { doseLabel, sideLabel, spentLabel } from '../format.js';
 import { beep, haptic } from '../feedback.js';
 import { sheet, toast } from '../ui.js';
+import { streak } from '../stats.js';
+import { CONFIG } from '../config.js';
+import { api, apiEnabled } from '../api.js';
+import { auth } from '../auth.js';
+import { syncNow } from '../sync.js';
+
+// Последняя запись нагрузки по упражнению из прошлых тренировок.
+const lastLog = (hist, ex) => { for (let i = hist.length - 1; i >= 0; i--) { const l = hist[i].log?.find((x) => x.ex === ex); if (l) return l; } return null; };
+/** Сравнение с прошлым разом: «+2 повт.», «+5 кг», «Без изменений», «Новое». */
+function changeText(cur, prev) {
+  if (!prev) return t('finish.new');
+  const vol = (l) => (l.seconds != null ? l.sets * l.seconds : l.sets * (l.reps || 0));
+  const sameKind = (prev.seconds != null) === (cur.seconds != null);
+  const parts = [], dv = sameKind ? vol(cur) - vol(prev) : 0, dk = Math.round(((cur.kg || 0) - (prev.kg || 0)) * 10) / 10;
+  const sign = (n) => (n > 0 ? '+' : '−') + Math.abs(n);
+  if (dv) parts.push(t(cur.seconds != null ? 'finish.secs' : 'finish.reps', { n: sign(dv) }));
+  if (dk) parts.push(t('finish.kg', { n: sign(dk) }));
+  return parts.length ? parts.join(' · ') : t('finish.same');
+}
 
 export default function player(params = {}) {
   let plan, steps, session;
@@ -179,28 +198,50 @@ export default function player(params = {}) {
   function finish() {
     if (over) return;
     over = true; cleanup(true);
-    const now = Date.now(), r = session.result(now);
-    let savedOk = true;
+    const now = Date.now(), r = session.result(now), before = history.all();
+    let savedOk = true, log = [];
     if (r.setsDone > 0) {
       savedOk = !!history.add({ at: now, startedAt: now - r.durationSec * 1000, durationSec: r.durationSec, title: plan.title, programId: plan.programId, kind: plan.kind,
         setsDone: r.setsDone, exercisesDone: r.exercisesDone, exerciseIds: r.exerciseIds, completed: r.completed,
-        log: r.exerciseIds.map((id) => plan.items.find((i) => i.ex === id)).filter(Boolean).map((i) => { const x = resolved(i, plan.restBetween); const o = { ex: x.ex, sets: x.sets }; if (x.kind === 'reps') o.reps = x.reps; else o.seconds = x.seconds; if (x.kg) o.kg = x.kg; return o; }) });
+        log: (log = r.exerciseIds.map((id) => plan.items.find((i) => i.ex === id)).filter(Boolean).map((i) => { const x = resolved(i, plan.restBetween); const o = { ex: x.ex, sets: x.sets }; if (x.kind === 'reps') o.reps = x.reps; else o.seconds = x.seconds; if (x.kg) o.kg = x.kg; return o; })) });
     }
     activeSession.clear();
     tg.confirmClose(false);
     beep('done'); haptic('success');
     if (!savedOk) toast(t('player.saveFailed'), 4000);
-    el.replaceChildren(h('div', { class: 'p-body p-finish' },
-      h('div', { class: 'p-phase work' }, t(r.completed ? 'player.finishTitle' : 'player.finishPartial')),
-      h('h1', { class: 'p-name' }, plan.title),
-      h('div', { class: 'p-big num', style: { fontSize: '64px' } }, spentLabel(r.durationSec)),
+    const days = streak(history.all(), now), mins = Math.max(1, Math.round(r.durationSec / 60));
+    const changes = log.map((l) => ({ ex: l.ex, text: changeText(l, lastLog(before, l.ex)) }));
+    const rankBox = h('div', { class: 'card row-flex', hidden: true });
+    const shareText = t('finish.shareText', { min: mins, sets: r.setsDone, days: Math.max(1, days) });
+    el.replaceChildren(h('div', { class: 'p-body p-finish', style: { overflowY: 'auto' } },
+      h('h1', { class: 'p-name', style: { marginTop: '8px' } }, t('finish.title')),
+      h('div', { class: 'muted', style: { textAlign: 'center' } }, t(r.completed ? 'finish.sub' : 'player.finishPartial')),
       h('div', { class: 'facts', style: { marginTop: '16px' } },
-        h('div', { class: 'fact' }, h('div', { class: 'v' }, `${r.setsDone}/${r.setsTotal}`), h('div', { class: 'l' }, t('player.finishSets'))),
-        h('div', { class: 'fact' }, h('div', { class: 'v' }, `${r.exercisesDone}/${r.exercisesTotal}`), h('div', { class: 'l' }, t('player.finishExercises'))),
-        h('div', { class: 'fact' }, h('div', { class: 'v' }, spentLabel(r.durationSec)), h('div', { class: 'l' }, t('player.finishTime'))))),
-      h('div', { class: 'p-controls', style: { gridTemplateColumns: '1fr' } },
-        h('button', { class: 'btn', onClick: () => router.openTab('home') }, t('player.finishHome')),
-        h('button', { class: 'btn ghost', onClick: () => router.openTab('progress') }, t('player.finishProgress'))));
+        h('div', { class: 'fact' }, h('div', { class: 'v' }, String(mins)), h('div', { class: 'l' }, t('finish.minutes'))),
+        h('div', { class: 'fact' }, h('div', { class: 'v' }, String(r.setsDone)), h('div', { class: 'l' }, t('finish.sets'))),
+        h('div', { class: 'fact' }, h('div', { class: 'v' }, String(days)), h('div', { class: 'l' }, t('finish.streak')))),
+      changes.length ? h('div', { class: 'stack', style: { gap: '8px', marginTop: '16px', textAlign: 'left' } }, h('h2', { class: 'h3' }, t('finish.changed')),
+        h('div', { class: 'list' }, ...changes.map((c) => h('div', { class: 'item', style: { cursor: 'default' } }, h('div', { class: 'grow t' }, exName(c.ex)), h('div', { class: 'value' }, c.text))))) : null,
+      rankBox,
+      h('div', { class: 'p-controls', style: { gridTemplateColumns: '1fr', marginTop: '16px' } },
+        h('button', { class: 'btn', onClick: () => router.openTab('home') }, t('finish.done')),
+        h('button', { class: 'btn ghost', onClick: () => tg.openLink('https://t.me/share/url?url=' + encodeURIComponent(CONFIG.siteUrl) + '&text=' + encodeURIComponent(shareText)) }, t('finish.share')))));
+    loadRank(rankBox, savedOk);
+  }
+
+  // Место в общем рейтинге недели: только если вы вошли и участвуете; иначе блока нет.
+  async function loadRank(box, saved) {
+    try {
+      if (!apiEnabled() || !auth.signedIn || !saved) return;
+      await Promise.race([syncNow(), new Promise((res) => setTimeout(res, 3000))]);
+      const b = await api('/comp/board?scope=global&period=week', { token: auth.token });
+      if (!b?.me || !b.rows?.length) return;
+      const lead = b.rows[0].minutes, mine = b.me.minutes;
+      box.replaceChildren(icon('trophy', 26), h('div', { class: 'grow', style: { textAlign: 'left' } },
+        h('div', { class: 'h3' }, b.me.rank === 1 ? t('finish.rankFirst') : t('finish.rank', { n: b.me.rank })),
+        b.me.rank === 1 ? null : h('div', { class: 'muted small' }, t('finish.toFirst', { n: Math.max(1, lead - mine) }))));
+      box.hidden = false;
+    } catch { /* без сети или без участия — блока нет */ }
   }
 
   function cleanup(keepGuard) {

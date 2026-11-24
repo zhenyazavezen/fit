@@ -83,3 +83,25 @@ export function recommend(hist, programs, now = Date.now()) {
   const pick = (fresh.length ? fresh : notToday.length ? notToday : pool).slice().sort((a, b) => (last.get(a.id) || 0) - (last.get(b.id) || 0));
   return { program: pick[0], reason: done === 0 ? 'first' : last.has(pick[0].id) ? 'rotation' : 'new' };
 }
+
+/** Самая длинная серия дней подряд за всё время. */
+export function bestStreak(hist) {
+  const idx = [...new Set(hist.map((s) => dayKey(s.at)))].map((k) => { const [y, m, d] = k.split('-').map(Number); return Math.round(Date.UTC(y, m - 1, d) / 86400000); }).sort((a, b) => a - b);
+  let best = 0, run = 0;
+  idx.forEach((v, i) => { run = i && v - idx[i - 1] === 1 ? run + 1 : 1; if (run > best) best = run; });
+  return best;
+}
+
+/** Лучшая неделя (с понедельника) по времени тренировок: секунды. */
+export function bestWeekSec(hist) {
+  const m = new Map();
+  for (const s of hist) { const k = startOfWeek(s.at); m.set(k, (m.get(k) || 0) + (s.durationSec || 0)); }
+  return Math.max(0, ...m.values());
+}
+
+/** Активное время текущего месяца: всего (сек) и в среднем за день месяца (с 1-го числа по сегодня), в секундах. */
+export function monthActive(hist, now = Date.now()) {
+  const from = startOfMonth(now), sec = summary(hist, from, addMonths(from, 1)).sec;
+  const day = new Date(now).getDate();
+  return { sec, avgSec: sec / Math.max(1, day) };
+}
