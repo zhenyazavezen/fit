@@ -1,4 +1,4 @@
-import { h } from '../util.js';
+import { h, icon } from '../util.js';
 import { t } from '../i18n.js';
 import * as router from '../router.js';
 import { D, allPrograms, progText, programEstimate } from '../data.js';
@@ -23,6 +23,16 @@ export default function plan() {
     } }));
     return h('div', null, h('h2', { class: 'h3 group-title' }, label), box);
   };
+  // Уровень: три плашки; нажатие выбирает уровень, ссылка ниже открывает программы выбранного уровня.
+  const levelBox = h('div', { class: 'stack', style: { gap: '10px' } });
+  const ready = () => allPrograms().filter((x) => !x.custom && !x.id.startsWith('r'));
+  function drawLevels() {
+    levelBox.replaceChildren(...LEVELS.map((lv) => h('button', { class: 'card level-plate' + (p.level === lv ? ' yours' : ''), type: 'button', 'aria-pressed': String(p.level === lv), onClick: () => { save({ level: lv }); drawLevels(); } },
+      h('div', { class: 'grow stack', style: { gap: '4px', textAlign: 'left' } },
+        h('div', { class: 'row-flex', style: { gap: '8px' } }, h('span', { class: 'h3' }, t('level.' + lv)), p.level === lv ? h('span', { class: 'badge' }, t('workouts.yourLevel')) : null),
+        h('div', { class: 'small muted' }, t('level.desc.' + lv)), h('div', { class: 'small muted' }, t('workouts.progs', { n: ready().filter((x) => x.level === lv).length }))))),
+      h('button', { class: 'link-btn row-flex', style: { gap: '4px', alignSelf: 'flex-start' }, type: 'button', onClick: () => router.go('level', { level: p.level }) }, t('plan.levelPrograms', { level: t('level.' + p.level).toLowerCase() }), icon('chev-r', 16)));
+  }
   const single = (label, all, key, tkey) => h('div', null, h('h2', { class: 'h3 group-title' }, label),
     segmented(all.map((v) => ({ value: v, label: t(tkey + v) })), p[key], (v) => save({ [key]: v })));
   const field = (label, key, min, max) => h('label', { class: 'stack', style: { gap: '6px', flex: 1 } }, h('span', { class: 'small muted' }, label),
@@ -42,7 +52,9 @@ export default function plan() {
 
   const b = bmi(p);
   el.append(topbar({ title: t('plan.title') }),
-    single(t('plan.level'), LEVELS, 'level', 'level.'),
+    h('div', null, h('h2', { class: 'h3 group-title' }, t('plan.level')), levelBox),
+    h('button', { class: 'card level-plate plan-plate', type: 'button', style: { marginTop: '16px' }, onClick: () => router.go('bodymap') }, icon('target'),
+      h('div', { class: 'grow stack', style: { gap: '2px', textAlign: 'left' } }, h('div', { class: 'h3' }, t('map.title')), h('div', { class: 'small muted' }, t('map.hint'))), icon('chev-r', 18)),
     single(t('plan.goal'), PROFILE_GOALS, 'goal', 'pgoal.'),
     single(t('plan.minutes'), [10, 15, 20, 30, 45, 60].map(String), 'minutes', 'min.'),
     multi(t('plan.limits'), PROFILE_LIMITS, 'limits', 'limit.'),
@@ -51,6 +63,6 @@ export default function plan() {
     h('div', { class: 'row-flex', style: { gap: '12px' } }, field(t('plan.age'), 'age', 14, 99), field(t('plan.height'), 'heightCm', 100, 230), field(t('plan.weight'), 'weightKg', 30, 300)),
     b ? h('p', { class: 'small muted' }, t('plan.bmiNote')) : null,
     recBox);
-  renderRecs();
+  drawLevels(); renderRecs();
   return { el };
 }

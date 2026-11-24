@@ -361,3 +361,5 @@ body[data-route="player"] .toast { bottom: calc(var(--safe-bottom) + var(--tg-bo
 .wk-line { display: flex; gap: 8px; align-items: baseline; text-align: left; }
 .wk-line .n { color: var(--text3); min-width: 20px; }
 .wk-line .muted { white-space: nowrap; }
+.cl-input { resize: none; min-height: var(--btn-h); max-height: 140px; line-height: 1.35; padding-top: 12px; padding-bottom: 12px; }
+.cl-addrow { align-items: flex-end; }
