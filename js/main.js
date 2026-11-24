@@ -64,10 +64,10 @@ async function boot() {
   try { await initI18n(tg.user?.language_code); await loadData(); } catch (e) { console.error(e); showFatal(t('app.loadError')); return; }
 
   const load = (p) => p.then((m) => m.default);
-  const [home, workouts, catalog, progress, profile, program, builder, exercise, player, about, plan, bodymap, account, ctab, calendar, compete, myday, level, week, weekday] = await Promise.all([
+  const [home, workouts, catalog, progress, profile, program, builder, exercise, player, about, plan, bodymap, account, ctab, calendar, compete, myday, level] = await Promise.all([
     load(import('./screens/home.js')), load(import('./screens/workouts.js')), load(import('./screens/catalog.js')), load(import('./screens/progress.js')),
     load(import('./screens/profile.js')), load(import('./screens/program.js')), load(import('./screens/builder.js')), load(import('./screens/exercise.js')),
-    load(import('./screens/player.js')), load(import('./screens/about.js')), load(import('./screens/plan.js')), load(import('./screens/bodymap.js')), load(import('./screens/account.js')), load(import('./screens/ctab.js')), load(import('./screens/calendar.js')), load(import('./screens/compete.js')), load(import('./screens/myday.js')), load(import('./screens/level.js')), load(import('./screens/week.js')), load(import('./screens/weekday.js'))]);
+    load(import('./screens/player.js')), load(import('./screens/about.js')), load(import('./screens/plan.js')), load(import('./screens/bodymap.js')), load(import('./screens/account.js')), load(import('./screens/ctab.js')), load(import('./screens/calendar.js')), load(import('./screens/compete.js')), load(import('./screens/myday.js')), load(import('./screens/level.js'))]);
 
   router.register('home', home, { tab: 'home' });
   router.register('workouts', workouts, { tab: 'workouts' });
@@ -83,9 +83,8 @@ async function boot() {
   router.register('account', account, { tab: 'profile' });
   router.register('compete', compete, { tab: 'compete' });
   router.register('myday', myday, { tab: 'home' });
+  router.register('mywk', (p) => myday({ ...p, kind: 'workouts' }), { tab: 'workouts' });
   router.register('level', level, { tab: 'workouts' });
-  router.register('week', week, { tab: 'workouts' });
-  router.register('weekday', weekday, { tab: 'workouts' });
   router.register('ctab', ctab, { tab: (p) => p.id });
   router.register('calendar', calendar, { tab: 'home' });
   router.register('player', player, { tabs: false });

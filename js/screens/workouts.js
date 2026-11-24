@@ -2,8 +2,8 @@ import { h, icon } from '../util.js';
 import { t } from '../i18n.js';
 import * as router from '../router.js';
 import { allPrograms, getProgram, progText, programEstimate } from '../data.js';
-import { weekPlan, weekdayOf } from '../store.js';
-import { dayKey } from '../dates.js';
+import { workoutsToday } from '../store.js';
+import { dayCard } from '../todocard.js';
 import { durationLabel } from '../format.js';
 import { empty } from '../ui.js';
 import { userProfile } from '../profile-data.js';
@@ -34,14 +34,12 @@ export default function workouts() {
         h('div', { class: 'small muted' }, t('level.desc.' + lv)), h('div', { class: 'small muted' }, t('workouts.progs', { n }))),
       icon('chev-r', 18));
   };
-  const wd = weekdayOf(dayKey(Date.now())), todayId = weekPlan.get(wd), todayProg = todayId && todayId !== 'rest' ? getProgram(todayId) : null;
-  const weekSub = todayProg ? t('week.todayIs', { name: progText(todayProg).name }) : todayId === 'rest' ? t('week.restToday') : t('week.hint');
   const link = (ic, title, sub, to) => h('button', { class: 'card level-plate plan-plate', type: 'button', onClick: () => router.go(to) }, icon(ic),
     h('div', { class: 'grow stack', style: { gap: '2px', textAlign: 'left' } }, h('div', { class: 'h3' }, title), h('div', { class: 'small muted' }, sub)), icon('chev-r', 18));
   el.append(h('div', null, h('h1', { class: 'h1 page-title', style: { paddingBottom: '4px' } }, t('workouts.title')), h('p', { class: 'small muted' }, t('workouts.sub'))),
-    h('button', { class: 'btn', onClick: () => router.go('builder', {}) }, icon('plus'), t('workouts.create')),
+    dayCard({ list: workoutsToday, k: 'wtoday', key: 'wtoday', route: 'mywk' }),
+    h('button', { class: 'link-btn row-flex', style: { gap: '4px', alignSelf: 'flex-start' }, type: 'button', onClick: () => router.go('builder', {}) }, icon('plus', 16), t('workouts.builder')),
     link('target', t('map.title'), t('map.hint'), 'bodymap'),
-    link('calendar', t('week.title'), weekSub, 'week'),
     h('button', { class: 'card level-plate plan-plate', type: 'button', onClick: () => router.go('plan') }, icon('profile'),
       h('div', { class: 'grow stack', style: { gap: '2px', textAlign: 'left' } }, h('div', { class: 'h3' }, t('plan.title')),
         h('div', { class: 'small muted' }, t('workouts.planHint', { level: t('level.' + prof.level) }))), icon('chev-r', 18)),

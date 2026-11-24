@@ -125,16 +125,16 @@ export const customEx = {
 /** День недели по ключу ГГГГ-ММ-ДД: 1 = понедельник … 7 = воскресенье. */
 export function weekdayOf(day) { const [y, m, d] = day.split('-').map(Number); return ((new Date(y, m - 1, d).getDay() + 6) % 7) + 1; }
 
-// ---- Дела на сегодня: { 'ГГГГ-ММ-ДД': [{id, t, d}] }; хранятся последние 14 дней
-export const todos = {
-  all() { const o = store.get('todos', {}); return o && typeof o === 'object' && !Array.isArray(o) ? o : {}; },
+// ---- Дела на сегодня (todos) и тренировки на сегодня (wtodos), одинаково: { 'ГГГГ-ММ-ДД': [{id, t, d}] }; хранятся последние 14 дней
+const dayLists = (key) => ({
+  all() { const o = store.get(key, {}); return o && typeof o === 'object' && !Array.isArray(o) ? o : {}; },
   get(day) { const a = this.all()[day]; return Array.isArray(a) ? a : []; },
   /** Постоянные дела (расписание): [{id, t, days:[1..7]}], 1 = понедельник. Без days — каждый день. */
   daily() {
     const a = this.all().daily;
     return (Array.isArray(a) ? a : []).map((r) => ({ id: r.id, t: r.t, d: false, days: Array.isArray(r.days) && r.days.length ? r.days : [1, 2, 3, 4, 5, 6, 7] }));
   },
-  setDaily(items) { return store.set('todos', { ...this.all(), daily: items }); },
+  setDaily(items) { return store.set(key, { ...this.all(), daily: items }); },
   /** Список дня: свои дела + дела расписания на этот день недели (без отметок с прошлых дней). */
   forDay(day) {
     const list = this.get(day).map((x) => ({ ...x })), have = new Set(list.map((x) => x.src).filter(Boolean)), wd = weekdayOf(day);
@@ -156,25 +156,11 @@ export const todos = {
   set(day, items) {
     const all = { ...this.all(), [day]: items };
     for (const k of Object.keys(all).filter((x) => x !== 'daily').sort().slice(0, -14)) delete all[k];
-    return store.set('todos', all);
+    return store.set(key, all);
   },
-};
-
-// ---- Расписание тренировок: { days: { '1': 'wk1' (свой список) | 'rest' | id программы (старый формат) }, plans: { '1': { items } } }, 1 = понедельник
-export const weekPlan = {
-  raw() { const v = store.get('week', null); return v && typeof v === 'object' && v.days && typeof v.days === 'object' ? v : { days: {} }; },
-  all() { return this.raw().days; },
-  get(wd) { const x = this.all()[wd]; return typeof x === 'string' && x ? x : null; },
-  own(wd) { const p = this.raw().plans?.[wd]; return p && Array.isArray(p.items) ? p.items : null; },
-  /** Сохранить список упражнений дня (пустой список — день не задан). Сохраняется сразу. */
-  saveItems(wd, items) {
-    const r = this.raw(), days = { ...r.days }, plans = { ...(r.plans || {}) };
-    if (items.length) { plans[wd] = { items }; days[wd] = 'wk' + wd; } else { delete plans[wd]; delete days[wd]; }
-    return store.set('week', { days, plans });
-  },
-  setRest(wd) { const r = this.raw(), plans = { ...(r.plans || {}) }; delete plans[wd]; return store.set('week', { days: { ...r.days, [wd]: 'rest' }, plans }); },
-  any() { return Object.values(this.all()).some(Boolean); },
-};
+});
+export const todos = dayLists('todos');
+export const workoutsToday = dayLists('wtodos');
 
 // ---- Нижняя панель: { order:[id…], hidden:[id…], custom:[{id,name,icon}] }; страницы своих вкладок: { id: {note, items:[{id,t,d}]} }
 export const tabsCfg = {

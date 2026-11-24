@@ -5,7 +5,7 @@
 //  • Каждое изменение получает номер ревизии аккаунта; клиент запрашивает изменения «после ревизии N».
 import { HttpError } from './http.js';
 
-export const DOC_KEYS = ['settings', 'profile', 'favorites', 'programs', 'avatar', 'myex', 'todos', 'tabs', 'pages', 'week'];
+export const DOC_KEYS = ['settings', 'profile', 'favorites', 'programs', 'avatar', 'myex', 'todos', 'wtodos', 'tabs', 'pages', 'week'];
 const MAX_DOC_BYTES = 64 * 1024;
 const MAX_SESSIONS_PER_PUSH = 200;
 export const MAX_SESSIONS_PER_ACCOUNT = 5000;
@@ -57,7 +57,7 @@ export function validateDoc(key, value) {
       return { id: e.id, name: e.name, mode: e.mode, cat: e.cat, note: e.note || '' };
     });
   }
-  if (key === 'todos') {
+  if (key === 'todos' || key === 'wtodos') {
     if (!isObj(value) || Object.keys(value).length > 30) throw bad('ожидается объект по дням');
     const cleanDaily = (a) => {
       if (!Array.isArray(a) || a.length > 60) throw bad('ожидается расписание');

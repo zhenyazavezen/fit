@@ -1,8 +1,8 @@
 // Загрузка и индексация данных каталога. Структура (data/*.json) не зависит от языка,
 // тексты — в data/content.<lang>.json; русский — базовый, недостающее берётся из него.
 import { CONFIG, BUILD, isStandalone } from './config.js';
-import { getLang, t } from './i18n.js';
-import { customPrograms, customEx, store, weekPlan } from './store.js';
+import { getLang } from './i18n.js';
+import { customPrograms, customEx, store } from './store.js';
 import { buildSteps, estimate, resolveItem } from './engine.js';
 
 export const D = { cards: {}, meta: null, exercises: [], exById: new Map(), programs: [], progById: new Map(), content: { exercises: {}, programs: {} } };
@@ -41,15 +41,7 @@ export const exName = (id) => exText(id).name;
 /** Встроенные программы + собственные пользователя. */
 const mine = (p) => ({ ...p, items: (p.items || []).filter((i) => D.exById.has(i.ex)), custom: true, goals: [], level: null });
 export const allPrograms = () => [...D.programs, ...customPrograms.all().map(mine)];
-/** Упражнения дня недели: свой список или (старый формат) состав выбранной программы. */
-export function weekItems(wd) {
-  const own = weekPlan.own(wd);
-  if (own) return own.filter((i) => D.exById.has(i.ex));
-  const id = weekPlan.get(wd), p = id && id !== 'rest' ? getProgram(id) : null;
-  return p ? p.items.map((i) => ({ ...i })) : [];
-}
-const weekProgram = (wd) => ({ id: 'wk' + wd, name: t('week.dayWorkout', { day: t('dayfull.' + (wd - 1)) }), items: weekItems(wd), restBetween: 30, custom: true, goals: [], level: null });
-export const getProgram = (id) => (/^wk[1-7]$/.test(id) ? weekProgram(+id[2]) : D.progById.get(id) || (customPrograms.get(id) ? mine(customPrograms.get(id)) : null));
+export const getProgram = (id) => D.progById.get(id) || (customPrograms.get(id) ? mine(customPrograms.get(id)) : null);
 export const progText = (p) => (p.custom ? { name: p.name, desc: '' } : D.content.programs[p.id] || { name: p.id, desc: '' });
 
 export const stepsOfItems = (items, restBetween) => buildSteps(items, D.exById, restBetween);

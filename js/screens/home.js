@@ -2,7 +2,8 @@ import { h, icon, uid } from '../util.js';
 import { t } from '../i18n.js';
 import * as router from '../router.js';
 import { tg } from '../tg.js';
-import { history, activeSession, todos, settings, weekPlan, weekdayOf } from '../store.js';
+import { history, activeSession, todos, settings } from '../store.js';
+import { dayCard } from '../todocard.js';
 import { dragSort } from '../dragsort.js';
 import { checklist } from '../checklist.js';
 import { weekDots, summary, streak } from '../stats.js';
@@ -34,28 +35,7 @@ function resumeCard() {
       } }, t('home.continueDiscard'))));
 }
 
-function todoCard() {
-  const day = dayKey(Date.now());
-  const bar = h('i'), count = h('span', { class: 'small muted row-flex', style: { gap: '4px', whiteSpace: 'nowrap' } });
-  const upd = (list) => {
-    const n = list.length, d = list.filter((x) => x.d).length;
-    bar.style.width = (n ? (d / n) * 100 : 0) + '%';
-    if (n && d === n) count.replaceChildren(icon('check', 16), t('todo.allDone'));
-    else count.textContent = !n ? t('todo.none') : t('todo.progress', { d, n });
-  };
-  // «Повторять каждый день»: дело запоминается в постоянном списке и появляется в каждом новом дне, пока его не удалят.
-  const repeat = { toggle: (x) => {
-    const daily = todos.daily();
-    if (x.src) { todos.setDaily(daily.filter((r) => r.id !== x.src)); delete x.src; }
-    else { const id = 'r_' + uid(); todos.setDaily([...daily, { id, t: x.t, days: [1, 2, 3, 4, 5, 6, 7] }]); x.src = id; }
-  } };
-  const onRemove = (x) => { if (x.src) todos.setDaily(todos.daily().filter((r) => r.id !== x.src)); };
-  const cl = checklist({ items: todos.forDay(day), save: (l) => todos.set(day, l), placeholder: t('todo.add'), onUpdate: upd, repeat, onRemove });
-  return h('section', { class: 'card todo htile', dataset: { key: 'todo' }, 'aria-label': t('todo.title') },
-    h('div', { class: 'row-flex', style: { justifyContent: 'space-between' } }, h('h2', { class: 'h3' }, t('todo.title')), count),
-    h('div', { class: 'bar', role: 'progressbar', 'aria-label': t('todo.title') }, bar), cl.el,
-    h('button', { class: 'link-btn row-flex', style: { gap: '4px', alignSelf: 'flex-start' }, type: 'button', onClick: () => router.go('myday') }, t('myday.open'), icon('chev-r', 16)));
-}
+const todoCard = () => dayCard({ list: todos, k: 'todo', key: 'todo', route: 'myday' });
 
 function weekTile(hist, now) {
   const dots = weekDots(hist, now), ws = summary(hist, startOfWeek(now), Infinity), st = streak(hist, now);
@@ -70,22 +50,7 @@ function weekTile(hist, now) {
       h('div', { class: 'kpi' }, h('div', { class: 'v' }, String(Math.round(ws.sec / 60))), h('div', { class: 'l' }, t('home.weekMinutes')))));
 }
 
-// Тренировка по расписанию на сегодня: показывается, когда расписание составлено.
-function planTile(hist, now) {
-  if (!weekPlan.any()) return null;
-  const day = dayKey(now), id = weekPlan.get(weekdayOf(day)), prog = id && id !== 'rest' ? getProgram(id) : null;
-  const head = h('div', { class: 'eyebrow' }, t('week.todayPlan'));
-  const open = () => router.go('week');
-  if (!prog) return h('section', { class: 'card htile plan-today', dataset: { key: 'plan' }, role: 'button', tabindex: '0', onClick: open, onKeydown: (e) => { if (e.key === 'Enter') open(); } }, head,
-    h('div', { class: 'h3' }, id === 'rest' ? t('week.restToday') : t('week.noneToday')), h('div', { class: 'small muted row-flex', style: { gap: '2px' } }, t('week.open'), icon('chev-r', 16)));
-  const done = hist.some((s) => dayKey(s.at) === day && s.programId === id);
-  return h('section', { class: 'card htile plan-today', dataset: { key: 'plan' }, 'aria-label': t('week.todayPlan') }, head,
-    h('div', { class: 'h3' }, progText(prog).name), h('div', { class: 'small muted' }, durationLabel(programEstimate(prog))),
-    done ? h('div', { class: 'row-flex small', style: { gap: '6px' } }, icon('check', 16), t('week.done'))
-      : h('button', { class: 'btn', type: 'button', onClick: () => startPlan(planForProgram(prog)) }, icon('play'), t('week.start')));
-}
-
-const TILES = ['plan', 'week', 'todo'];
+const TILES = ['week', 'todo'];
 export default function home() {
   const hist = history.all(), now = Date.now();
   const name = tg.user?.first_name;
@@ -100,8 +65,7 @@ export default function home() {
   // Две плашки: порядок задаёт пользователь — зажать плашку и перетащить (без кнопок и настроек).
   const saved = String(settings.get().homeOrder || '').split(',').filter((k) => TILES.includes(k));
   const order = [...new Set([...saved, ...TILES])];
-  if (!saved.includes('plan')) order.splice(order.indexOf('plan'), 1), order.unshift('plan');
-  const makers = { plan: () => planTile(hist, now), week: () => weekTile(hist, now), todo: todoCard };
+  const makers = { week: () => weekTile(hist, now), todo: todoCard };
   const tiles = h('div', { class: 'home-tiles' }, ...order.map((k) => makers[k]()).filter(Boolean));
   el.append(tiles);
   dragSort(tiles, { itemSel: '[data-key]', axis: 'y', scale: 1.02, onDrop: (keys) => settings.set({ homeOrder: keys.join(',') }) });

@@ -219,7 +219,7 @@ await test('Системная «Назад»: в тренировке откр�
 await test('Конструктор: своя программа создаётся, редактируется, запускается и удаляется', async () => {
   const { page, errors, ctx } = await fresh();
   await tab(page, 'workouts'); 
-  await btn(page, 'Создать свою тренировку').click();
+  await btn(page, /Собрать тренировку/).click();
   ok(await page.locator('.btn', { hasText: 'Сохранить программу' }).isDisabled(), 'сохранение заблокировано');
   await page.fill('#prog-name', 'Моя проверка');
   await btn(page, 'Добавить упражнение').click();
@@ -249,7 +249,7 @@ await test('Конструктор: своя программа создаётс
 await test('Конструктор: своё упражнение создаётся с нуля, попадает в программу и запускается', async () => {
   const { page, errors, ctx } = await fresh();
   await tab(page, 'workouts'); 
-  await btn(page, 'Создать свою тренировку').click(); await page.fill('#prog-name', 'С нуля');
+  await btn(page, /Собрать тренировку/).click(); await page.fill('#prog-name', 'С нуля');
   await btn(page, 'Создать своё упражнение').click();
   await page.locator('.sheet input[type=text]').last().fill('Отжимания на кулаках');
   await btn(page, 'Создать и добавить').tap();
@@ -554,7 +554,7 @@ await test('Тренировки: «Мой план», три плашки ур�
   const { page, ctx, errors } = await fresh();
   await tab(page, 'workouts'); await page.waitForSelector('.level-plate');
   const txt = await text(page, '#screen');
-  for (const w of ['Мой план', 'Начальный', 'Средний', 'Продвинутый', 'Ваш уровень', 'Растяжка и восстановление', 'Создать свою тренировку']) ok(txt.includes(w), 'есть «' + w + '»');
+  for (const w of ['Мой план', 'Начальный', 'Средний', 'Продвинутый', 'Ваш уровень', 'Растяжка и восстановление', 'Тренировки на сегодня']) ok(txt.includes(w), 'есть «' + w + '»');
   eq(await page.locator('.level-plate:not(.plan-plate)').count(), 3, 'три плашки уровней');
   ok(!/рюкзак|гантел|резинк|Premium/i.test(txt), 'нет инвентаря и Premium');
   await page.locator('.level-plate:not(.plan-plate)', { hasText: 'Средний' }).click(); await page.waitForSelector('.pcard-wide');
@@ -599,41 +599,27 @@ await test('Мой день: расписание по дням недели, и
   eq(errors.length, 0, errors.join(' | ')); await ctx.close();
 });
 
-await test('Расписание тренировок: составить неделю, на главной — тренировка на сегодня', async () => {
+await test('Тренировки на сегодня: добавить, отметить, повторять; расписание по дням', async () => {
   const { page, errors, ctx } = await fresh();
   await tab(page, 'workouts');
-  const order = await page.locator('#screen > .pad > *').evaluateAll((n) => n.slice(0, 3).map((e) => e.innerText.split('\n')[0]));
-  ok(/Создать свою тренировку/.test(order.join('|')) && order.join('|').indexOf('Создать') < order.join('|').indexOf('Карта тела'), 'кнопка «Создать» выше карты тела');
-  await page.getByRole('button', { name: /Расписание тренировок/ }).click(); await page.waitForSelector('.wk-day');
-  eq(await page.locator('.wk-day.me').count(), 1, 'сегодняшний день отмечен');
-  await page.locator('.wk-day.me').click(); await page.waitForSelector('.btn');
-  await btn(page, /^Добавить упражнение/).click(); await page.waitForSelector('.sheet .item');
-  await page.locator('.sheet .item').nth(0).click(); await page.locator('.sheet .item').nth(1).click();
-  await page.locator('.sheet .btn', { hasText: 'Готово' }).click();
-  const names = async () => page.locator('.list .item .t').allTextContents();
-  const n0 = await names(); eq(n0.length, 2, 'два упражнения в дне');
-  await page.locator('.item .icon-btn[aria-label="Ниже"]').first().click();
-  const n1 = await names(); eq(n1[0], n0[1], 'порядок изменён'); eq(n1[1], n0[0], 'порядок изменён (2)');
-  await page.locator('.list .item .grow').first().click(); await page.waitForSelector('.sheet .stepper');
-  await page.locator('.sheet .stepper').nth(2).getByRole('button', { name: /\+/ }).click();
-  await page.locator('.sheet .btn', { hasText: 'Готово' }).click();
-  ok((await page.locator('.list .item').first().innerText()).includes('0.5 кг'), 'рабочий вес показан в списке дня');
-  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('seven:week')));
-  eq(saved.plans[Object.keys(saved.plans)[0]].items.length, 2, 'расписание сохранено сразу');
-  await page.locator('.item .icon-btn[aria-label="Убрать"]').first().click();
-  eq((await names()).length, 1, 'упражнение убрано');
-  await page.goBack(); await page.waitForSelector('.wk-day');
-  ok((await text(page, '.wk-day.me')).includes(n0[0]), 'в расписании виден список упражнений дня');
-  await tab(page, 'home');
-  await page.waitForSelector('.plan-today');
-  ok((await text(page, '.plan-today')).includes('Тренировка'), 'на главной тренировка на сегодня');
-  await page.locator('.plan-today .btn').click(); await page.waitForSelector('.player');
+  ok(/Тренировки на сегодня/.test(await text(page, '.todo')), 'блок «Тренировки на сегодня» есть');
+  const inp = page.locator('.todo input');
+  await inp.fill('Отжимания 3×15'); await inp.press('Enter');
+  await inp.fill('Бицепс'); await inp.press('Enter');
+  eq((await page.locator('.todo .cl-text').allTextContents()).join('|'), 'Отжимания 3×15|Бицепс', 'названия и порядок сохранены');
+  await page.locator('.todo .cl-main').first().click();
+  await page.locator('.todo .rep').nth(1).click();
+  await tab(page, 'home'); await tab(page, 'workouts');
+  eq((await page.locator('.todo .cl-text').allTextContents()).join('|'), 'Отжимания 3×15|Бицепс', 'после перехода всё на месте');
+  eq(await page.locator('.todo .cl-row.done').count(), 1, 'отметка сохранена');
+  await page.getByRole('button', { name: /Расписание и история/ }).click(); await page.waitForSelector('.days-row');
+  ok((await text(page, '#screen')).includes('Бицепс'), 'постоянная тренировка в расписании дня');
   ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
 });
 
 await test('Конструктор: «Создать своё упражнение» и «Добавить упражнение»; отдых от 1 с, удержание меняет значение', async () => {
   const { page, errors, ctx } = await fresh();
-  await tab(page, 'workouts'); await btn(page, /Создать свою тренировку/).click(); await page.waitForSelector('.stepper');
+  await tab(page, 'workouts'); await btn(page, /Собрать тренировку/).click(); await page.waitForSelector('.stepper');
   const names = await page.locator('.pad > .btn').allTextContents();
   eq(names.slice(0, 2).join('|'), 'Создать своё упражнение|Добавить упражнение', 'две плашки по порядку');
   const val = () => page.locator('.stepper .val').first().innerText();
@@ -661,18 +647,6 @@ await test('Избранное поднимается наверх списка 
   await page.locator('.fav-btn').click();
   await page.goBack(); await page.waitForSelector('.list .item');
   eq((await names())[0], target, 'добавленное в избранное стало первым');
-  await tab(page, 'workouts'); await page.getByRole('button', { name: /Расписание тренировок/ }).click(); await page.waitForSelector('.wk-day');
-  await page.locator('.wk-day.me').click(); await btn(page, /Из готовой тренировки/).click(); await page.waitForSelector('.sheet .item');
-  const hs = await page.locator('.sheet .list').evaluateAll((n) => n.map((e) => e.scrollHeight - e.clientHeight));
-  ok(hs.every((d) => d <= 1), 'списки в окне не обрезаются: ' + hs.join());
-  await page.locator('.sheet .item', { hasText: 'Моя зарядка' }).click();
-  ok((await page.locator('.list .item').count()) >= 1, 'упражнения своей тренировки добавлены в день');
-  const dayBefore = await page.locator('.list .item .t').allTextContents();
-  await btn(page, /^Добавить упражнение/).click(); await page.waitForSelector('#pick-q');
-  await page.fill('#pick-q', 'Мой бицепс'); await page.locator('.sheet .item', { hasText: /Создать упражнение «Мой бицепс»/ }).click();
-  await page.locator('.sheet .btn', { hasText: 'Готово' }).click();
-  const dayAfter = await page.locator('.list .item .t').allTextContents();
-  eq(dayAfter.length, dayBefore.length + 1, 'своё упражнение добавлено одним нажатием'); eq(dayAfter[dayAfter.length - 1], 'Мой бицепс', 'название и порядок сохранены');
   ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
 });
 
