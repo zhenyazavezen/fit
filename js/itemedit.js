@@ -4,7 +4,7 @@ import { h, icon, uid } from './util.js';
 import { t } from './i18n.js';
 import { D, exName, exText, resolved, applyCustomEx } from './data.js';
 import { customPrograms, customEx } from './store.js';
-import { sheet, stepper, segmented, confirmDialog, toast, chip } from './ui.js';
+import { sheet, stepper, segmented, confirmDialog, toast } from './ui.js';
 import { sortByName, filterExercises, emptyFilter } from './catalog.js';
 
 const row = (label, control) => h('div', { class: 'row-flex', style: { justifyContent: 'space-between' } }, h('div', { class: 'h3' }, label), control);
@@ -43,33 +43,11 @@ export function editItem(it, rest, onSave) {
   });
 }
 
-/** Окно «Создать своё упражнение». done(запись). */
-export function newExercise(done) {
-  let mode = 'reps', cat = 'fullbody';
-  const name = h('input', { class: 'input', type: 'text', maxlength: '40', placeholder: t('myex.namePh'), 'aria-label': t('myex.name') });
-  const note = h('textarea', { class: 'input note-area', maxlength: '300', rows: '3', placeholder: t('myex.notePh'), 'aria-label': t('myex.note') });
-  const cats = h('div', { class: 'chips wrap' });
-  const drawCats = () => cats.replaceChildren(...D.meta.categories.map((c) => chip({ label: t('cat.' + c), pressed: cat === c, onClick: () => { cat = c; drawCats(); } })));
-  drawCats();
-  const s = sheet({
-    title: t('myex.new'),
-    body: [h('div', null, h('div', { class: 'eyebrow', style: { marginBottom: '8px' } }, t('myex.name')), name),
-      h('div', null, h('div', { class: 'eyebrow', style: { marginBottom: '8px' } }, t('builder.type')), segmented([{ value: 'reps', label: t('builder.reps') }, { value: 'time', label: t('builder.seconds') }], mode, (v) => { mode = v; })),
-      h('div', null, h('div', { class: 'eyebrow', style: { marginBottom: '8px' } }, t('myex.group')), cats),
-      h('div', null, h('div', { class: 'eyebrow', style: { marginBottom: '8px' } }, t('myex.note')), note)],
-    foot: [h('button', { class: 'btn', onClick: () => {
-      const nm = name.value.trim(); if (!nm) { name.focus(); return; }
-      const rec = { id: 'x_' + uid(), name: nm, mode, cat, note: note.value.trim() };
-      if (!customEx.save(rec)) { toast(t('builder.saveFailed')); return; }
-      applyCustomEx(); s.close(); toast(t('myex.saved')); done(rec);
-    } }, t('myex.save'))],
-  });
-}
-
 /** Окно выбора упражнений (можно добавить несколько). onAdd(элемент); onRemoved(id) — когда удалено своё упражнение. */
 export function pickExercises({ onAdd, onRemoved }) {
   let q = '', added = 0;
-  const input = h('input', { class: 'input', id: 'pick-q', type: 'search', placeholder: t('catalog.search'), 'aria-label': t('catalog.search') });
+  const input = h('input', { class: 'input', id: 'pick-q', type: 'search', placeholder: t('builder.pickSearch'), 'aria-label': t('builder.pickSearch'), autocomplete: 'off' });
+  const hint = h('p', { class: 'small muted' }, t('builder.pickHint'));
   const list = h('div', { class: 'list' }), counter = h('div', { class: 'small muted' });
   const addEx = (ex) => { added++; counter.textContent = t('builder.picked', { n: added }); onAdd(itemFromEx(ex)); };
   const draw = () => {
@@ -96,5 +74,5 @@ export function pickExercises({ onAdd, onRemoved }) {
   };
   input.addEventListener('input', () => { q = input.value; draw(); });
   draw();
-  const s = sheet({ title: t('builder.pick'), body: [input, counter, list], foot: [h('button', { class: 'btn', onClick: () => s.close() }, t('common.done'))] });
+  const s = sheet({ title: t('builder.pick'), body: [input, hint, counter, list], foot: [h('button', { class: 'btn', onClick: () => s.close() }, t('common.done'))] });
 }

@@ -368,3 +368,9 @@ body[data-route="player"] .toast { bottom: calc(var(--safe-bottom) + var(--tg-bo
 .mine-rows { margin-top: 6px; line-height: 1.45; overflow-wrap: anywhere; }
 .mine-act { display: flex; flex-direction: column; gap: var(--sp-2); flex: none; }
 .today { gap: var(--sp-3); }
+
+.more { margin-top: var(--sp-6); border-top: 1px solid var(--s3); padding-top: var(--sp-3); }
+.more > summary { cursor: pointer; list-style: none; color: var(--text2); font-weight: 600; min-height: 44px; display: flex; align-items: center; }
+.more > summary::-webkit-details-marker { display: none; }
+.more > summary::after { content: '▾'; margin-left: 8px; }
+.more[open] > summary::after { content: '▴'; }

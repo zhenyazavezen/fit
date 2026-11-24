@@ -33,15 +33,20 @@ export default function plan() {
         h('div', { class: 'small muted' }, t('level.desc.' + lv)), h('div', { class: 'small muted' }, t('workouts.progs', { n: ready().filter((x) => x.level === lv).length }))))),
       h('button', { class: 'link-btn row-flex', style: { gap: '4px', alignSelf: 'flex-start' }, type: 'button', onClick: () => router.go('level', { level: p.level }) }, t('plan.levelPrograms', { level: t('level.' + p.level).toLowerCase() }), icon('chev-r', 16)));
   }
-  const single = (label, all, key, tkey) => h('div', null, h('h2', { class: 'h3 group-title' }, label),
-    segmented(all.map((v) => ({ value: v, label: t(tkey + v) })), p[key], (v) => save({ [key]: v })));
+  // Один выбор: переносимые «таблетки» (длинные подписи не обрезаются).
+  const single = (label, all, key, tkey) => {
+    const box = h('div', { class: 'chipset' });
+    const draw = () => box.replaceChildren(...all.map((v) => chip({ label: t(tkey + v), pressed: p[key] === v, onClick: () => { save({ [key]: v }); draw(); } })));
+    draw();
+    return h('div', null, h('h2', { class: 'h3 group-title' }, label), box);
+  };
   const field = (label, key, min, max) => h('label', { class: 'stack', style: { gap: '6px', flex: 1 } }, h('span', { class: 'small muted' }, label),
     h('input', { class: 'input', type: 'number', inputmode: 'decimal', min, max, value: p[key] ?? '', 'aria-label': label,
       onChange: (e) => save({ [key]: e.target.value === '' ? null : e.target.value }) }));
 
   function renderRecs() {
     const ctx = { exById: D.exById, history: history.all(), programs: allPrograms(), now: Date.now() };
-    const recs = recommendPrograms(p, ctx, { limit: 4 });
+    const recs = recommendPrograms(p, ctx, { limit: 3 });
     recBox.replaceChildren(h('h2', { class: 'h3 group-title' }, t('plan.recs')),
       ...(recs.length ? recs.map((r) => h('button', { class: 'card stack', style: { gap: '6px', textAlign: 'left', marginBottom: '12px', width: '100%' }, onClick: () => router.go('program', { id: r.program.id }) },
         h('div', { class: 'h3' }, progText(r.program).name),
@@ -57,11 +62,12 @@ export default function plan() {
       h('div', { class: 'grow stack', style: { gap: '2px', textAlign: 'left' } }, h('div', { class: 'h3' }, t('map.title')), h('div', { class: 'small muted' }, t('map.hint'))), icon('chev-r', 18)),
     single(t('plan.goal'), PROFILE_GOALS, 'goal', 'pgoal.'),
     single(t('plan.minutes'), [10, 15, 20, 30, 45, 60].map(String), 'minutes', 'min.'),
-    multi(t('plan.limits'), PROFILE_LIMITS, 'limits', 'limit.'),
-    h('p', { class: 'small muted' }, t('plan.limitsNote')),
-    h('h2', { class: 'h3 group-title' }, t('plan.params')),
-    h('div', { class: 'row-flex', style: { gap: '12px' } }, field(t('plan.age'), 'age', 14, 99), field(t('plan.height'), 'heightCm', 100, 230), field(t('plan.weight'), 'weightKg', 30, 300)),
-    b ? h('p', { class: 'small muted' }, t('plan.bmiNote')) : null,
+    h('details', { class: 'more' }, h('summary', null, t('plan.more')),
+      multi(t('plan.limits'), PROFILE_LIMITS, 'limits', 'limit.'),
+      h('p', { class: 'small muted' }, t('plan.limitsNote')),
+      h('h2', { class: 'h3 group-title' }, t('plan.params')),
+      h('div', { class: 'row-flex', style: { gap: '12px' } }, field(t('plan.age'), 'age', 14, 99), field(t('plan.height'), 'heightCm', 100, 230), field(t('plan.weight'), 'weightKg', 30, 300)),
+      b ? h('p', { class: 'small muted' }, t('plan.bmiNote')) : null),
     recBox);
   drawLevels(); renderRecs();
   return { el };

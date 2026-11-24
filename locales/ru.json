@@ -579,7 +579,6 @@
   "myday.added": "Добавлено на сегодня",
   "myday.toToday": "Добавить на сегодня",
   "myday.toSchedule": "Добавить в расписание",
-  "builder.createEx": "Создать своё упражнение",
   "wtoday.title": "Тренировки на сегодня",
   "wtoday.add": "Добавить тренировку",
   "mywk.title": "Мои тренировки по дням",
@@ -626,5 +625,8 @@
   "today.others": "Другие тренировки",
   "today.meta": "{n} упр. · {time}",
   "today.pending": "В списке тренировок осталось: {n}",
-  "workouts.mineDate": "{date} • {n} упр."
+  "workouts.mineDate": "{date} • {n} упр.",
+  "plan.more": "Дополнительно (необязательно)",
+  "builder.pickSearch": "Найти или ввести своё упражнение",
+  "builder.pickHint": "Нет нужного? Введите название и нажмите «Создать»."
 }

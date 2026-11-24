@@ -5,7 +5,7 @@ import { D, exName, resolved } from '../data.js';
 import { customPrograms } from '../store.js';
 import { doseLabel } from '../format.js';
 import { topbar, stepper, confirmDialog, toast } from '../ui.js';
-import { editItem, newExercise, pickExercises, itemFromEx } from '../itemedit.js';
+import { editItem, pickExercises } from '../itemedit.js';
 
 export default function builder({ id } = {}) {
   const existing = id ? customPrograms.get(id) : null;
@@ -53,7 +53,6 @@ export default function builder({ id } = {}) {
       h('div', null, h('label', { class: 'eyebrow', for: 'prog-name', style: { display: 'block', marginBottom: '8px' } }, t('builder.name')), nameInput),
       row(t('builder.rest'), stepper({ value: st.rest, min: 1, max: 180, step: 1, onChange: (v) => { st.rest = v; dirty = true; renderItems(); }, label: t('builder.rest') })),
       h('h2', { class: 'h3' }, t('builder.items')),
-      h('button', { class: 'btn secondary', onClick: () => newExercise((rec) => { st.items.push(itemFromEx(D.exById.get(rec.id))); touch(); }) }, icon('plus'), t('builder.createEx')),
       h('button', { class: 'btn secondary', onClick: pick }, icon('plus'), t('builder.add')),
       itemsBox,
       hint, saveBtn));

@@ -255,9 +255,9 @@ await test('Конструктор: своё упражнение создаёт
   const { page, errors, ctx } = await fresh();
   await tab(page, 'workouts'); 
   await btn(page, /Создать свою тренировку/).click(); await page.fill('#prog-name', 'С нуля');
-  await btn(page, 'Создать своё упражнение').click();
-  await page.locator('.sheet input[type=text]').last().fill('Отжимания на кулаках');
-  await btn(page, 'Создать и добавить').tap();
+  await btn(page, /^Добавить упражнение/).click(); await page.waitForSelector('#pick-q');
+  await page.fill('#pick-q', 'Отжимания на кулаках'); await page.locator('.sheet .item', { hasText: /Создать упражнение/ }).click();
+  await page.locator('.sheet .btn', { hasText: 'Готово' }).click();
   await page.waitForSelector('.item .lead');
   ok((await text(page, '.list')).includes('Отжимания на кулаках'), 'своё упражнение в программе');
   await page.locator('.btn', { hasText: 'Сохранить программу' }).tap(); await page.waitForSelector('.facts');
@@ -625,11 +625,11 @@ await test('Тренировки на сегодня: добавить, отме
   ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
 });
 
-await test('Конструктор: «Создать своё упражнение» и «Добавить упражнение»; отдых от 1 с, удержание меняет значение', async () => {
+await test('Конструктор: одна плашка «Добавить упражнение»; отдых от 1 с, удержание меняет значение', async () => {
   const { page, errors, ctx } = await fresh();
   await tab(page, 'workouts'); await btn(page, /Создать свою тренировку/).click(); await page.waitForSelector('.stepper');
   const names = await page.locator('.pad > .btn').allTextContents();
-  eq(names.slice(0, 2).join('|'), 'Создать своё упражнение|Добавить упражнение', 'две плашки по порядку');
+  eq(names[0], 'Добавить упражнение', 'одна плашка «Добавить упражнение»; создание своего — внутри выбора');
   const val = () => page.locator('.stepper .val').first().innerText();
   eq(await val(), '30', 'отдых по умолчанию 30');
   const minus = page.locator('.stepper .icon-btn').first();
