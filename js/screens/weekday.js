@@ -6,7 +6,7 @@ import { D, weekItems, exName, resolved, allPrograms, progText, getProgram, plan
 import { doseLabel, durationLabel } from '../format.js';
 import { history } from '../store.js';
 import { topbar, sheet, confirmDialog } from '../ui.js';
-import { editItem, newExercise, pickExercises, itemFromEx } from '../itemedit.js';
+import { editItem, pickExercises } from '../itemedit.js';
 import { startPlan } from '../start.js';
 
 export default function weekday({ wd }) {
@@ -44,7 +44,6 @@ export default function weekday({ wd }) {
           h('button', { class: 'icon-btn', 'aria-label': t('builder.down'), disabled: i === items.length - 1, onClick: () => swap(i, i + 1) }, icon('down')),
           h('button', { class: 'icon-btn', 'aria-label': t('builder.remove'), onClick: () => save(items.filter((_, k) => k !== i)) }, icon('trash')))))) : null,
       h('button', { class: 'btn secondary', onClick: () => pickExercises({ onAdd: (it) => { items = [...items, it]; weekPlan.saveItems(wd, items); draw(); }, onRemoved: (id) => save(items.filter((i) => i.ex !== id)) }) }, icon('plus'), t('week.addEx')),
-      h('button', { class: 'btn secondary', onClick: () => newExercise((rec) => save([...items, itemFromEx(D.exById.get(rec.id))])) }, icon('plus'), t('builder.createEx')),
       h('button', { class: 'btn secondary', onClick: fromProgram }, icon('workouts'), t('week.fromProg')),
       r ? null : h('button', { class: 'link-btn', onClick: async () => {
         if (items.length && !(await confirmDialog({ title: t('week.restTitle'), text: t('week.restConfirm'), confirm: t('week.makeRest'), danger: true }))) return;

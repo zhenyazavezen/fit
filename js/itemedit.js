@@ -76,7 +76,13 @@ export function pickExercises({ onAdd, onRemoved }) {
     const f = { ...emptyFilter(), q };
     const pool = [...[...D.exById.values()].filter((e) => e.custom), ...D.exercises];
     const items = sortByName(filterExercises(pool, D.content.exercises, f), D.content.exercises);
-    list.replaceChildren(...items.map((ex) => {
+    const nm = q.trim(), exact = items.some((e) => exText(e.id).name.toLowerCase() === nm.toLowerCase());
+    const create = nm.length >= 2 && !exact ? h('button', { class: 'item', onClick: () => {
+      const rec = { id: 'x_' + uid(), name: nm.slice(0, 40), mode: 'reps', cat: 'fullbody', note: '' };
+      if (!customEx.save(rec)) { toast(t('builder.saveFailed')); return; }
+      applyCustomEx(); addEx(D.exById.get(rec.id)); q = ''; input.value = ''; draw();
+    } }, icon('plus', 20), h('div', { class: 'grow t' }, t('builder.createNamed', { name: nm.slice(0, 40) }))) : null;
+    list.replaceChildren(...[create].filter(Boolean), ...items.map((ex) => {
       const body = h('div', { class: 'grow' }, h('div', { class: 't' }, exText(ex.id).name), h('div', { class: 's' }, ex.custom ? t('myex.mine') : t('level.' + ex.level)));
       if (!ex.custom) return h('button', { class: 'item', onClick: () => addEx(ex) }, body, icon('plus', 20));
       return h('div', { class: 'item' }, h('button', { class: 'row-flex grow', style: { textAlign: 'left', gap: '12px' }, onClick: () => addEx(ex) }, body, icon('plus', 20)),

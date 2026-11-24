@@ -667,6 +667,12 @@ await test('Избранное поднимается наверх списка 
   ok(hs.every((d) => d <= 1), 'списки в окне не обрезаются: ' + hs.join());
   await page.locator('.sheet .item', { hasText: 'Моя зарядка' }).click();
   ok((await page.locator('.list .item').count()) >= 1, 'упражнения своей тренировки добавлены в день');
+  const dayBefore = await page.locator('.list .item .t').allTextContents();
+  await btn(page, /^Добавить упражнение/).click(); await page.waitForSelector('#pick-q');
+  await page.fill('#pick-q', 'Мой бицепс'); await page.locator('.sheet .item', { hasText: /Создать упражнение «Мой бицепс»/ }).click();
+  await page.locator('.sheet .btn', { hasText: 'Готово' }).click();
+  const dayAfter = await page.locator('.list .item .t').allTextContents();
+  eq(dayAfter.length, dayBefore.length + 1, 'своё упражнение добавлено одним нажатием'); eq(dayAfter[dayAfter.length - 1], 'Мой бицепс', 'название и порядок сохранены');
   ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
 });
 
