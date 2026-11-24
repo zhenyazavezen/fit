@@ -7,7 +7,8 @@ import { dragSort } from '../dragsort.js';
 import { checklist } from '../checklist.js';
 import { weekDots, summary, streak } from '../stats.js';
 import { startOfWeek, dayKey } from '../dates.js';
-import { stepsOfItems, getProgram, progText, programEstimate } from '../data.js';
+import { stepsOfItems, getProgram, progText, programEstimate, planForProgram } from '../data.js';
+import { startPlan } from '../start.js';
 import { durationLabel } from '../format.js';
 import { withPrep } from '../engine.js';
 import { greetingKey } from '../format.js';
@@ -81,7 +82,7 @@ function planTile(hist, now) {
   return h('section', { class: 'card htile plan-today', dataset: { key: 'plan' }, 'aria-label': t('week.todayPlan') }, head,
     h('div', { class: 'h3' }, progText(prog).name), h('div', { class: 'small muted' }, durationLabel(programEstimate(prog))),
     done ? h('div', { class: 'row-flex small', style: { gap: '6px' } }, icon('check', 16), t('week.done'))
-      : h('button', { class: 'btn', type: 'button', onClick: () => router.go('program', { id }) }, icon('play'), t('week.start')));
+      : h('button', { class: 'btn', type: 'button', onClick: () => startPlan(planForProgram(prog)) }, icon('play'), t('week.start')));
 }
 
 const TILES = ['plan', 'week', 'todo'];

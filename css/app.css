@@ -355,3 +355,9 @@ body[data-route="player"] .toast { bottom: calc(var(--safe-bottom) + var(--tg-bo
 @media (max-width: 360px) { .seg button { font-size: var(--fs-s); } }
 
 .sheet .body > * { flex-shrink: 0; }
+.wk-day { display: flex; flex-direction: column; gap: 8px; width: 100%; text-align: left; }
+.wk-day.me { border-color: var(--platinum); }
+.wk-lines { display: flex; flex-direction: column; gap: 4px; font-size: var(--fs-s); }
+.wk-line { display: flex; gap: 8px; align-items: baseline; text-align: left; }
+.wk-line .n { color: var(--text3); min-width: 20px; }
+.wk-line .muted { white-space: nowrap; }

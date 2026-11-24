@@ -160,11 +160,19 @@ export const todos = {
   },
 };
 
-// ---- Расписание тренировок: { days: { '1': id программы | 'rest' } }, 1 = понедельник
+// ---- Расписание тренировок: { days: { '1': 'wk1' (свой список) | 'rest' | id программы (старый формат) }, plans: { '1': { items } } }, 1 = понедельник
 export const weekPlan = {
-  all() { const v = store.get('week', null); return v && typeof v === 'object' && v.days && typeof v.days === 'object' ? v.days : {}; },
+  raw() { const v = store.get('week', null); return v && typeof v === 'object' && v.days && typeof v.days === 'object' ? v : { days: {} }; },
+  all() { return this.raw().days; },
   get(wd) { const x = this.all()[wd]; return typeof x === 'string' && x ? x : null; },
-  set(wd, id) { const days = { ...this.all() }; if (id) days[wd] = id; else delete days[wd]; return store.set('week', { days }); },
+  own(wd) { const p = this.raw().plans?.[wd]; return p && Array.isArray(p.items) ? p.items : null; },
+  /** Сохранить список упражнений дня (пустой список — день не задан). Сохраняется сразу. */
+  saveItems(wd, items) {
+    const r = this.raw(), days = { ...r.days }, plans = { ...(r.plans || {}) };
+    if (items.length) { plans[wd] = { items }; days[wd] = 'wk' + wd; } else { delete plans[wd]; delete days[wd]; }
+    return store.set('week', { days, plans });
+  },
+  setRest(wd) { const r = this.raw(), plans = { ...(r.plans || {}) }; delete plans[wd]; return store.set('week', { days: { ...r.days, [wd]: 'rest' }, plans }); },
   any() { return Object.values(this.all()).some(Boolean); },
 };
 

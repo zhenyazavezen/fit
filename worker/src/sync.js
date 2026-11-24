@@ -77,7 +77,21 @@ export function validateDoc(key, value) {
       if (!/^[1-7]$/.test(k) || !str(v, 64) || !ID_RE.test(v)) throw bad('некорректное расписание');
       days[k] = v;
     }
-    return { days };
+    const plans = {};
+    if (value.plans != null) {
+      if (!isObj(value.plans)) throw bad('некорректное расписание');
+      const num = (x, lo, hi) => (Number.isInteger(x) && x >= lo && x <= hi ? x : undefined);
+      for (const [k, p] of Object.entries(value.plans)) {
+        if (!/^[1-7]$/.test(k) || !isObj(p) || !Array.isArray(p.items) || p.items.length > 60) throw bad('некорректный план дня');
+        plans[k] = { items: p.items.map((it) => {
+          if (!isObj(it) || !str(it.ex, 64) || !ID_RE.test(it.ex)) throw bad('некорректное упражнение');
+          const o = { ex: it.ex }, sets = num(it.sets, 1, 20), reps = num(it.reps, 1, 500), seconds = num(it.seconds, 1, 3600);
+          if (sets) o.sets = sets; if (reps) o.reps = reps; if (seconds) o.seconds = seconds;
+          return o;
+        }) };
+      }
+    }
+    return Object.keys(plans).length ? { days, plans } : { days };
   }
   if (key === 'tabs') {
     if (!isObj(value)) throw bad('ожидается объект');

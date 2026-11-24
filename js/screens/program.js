@@ -35,7 +35,7 @@ export default function program({ id }) {
   })));
   if (text.note) body.append(h('div', { class: 'block' }, h('h2', { class: 'h3' }, t('program.note')), h('p', { class: 'small muted' }, text.note)));
 
-  if (p.custom) {
+  if (p.custom && !/^wk\d$/.test(p.id)) {
     body.append(h('div', { class: 'row-flex' },
       h('button', { class: 'btn ghost small', style: { flex: 1 }, onClick: () => router.go('builder', { id: p.id }) }, icon('edit', 18), t('common.edit')),
       h('button', { class: 'btn danger small', style: { flex: 1 }, onClick: async () => {
