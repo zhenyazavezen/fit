@@ -114,3 +114,6 @@ export function toast(message, ms = 2400) {
   toastTimer = setTimeout(() => el.remove(), ms);
 }
 
+
+/** Аккуратный индикатор загрузки. */
+export function spinner() { return h('div', { class: 'spin-wrap', role: 'status', 'aria-label': t('common.loading') }, h('i', { class: 'spin' })); }

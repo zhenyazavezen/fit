@@ -59,3 +59,27 @@ export function debounce(fn, ms) {
 }
 
 export const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+
+/** Число плавно «набегает» до значения (0.7 с). При «уменьшить анимацию» показывается сразу. */
+export function countUp(el, to, ms = 700, delay = 0) {
+  to = Math.round(to); el.textContent = String(to);
+  if (reducedMotion() || to < 2 || typeof requestAnimationFrame !== 'function') return;
+  el.textContent = '0';
+  let t0 = 0;
+  const step = (now) => {
+    if (!t0) t0 = now + delay;
+    const p = Math.min(1, Math.max(0, (now - t0) / ms));
+    el.textContent = String(Math.round(to * (1 - Math.pow(1 - p, 3))));
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+/** SVG-элемент без innerHTML. */
+export function svgEl(tag, attrs = {}, ...kids) {
+  const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  for (const c of kids) e.append(c);
+  return e;
+}

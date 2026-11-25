@@ -4,7 +4,7 @@ import { t } from '../i18n.js';
 import * as router from '../router.js';
 import { CONFIG } from '../config.js';
 import { tg } from '../tg.js';
-import { topbar, sheet, confirmDialog, segmented, toggle, toast, empty } from '../ui.js';
+import { topbar, sheet, confirmDialog, segmented, toggle, toast, empty, spinner } from '../ui.js';
 import { api, apiEnabled } from '../api.js';
 import { auth } from '../auth.js';
 import { avatarNode, thumbOf } from '../avatar.js';
@@ -34,6 +34,7 @@ export default function compete() {
     return { el };
   }
 
+  body.append(spinner());
   const photo = { v: undefined };
   const guard = async (fn) => { try { await fn(); } catch (e) { toast(errText(e)); } };
   const nickFor = async () => (st.me.nick ? undefined : await askNick());   // undefined — ник уже есть; null — отказ
@@ -93,7 +94,7 @@ export default function compete() {
       }) }, t('comp.leave')));
     body.replaceChildren(head, h('h2', { class: 'h2' }, room ? room.name : t('comp.global')), seg, list, ...foot);
     async function fill() {
-      list.replaceChildren(h('p', { class: 'muted small' }, t('common.loading')));
+      list.replaceChildren(spinner());
       try {
         const r = await call(`/board?scope=${encodeURIComponent(scope)}&period=${st.period}`);
         list.replaceChildren(r.rows.length ? h('div', { class: 'list' }, ...r.rows.map((x) => h('div', { class: 'item' + (x.me ? ' me' : '') }, h('div', { class: 'lead' }, String(x.rank)), avatarNode(x.photo, x.nick, 'sm'),

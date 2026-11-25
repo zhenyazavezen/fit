@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0F0F12">
 <meta name="color-scheme" content="dark">
-<meta name="build" content="fe45c909">
+<meta name="build" content="a435b35f">
 <title>ZAVEZEN_FIT</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230A0A0B'/%3E%3Cpath d='M18 20h28L30 46' fill='none' stroke='%23ECEDEF' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
@@ -100,7 +100,7 @@ h1, h2, h3, p { margin: 0; }
   background: var(--bg); position: relative; overflow: hidden;
 }
 #screen { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; margin-top: var(--tg-top); outline: none; }
-#screen.enter > * { animation: rise .26s var(--ease); }
+#screen.enter > * { animation: fade .18s ease-out; }
 @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { #screen.enter > *, .sheet, .scrim, .toast { animation: none !important; } * { transition: none !important; } }
 
@@ -464,12 +464,81 @@ body[data-route="player"] .toast { bottom: calc(var(--safe-bottom) + var(--tg-bo
 .sheet { box-shadow: 0 -16px 40px rgba(0, 0, 0, .5); }
 .seg { box-shadow: inset 0 1px 2px rgba(0, 0, 0, .35); }
 
+/* =====  Анимации: только transform/opacity, короткие, без бесконечных циклов (кроме индикатора загрузки)  ===== */
+@keyframes slidein { from { opacity: 0; transform: translateX(18px); } }
+@keyframes slideback { from { opacity: 0; transform: translateX(-14px); } }
+@keyframes sheen { from { transform: translateX(-130%); } to { transform: translateX(130%); } }
+@keyframes grow { from { transform: scaleX(0); } }
+@keyframes bargrow { from { transform: scaleY(0); } }
+@keyframes pop { 0% { opacity: 0; transform: scale(.82); } 60% { transform: scale(1.04); } 100% { opacity: 1; transform: none; } }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* переходы между экранами: вперёд — вправо, назад — влево, вкладки — мягкое появление блоков по очереди */
+#screen.enter.fwd > * { animation: slidein .24s var(--ease); }
+#screen.enter.back > * { animation: slideback .22s var(--ease); }
+#screen.enter.tab > .pad > *:nth-child(-n+8) { animation: rise .32s var(--ease) backwards; }
+#screen.enter.tab > .pad > *:nth-child(2) { animation-delay: 40ms; }
+#screen.enter.tab > .pad > *:nth-child(3) { animation-delay: 80ms; }
+#screen.enter.tab > .pad > *:nth-child(4) { animation-delay: 120ms; }
+#screen.enter.tab > .pad > *:nth-child(5) { animation-delay: 150ms; }
+#screen.enter.tab > .pad > *:nth-child(6) { animation-delay: 180ms; }
+#screen.enter.tab > .pad > *:nth-child(7) { animation-delay: 205ms; }
+#screen.enter.tab > .pad > *:nth-child(8) { animation-delay: 230ms; }
+#screen.enter.tab > .pad { animation: none; }
+
+/* кнопки: нажатие слегка утапливает, по главной кнопке проходит мягкий блик */
+.btn { position: relative; overflow: hidden; transition: transform .14s var(--ease), box-shadow .2s, filter .15s, background .15s, opacity .15s; }
+.btn:active { transform: scale(.975); filter: brightness(.95); }
+.btn:not(.secondary):not(.ghost):not(.danger)::after { content: ''; position: absolute; inset: 0; pointer-events: none; transform: translateX(-130%);
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, .6) 50%, transparent 62%); }
+.btn:not(.secondary):not(.ghost):not(.danger):active::after { transform: translateX(130%); transition: transform .5s var(--ease); }
+.card.today .btn::after, .sticky-cta .btn::after { animation: sheen 1.2s var(--ease) .7s 1 both; }
+.icon-btn { transition: background .15s, transform .12s var(--ease); }
+.icon-btn:active { transform: scale(.92); }
+.chip { transition: background .15s, color .15s, transform .12s var(--ease); }
+.chip:active { transform: scale(.96); }
+
+/* карточки и строки: лёгкое нажатие */
+button.card, .pcard-wide, .pcard, .level-plate, .mine-main, button.item, a.item { transition: transform .15s var(--ease), background .15s; }
+button.card:active, .pcard-wide:active, .pcard:active, .level-plate:active { transform: scale(.985); }
+.mine-card { transition: transform .15s var(--ease); }
+.mine-card:active { transform: scale(.992); }
+
+/* галочки в списках */
+.cl-box { transition: background .15s, border-color .15s, transform .15s var(--ease); }
+.cl-main:active .cl-box { transform: scale(.88); }
+.cl-row.done .cl-box .ic { animation: pop .28s var(--ease); }
+.cl-row { animation: rise .22s var(--ease); }
+
+/* прогресс: индикатор заполняется, столбцы графика вырастают */
+.bar i { transform-origin: left center; animation: grow .7s var(--ease) backwards; }
+.chart .bar { transform-box: fill-box; transform-origin: center bottom; animation: bargrow .55s var(--ease) backwards; }
+.dot.done i { animation: pop .35s var(--ease) backwards; }
+
+/* итог тренировки: последовательное появление */
+.seq { animation: rise .5s var(--ease) backwards; animation-delay: calc(var(--i, 0) * 90ms + 120ms); }
+.fin-ring { width: 84px; height: 84px; margin: 4px auto 14px; display: block; }
+.fin-ring circle { fill: none; stroke: var(--platinum); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 227; stroke-dashoffset: 227; transform: rotate(-90deg); transform-origin: 50% 50%; animation: draw .8s var(--ease) .1s forwards; }
+.fin-ring path { fill: none; stroke: var(--platinum); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 40; stroke-dashoffset: 40; animation: draw .4s var(--ease) .75s forwards; }
+
+/* загрузка: стартовый экран и индикатор в списках */
+.boot { min-height: 60vh; display: grid; place-items: center; }
+.spin { display: block; width: 30px; height: 30px; border-radius: 50%; border: 2.5px solid var(--s3); border-top-color: var(--silver); animation: spin .8s linear infinite; }
+.spin-wrap { display: grid; place-items: center; padding: var(--sp-8) 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+  .spin { animation: none !important; border-top-color: var(--silver); border-right-color: var(--silver); }
+  .fin-ring circle, .fin-ring path { stroke-dashoffset: 0; }
+}
+
 </style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></symbol><symbol id="i-workouts" viewBox="0 0 24 24"><path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/></symbol><symbol id="i-catalog" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></symbol><symbol id="i-progress" viewBox="0 0 24 24"><path d="M5 20V11M12 20V5M19 20v-6"/></symbol><symbol id="i-profile" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/></symbol><symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></symbol><symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 7h16M7 12h10M10 17h4"/></symbol><symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol><symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></symbol><symbol id="i-pause" viewBox="0 0 24 24"><path d="M8.5 5v14M15.5 5v14"/></symbol><symbol id="i-next" viewBox="0 0 24 24"><path d="M6 6l9 6-9 6zM18 6v12"/></symbol><symbol id="i-prev" viewBox="0 0 24 24"><path d="M18 6l-9 6 9 6zM6 6v12"/></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol><symbol id="i-chev-r" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol><symbol id="i-chev-l" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol><symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol><symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol><symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 3L5 13.5h6L10 21l8-10.5h-6z"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 7V4.5h4V7M7 7l.8 12.5h8.4L17 7"/></symbol><symbol id="i-edit" viewBox="0 0 24 24"><path d="M5 19l1-4L16.5 4.5l3 3L9 18z"/></symbol><symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8v.01"/></symbol><symbol id="i-up" viewBox="0 0 24 24"><path d="M6 14l6-6 6 6"/></symbol><symbol id="i-down" viewBox="0 0 24 24"><path d="M6 10l6 6 6-6"/></symbol><symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></symbol><symbol id="i-external" viewBox="0 0 24 24"><path d="M14 5h5v5M19 5l-8 8M18 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h4"/></symbol><symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7M12 17v.01"/></symbol><symbol id="i-sound" viewBox="0 0 24 24"><path d="M5 10v4h3l4 3.5v-11L8 10zM16 9.5a3.5 3.5 0 0 1 0 5M18.5 7a7 7 0 0 1 0 10"/></symbol><symbol id="i-vibrate" viewBox="0 0 24 24"><rect x="9" y="5" width="6" height="14" rx="1.5"/><path d="M5.5 9v6M18.5 9v6M3 11v2M21 11v2"/></symbol><symbol id="i-screen" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M9 20h6M12 16v4"/></symbol><symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.5 2.6 2.5 14.4 0 17M12 3.5c-2.5 2.6-2.5 14.4 0 17"/></symbol><symbol id="i-star" viewBox="0 0 24 24"><path d="M12 4l2.4 5 5.4.7-4 3.8 1 5.4-4.8-2.7-4.8 2.7 1-5.4-4-3.8 5.4-.7z"/></symbol><symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3.2 2-4.2.3 1.2 1 1.8 1.7 2C10.3 8 11 5.5 12 3z"/></symbol><symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3.5c3 4 6 6.5 6 10a6 6 0 0 1-12 0c0-3.5 3-6 6-10z"/></symbol><symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14zM5 19l7-7"/></symbol><symbol id="i-book" viewBox="0 0 24 24"><path d="M5 5.5A1.5 1.5 0 0 1 6.5 4H19v14H6.5A1.5 1.5 0 0 0 5 19.5zM5 19.5A1.5 1.5 0 0 0 6.5 21H19"/></symbol><symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><path d="M12 12v.01"/></symbol><symbol id="i-moon" viewBox="0 0 24 24"><path d="M19 14.5A7.5 7.5 0 0 1 9.5 5a7.5 7.5 0 1 0 9.5 9.5z"/></symbol><symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6L7 7M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></symbol><symbol id="i-list" viewBox="0 0 24 24"><path d="M9 7h10M9 12h10M9 17h10M5 7h.01M5 12h.01M5 17h.01"/></symbol><symbol id="i-calendar" viewBox="0 0 24 24"><path d="M5 6.5h14v13H5zM5 10.5h14M9 4v3M15 4v3"/></symbol><symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5v1.5A3 3 0 0 0 8 10.5M16 6h3v1.5a3 3 0 0 1-3 3M12 13v4M9 20h6M10 17h4"/></symbol><symbol id="i-repeat" viewBox="0 0 24 24"><path d="M17 3l3 3-3 3M20 6H8a4 4 0 0 0-4 4M7 21l-3-3 3-3M4 18h12a4 4 0 0 0 4-4"/></symbol><symbol id="i-compete" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5v1.5A3 3 0 0 0 8 10.5M16 6h3v1.5a3 3 0 0 1-3 3M12 13v4M9 20h6M10 17h4"/></symbol></defs></svg>
 <div id="app">
-  <main id="screen" tabindex="-1"></main>
+  <main id="screen" tabindex="-1"><div class="boot" role="status" aria-label="Загрузка"><i class="spin"></i></div></main>
   <nav id="tabbar" aria-label="Разделы" hidden></nav>
 </div>
 <div id="layer"></div>
@@ -582,7 +651,31 @@ function debounce(fn, ms) {
 
 const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-;return { append, h, icon, fmtClock, normalize, uid, debounce, reducedMotion };
+
+/** Число плавно «набегает» до значения (0.7 с). При «уменьшить анимацию» показывается сразу. */
+function countUp(el, to, ms = 700, delay = 0) {
+  to = Math.round(to); el.textContent = String(to);
+  if (reducedMotion() || to < 2 || typeof requestAnimationFrame !== 'function') return;
+  el.textContent = '0';
+  let t0 = 0;
+  const step = (now) => {
+    if (!t0) t0 = now + delay;
+    const p = Math.min(1, Math.max(0, (now - t0) / ms));
+    el.textContent = String(Math.round(to * (1 - Math.pow(1 - p, 3))));
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+/** SVG-элемент без innerHTML. */
+function svgEl(tag, attrs = {}, ...kids) {
+  const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  for (const c of kids) e.append(c);
+  return e;
+}
+
+;return { append, h, icon, fmtClock, normalize, uid, debounce, reducedMotion, countUp, svgEl };
 })();
 // ── js/store.js
 __m[2] = (function () {
@@ -1163,6 +1256,7 @@ let stack = [];                      // [{ name, params, scroll }]
 let view = null;                     // { el, onShow, onHide, destroy }
 let screenEl, tabbarEl;
 let navToken = 0;
+let navDir = 'fwd';                  // направление перехода для анимации: fwd | back | tab | none
 let canPush = true;                 // в ограниченных окружениях (iframe) pushState может быть запрещён — тогда стек ведём сами
 const pushState = (n) => { try { history.pushState({ n }, ''); return true; } catch { canPush = false; return false; } };
 const replaceState = (n) => { try { history.replaceState({ n }, ''); } catch { /* ignore */ } };
@@ -1179,7 +1273,7 @@ function start({ screen, tabbar, initial }) {
   });
   window.addEventListener('popstate', onPop);
   replaceState(1);
-  stack = [];
+  stack = []; navDir = 'tab';
   return show({ name: initial, params: {} }, [{ name: initial, params: {}, scroll: 0 }]);
 }
 
@@ -1187,7 +1281,7 @@ const current = () => stack[stack.length - 1] || null;
 
 /** Перейти на экран. replace — заменить текущий вместо добавления в стек. */
 function go(name, params = {}, { replace = false } = {}) {
-  saveScroll();
+  saveScroll(); navDir = 'fwd';
   const entry = { name, params, scroll: 0 };
   const next = replace ? [...stack.slice(0, -1), entry] : [...stack, entry];
   if (!replace) pushState(next.length);
@@ -1199,7 +1293,7 @@ function openTab(key) {
   const name = custom ? 'ctab' : key, params = custom ? { id: key } : {};
   if (stack.length === 1 && current()?.name === name && current()?.params?.id === params.id) { screenEl.scrollTo?.({ top: 0, behavior: 'smooth' }); return; }
   const entry = { name, params, scroll: 0 };
-  replaceState(1);
+  replaceState(1); navDir = 'tab';
   return show(entry, [entry]);
 }
 
@@ -1214,7 +1308,7 @@ function back() {
   if (backHandlers.length) { backHandlers[backHandlers.length - 1](); return; }
   if (stack.length > 1) {
     if (canPush) { try { history.back(); return; } catch { canPush = false; } }
-    const next = stack.slice(0, -1);
+    const next = stack.slice(0, -1); navDir = 'back';
     show(next[next.length - 1], next, true);
   }
 }
@@ -1227,7 +1321,7 @@ function onPop(e) {
   }
   const n = e.state?.n ?? 1;
   if (n < stack.length) {
-    const next = stack.slice(0, n);
+    const next = stack.slice(0, n); navDir = 'back';
     show(next[next.length - 1], next, true);
   }
 }
@@ -1245,7 +1339,9 @@ async function show(entry, nextStack, restore = false) {
   if (token !== navToken) { next.destroy?.(); return; }
   view = next;
   screenEl.replaceChildren(next.el);
-  screenEl.classList.remove('enter'); void screenEl.offsetWidth; screenEl.classList.add('enter');
+  screenEl.classList.remove('enter', 'fwd', 'back', 'tab'); void screenEl.offsetWidth;
+  if (navDir !== 'none') screenEl.classList.add('enter', navDir);
+  navDir = 'fwd';
   screenEl.scrollTop = restore ? entry.scroll || 0 : 0;
   document.body.dataset.route = entry.name;
   tabbarEl.hidden = !def.tabs;
@@ -1281,7 +1377,7 @@ function syncBackButton() {
 }
 
 /** Перерисовать текущий экран (например, после смены языка). */
-function refresh() { const c = current(); if (c) return show(c, stack, true); }
+function refresh() { const c = current(); if (c) { navDir = 'none'; return show(c, stack, true); } }
 
 ;return { register, start, go, openTab, onBack, back, syncTabbar, refresh };
 })();
@@ -1524,7 +1620,10 @@ function toast(message, ms = 2400) {
 }
 
 
-;return { topbar, chip, segmented, toggle, stepper, badge, empty, noteBox, sheet, confirmDialog, toast };
+/** Аккуратный индикатор загрузки. */
+function spinner() { return h('div', { class: 'spin-wrap', role: 'status', 'aria-label': t('common.loading') }, h('i', { class: 'spin' })); }
+
+;return { topbar, chip, segmented, toggle, stepper, badge, empty, noteBox, sheet, confirmDialog, toast, spinner };
 })();
 // ── js/avatar.js
 __m[14] = (function () {
@@ -3009,7 +3108,7 @@ function chart(p) {
   const peak = Math.max(...p.bars.map((b) => b.sec));
   p.bars.forEach((b, i) => {
     const x = L + slot * i + (slot - bw) / 2, hgt = b.sec ? Math.max(3, (b.sec / 60 / top) * ph) : 2;
-    svg.append(sv('rect', { class: 'bar' + (b.sec ? '' : ' zero') + (b.sec && b.sec === peak ? ' peak' : ''), x, y: base - hgt, width: bw, height: hgt, rx: Math.min(3, bw / 2) }));
+    svg.append(sv('rect', { class: 'bar' + (b.sec ? '' : ' zero') + (b.sec && b.sec === peak ? ' peak' : ''), x, y: base - hgt, width: bw, height: hgt, rx: Math.min(3, bw / 2), style: `animation-delay:${Math.min(i, 30) * 14}ms` }));
     const label = p.mode === 'week' ? t('day.' + i) : (b.i === 0 || (b.i + 1) % 7 === 1 ? String(b.i + 1) : '');
     if (label) svg.append(sv('text', { x: x + bw / 2, y: H - 6, 'text-anchor': 'middle' }, label));
   });
@@ -3338,7 +3437,7 @@ function exercise({ id }) {
 // ── js/screens/player.js
 __m[38] = (function () {
 // Экран тренировки: крупный таймер или число повторений, инструкция текстом, пауза, переходы, выход, итог.
-const { h, icon, fmtClock } = __m[1];
+const { h, icon, fmtClock, countUp, svgEl } = __m[1];
 const { t } = __m[8];
 const router = __m[9];
 const { tg } = __m[4];
@@ -3550,21 +3649,26 @@ function player(params = {}) {
     if (!savedOk) toast(t('player.saveFailed'), 4000);
     const days = streak(history.all(), now), mins = Math.max(1, Math.round(r.durationSec / 60));
     const changes = log.map((l) => ({ ex: l.ex, text: changeText(l, lastLog(before, l.ex)) }));
-    const rankBox = h('div', { class: 'card row-flex', hidden: true });
+    const rankBox = h('div', { class: 'card row-flex seq', style: { '--i': '0' }, hidden: true });
     const shareText = t('finish.shareText', { min: mins, sets: r.setsDone, days: Math.max(1, days) });
+    const nums = { mins: h('div', { class: 'v' }), sets: h('div', { class: 'v' }), days: h('div', { class: 'v' }) };
+    let seq = 0; const s = (extra, style = {}) => ({ class: 'seq' + (extra ? ' ' + extra : ''), style: { '--i': String(seq++), ...style } });
+    const ring = svgEl('svg', { class: 'fin-ring', viewBox: '0 0 84 84', 'aria-hidden': 'true' }, svgEl('circle', { cx: 42, cy: 42, r: 36 }), svgEl('path', { d: 'M27 43l10 10 20-22' }));
     el.replaceChildren(h('div', { class: 'p-body p-finish', style: { overflowY: 'auto' } },
-      h('h1', { class: 'p-name', style: { marginTop: '8px' } }, t('finish.title')),
-      h('div', { class: 'muted', style: { textAlign: 'center' } }, t(r.completed ? 'finish.sub' : 'player.finishPartial')),
-      h('div', { class: 'facts', style: { marginTop: '16px' } },
-        h('div', { class: 'fact' }, h('div', { class: 'v' }, String(mins)), h('div', { class: 'l' }, t('finish.minutes'))),
-        h('div', { class: 'fact' }, h('div', { class: 'v' }, String(r.setsDone)), h('div', { class: 'l' }, t('finish.sets'))),
-        h('div', { class: 'fact' }, h('div', { class: 'v' }, String(days)), h('div', { class: 'l' }, t('finish.streak')))),
-      changes.length ? h('div', { class: 'stack', style: { gap: '8px', marginTop: '16px', textAlign: 'left' } }, h('h2', { class: 'h3' }, t('finish.changed')),
+      ring,
+      h('h1', s('p-name', { marginTop: '0' }), t('finish.title')),
+      h('div', s('muted', { textAlign: 'center' }), t(r.completed ? 'finish.sub' : 'player.finishPartial')),
+      h('div', s('facts', { marginTop: '16px' }),
+        h('div', { class: 'fact' }, nums.mins, h('div', { class: 'l' }, t('finish.minutes'))),
+        h('div', { class: 'fact' }, nums.sets, h('div', { class: 'l' }, t('finish.sets'))),
+        h('div', { class: 'fact' }, nums.days, h('div', { class: 'l' }, t('finish.streak')))),
+      changes.length ? h('div', s('stack', { gap: '8px', marginTop: '16px', textAlign: 'left' }), h('h2', { class: 'h3' }, t('finish.changed')),
         h('div', { class: 'list' }, ...changes.map((c) => h('div', { class: 'item', style: { cursor: 'default' } }, h('div', { class: 'grow t' }, exName(c.ex)), h('div', { class: 'value' }, c.text))))) : null,
       rankBox,
-      h('div', { class: 'p-controls', style: { gridTemplateColumns: '1fr', marginTop: '16px' } },
+      h('div', s('p-controls', { gridTemplateColumns: '1fr', marginTop: '16px' }),
         h('button', { class: 'btn', onClick: () => router.openTab('home') }, t('finish.done')),
         h('button', { class: 'btn ghost', onClick: () => tg.openLink('https://t.me/share/url?url=' + encodeURIComponent(CONFIG.siteUrl) + '&text=' + encodeURIComponent(shareText)) }, t('finish.share')))));
+    countUp(nums.mins, mins, 700, 450); countUp(nums.sets, r.setsDone, 700, 550); countUp(nums.days, days, 700, 650);
     loadRank(rankBox, savedOk);
   }
 
@@ -3989,7 +4093,7 @@ const { t } = __m[8];
 const router = __m[9];
 const { CONFIG } = __m[0];
 const { tg } = __m[4];
-const { topbar, sheet, confirmDialog, segmented, toggle, toast, empty } = __m[13];
+const { topbar, sheet, confirmDialog, segmented, toggle, toast, empty, spinner } = __m[13];
 const { api, apiEnabled } = __m[3];
 const { auth } = __m[6];
 const { avatarNode, thumbOf } = __m[14];
@@ -4019,6 +4123,7 @@ function compete() {
     return { el };
   }
 
+  body.append(spinner());
   const photo = { v: undefined };
   const guard = async (fn) => { try { await fn(); } catch (e) { toast(errText(e)); } };
   const nickFor = async () => (st.me.nick ? undefined : await askNick());   // undefined — ник уже есть; null — отказ
@@ -4078,7 +4183,7 @@ function compete() {
       }) }, t('comp.leave')));
     body.replaceChildren(head, h('h2', { class: 'h2' }, room ? room.name : t('comp.global')), seg, list, ...foot);
     async function fill() {
-      list.replaceChildren(h('p', { class: 'muted small' }, t('common.loading')));
+      list.replaceChildren(spinner());
       try {
         const r = await call(`/board?scope=${encodeURIComponent(scope)}&period=${st.period}`);
         list.replaceChildren(r.rows.length ? h('div', { class: 'list' }, ...r.rows.map((x) => h('div', { class: 'item' + (x.me ? ' me' : '') }, h('div', { class: 'lead' }, String(x.rank)), avatarNode(x.photo, x.nick, 'sm'),

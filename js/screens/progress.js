@@ -23,7 +23,7 @@ function chart(p) {
   const peak = Math.max(...p.bars.map((b) => b.sec));
   p.bars.forEach((b, i) => {
     const x = L + slot * i + (slot - bw) / 2, hgt = b.sec ? Math.max(3, (b.sec / 60 / top) * ph) : 2;
-    svg.append(sv('rect', { class: 'bar' + (b.sec ? '' : ' zero') + (b.sec && b.sec === peak ? ' peak' : ''), x, y: base - hgt, width: bw, height: hgt, rx: Math.min(3, bw / 2) }));
+    svg.append(sv('rect', { class: 'bar' + (b.sec ? '' : ' zero') + (b.sec && b.sec === peak ? ' peak' : ''), x, y: base - hgt, width: bw, height: hgt, rx: Math.min(3, bw / 2), style: `animation-delay:${Math.min(i, 30) * 14}ms` }));
     const label = p.mode === 'week' ? t('day.' + i) : (b.i === 0 || (b.i + 1) % 7 === 1 ? String(b.i + 1) : '');
     if (label) svg.append(sv('text', { x: x + bw / 2, y: H - 6, 'text-anchor': 'middle' }, label));
   });

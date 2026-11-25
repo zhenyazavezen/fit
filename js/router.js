@@ -8,6 +8,7 @@ let stack = [];                      // [{ name, params, scroll }]
 let view = null;                     // { el, onShow, onHide, destroy }
 let screenEl, tabbarEl;
 let navToken = 0;
+let navDir = 'fwd';                  // направление перехода для анимации: fwd | back | tab | none
 let canPush = true;                 // в ограниченных окружениях (iframe) pushState может быть запрещён — тогда стек ведём сами
 const pushState = (n) => { try { history.pushState({ n }, ''); return true; } catch { canPush = false; return false; } };
 const replaceState = (n) => { try { history.replaceState({ n }, ''); } catch { /* ignore */ } };
@@ -24,7 +25,7 @@ export function start({ screen, tabbar, initial }) {
   });
   window.addEventListener('popstate', onPop);
   replaceState(1);
-  stack = [];
+  stack = []; navDir = 'tab';
   return show({ name: initial, params: {} }, [{ name: initial, params: {}, scroll: 0 }]);
 }
 
@@ -32,7 +33,7 @@ const current = () => stack[stack.length - 1] || null;
 
 /** Перейти на экран. replace — заменить текущий вместо добавления в стек. */
 export function go(name, params = {}, { replace = false } = {}) {
-  saveScroll();
+  saveScroll(); navDir = 'fwd';
   const entry = { name, params, scroll: 0 };
   const next = replace ? [...stack.slice(0, -1), entry] : [...stack, entry];
   if (!replace) pushState(next.length);
@@ -44,7 +45,7 @@ export function openTab(key) {
   const name = custom ? 'ctab' : key, params = custom ? { id: key } : {};
   if (stack.length === 1 && current()?.name === name && current()?.params?.id === params.id) { screenEl.scrollTo?.({ top: 0, behavior: 'smooth' }); return; }
   const entry = { name, params, scroll: 0 };
-  replaceState(1);
+  replaceState(1); navDir = 'tab';
   return show(entry, [entry]);
 }
 
@@ -59,7 +60,7 @@ export function back() {
   if (backHandlers.length) { backHandlers[backHandlers.length - 1](); return; }
   if (stack.length > 1) {
     if (canPush) { try { history.back(); return; } catch { canPush = false; } }
-    const next = stack.slice(0, -1);
+    const next = stack.slice(0, -1); navDir = 'back';
     show(next[next.length - 1], next, true);
   }
 }
@@ -72,7 +73,7 @@ function onPop(e) {
   }
   const n = e.state?.n ?? 1;
   if (n < stack.length) {
-    const next = stack.slice(0, n);
+    const next = stack.slice(0, n); navDir = 'back';
     show(next[next.length - 1], next, true);
   }
 }
@@ -90,7 +91,9 @@ async function show(entry, nextStack, restore = false) {
   if (token !== navToken) { next.destroy?.(); return; }
   view = next;
   screenEl.replaceChildren(next.el);
-  screenEl.classList.remove('enter'); void screenEl.offsetWidth; screenEl.classList.add('enter');
+  screenEl.classList.remove('enter', 'fwd', 'back', 'tab'); void screenEl.offsetWidth;
+  if (navDir !== 'none') screenEl.classList.add('enter', navDir);
+  navDir = 'fwd';
   screenEl.scrollTop = restore ? entry.scroll || 0 : 0;
   document.body.dataset.route = entry.name;
   tabbarEl.hidden = !def.tabs;
@@ -126,4 +129,4 @@ function syncBackButton() {
 }
 
 /** Перерисовать текущий экран (например, после смены языка). */
-export function refresh() { const c = current(); if (c) return show(c, stack, true); }
+export function refresh() { const c = current(); if (c) { navDir = 'none'; return show(c, stack, true); } }

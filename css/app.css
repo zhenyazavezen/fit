@@ -23,7 +23,7 @@ h1, h2, h3, p { margin: 0; }
   background: var(--bg); position: relative; overflow: hidden;
 }
 #screen { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; margin-top: var(--tg-top); outline: none; }
-#screen.enter > * { animation: rise .26s var(--ease); }
+#screen.enter > * { animation: fade .18s ease-out; }
 @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { #screen.enter > *, .sheet, .scrim, .toast { animation: none !important; } * { transition: none !important; } }
 
@@ -386,3 +386,72 @@ body[data-route="player"] .toast { bottom: calc(var(--safe-bottom) + var(--tg-bo
 #tabbar { background: color-mix(in srgb, var(--s1) 94%, #fff); box-shadow: 0 -8px 24px rgba(0, 0, 0, .25); }
 .sheet { box-shadow: 0 -16px 40px rgba(0, 0, 0, .5); }
 .seg { box-shadow: inset 0 1px 2px rgba(0, 0, 0, .35); }
+
+/* =====  Анимации: только transform/opacity, короткие, без бесконечных циклов (кроме индикатора загрузки)  ===== */
+@keyframes slidein { from { opacity: 0; transform: translateX(18px); } }
+@keyframes slideback { from { opacity: 0; transform: translateX(-14px); } }
+@keyframes sheen { from { transform: translateX(-130%); } to { transform: translateX(130%); } }
+@keyframes grow { from { transform: scaleX(0); } }
+@keyframes bargrow { from { transform: scaleY(0); } }
+@keyframes pop { 0% { opacity: 0; transform: scale(.82); } 60% { transform: scale(1.04); } 100% { opacity: 1; transform: none; } }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* переходы между экранами: вперёд — вправо, назад — влево, вкладки — мягкое появление блоков по очереди */
+#screen.enter.fwd > * { animation: slidein .24s var(--ease); }
+#screen.enter.back > * { animation: slideback .22s var(--ease); }
+#screen.enter.tab > .pad > *:nth-child(-n+8) { animation: rise .32s var(--ease) backwards; }
+#screen.enter.tab > .pad > *:nth-child(2) { animation-delay: 40ms; }
+#screen.enter.tab > .pad > *:nth-child(3) { animation-delay: 80ms; }
+#screen.enter.tab > .pad > *:nth-child(4) { animation-delay: 120ms; }
+#screen.enter.tab > .pad > *:nth-child(5) { animation-delay: 150ms; }
+#screen.enter.tab > .pad > *:nth-child(6) { animation-delay: 180ms; }
+#screen.enter.tab > .pad > *:nth-child(7) { animation-delay: 205ms; }
+#screen.enter.tab > .pad > *:nth-child(8) { animation-delay: 230ms; }
+#screen.enter.tab > .pad { animation: none; }
+
+/* кнопки: нажатие слегка утапливает, по главной кнопке проходит мягкий блик */
+.btn { position: relative; overflow: hidden; transition: transform .14s var(--ease), box-shadow .2s, filter .15s, background .15s, opacity .15s; }
+.btn:active { transform: scale(.975); filter: brightness(.95); }
+.btn:not(.secondary):not(.ghost):not(.danger)::after { content: ''; position: absolute; inset: 0; pointer-events: none; transform: translateX(-130%);
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, .6) 50%, transparent 62%); }
+.btn:not(.secondary):not(.ghost):not(.danger):active::after { transform: translateX(130%); transition: transform .5s var(--ease); }
+.card.today .btn::after, .sticky-cta .btn::after { animation: sheen 1.2s var(--ease) .7s 1 both; }
+.icon-btn { transition: background .15s, transform .12s var(--ease); }
+.icon-btn:active { transform: scale(.92); }
+.chip { transition: background .15s, color .15s, transform .12s var(--ease); }
+.chip:active { transform: scale(.96); }
+
+/* карточки и строки: лёгкое нажатие */
+button.card, .pcard-wide, .pcard, .level-plate, .mine-main, button.item, a.item { transition: transform .15s var(--ease), background .15s; }
+button.card:active, .pcard-wide:active, .pcard:active, .level-plate:active { transform: scale(.985); }
+.mine-card { transition: transform .15s var(--ease); }
+.mine-card:active { transform: scale(.992); }
+
+/* галочки в списках */
+.cl-box { transition: background .15s, border-color .15s, transform .15s var(--ease); }
+.cl-main:active .cl-box { transform: scale(.88); }
+.cl-row.done .cl-box .ic { animation: pop .28s var(--ease); }
+.cl-row { animation: rise .22s var(--ease); }
+
+/* прогресс: индикатор заполняется, столбцы графика вырастают */
+.bar i { transform-origin: left center; animation: grow .7s var(--ease) backwards; }
+.chart .bar { transform-box: fill-box; transform-origin: center bottom; animation: bargrow .55s var(--ease) backwards; }
+.dot.done i { animation: pop .35s var(--ease) backwards; }
+
+/* итог тренировки: последовательное появление */
+.seq { animation: rise .5s var(--ease) backwards; animation-delay: calc(var(--i, 0) * 90ms + 120ms); }
+.fin-ring { width: 84px; height: 84px; margin: 4px auto 14px; display: block; }
+.fin-ring circle { fill: none; stroke: var(--platinum); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 227; stroke-dashoffset: 227; transform: rotate(-90deg); transform-origin: 50% 50%; animation: draw .8s var(--ease) .1s forwards; }
+.fin-ring path { fill: none; stroke: var(--platinum); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 40; stroke-dashoffset: 40; animation: draw .4s var(--ease) .75s forwards; }
+
+/* загрузка: стартовый экран и индикатор в списках */
+.boot { min-height: 60vh; display: grid; place-items: center; }
+.spin { display: block; width: 30px; height: 30px; border-radius: 50%; border: 2.5px solid var(--s3); border-top-color: var(--silver); animation: spin .8s linear infinite; }
+.spin-wrap { display: grid; place-items: center; padding: var(--sp-8) 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+  .spin { animation: none !important; border-top-color: var(--silver); border-right-color: var(--silver); }
+  .fin-ring circle, .fin-ring path { stroke-dashoffset: 0; }
+}

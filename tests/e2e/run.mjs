@@ -153,6 +153,8 @@ await test('Программа «Экспресс-круг (средний)»: 7
   ok(fin.includes('Отлично!') && fin.includes('минут') && fin.includes('подходов') && fin.includes('дней подряд'), 'экран итога: ' + fin);
   eq(await page.locator('.p-finish .list .item').count(), 12, 'в «Что изменилось» все 12 упражнений'); ok(fin.includes('Новое'), 'первый раз — «Новое»');
   ok(await btn(page, 'Поделиться результатом').count() === 1, 'есть «Поделиться результатом»');
+  ok(await page.locator('.fin-ring').count() === 1 && await page.locator('.seq').count() >= 4, 'анимация итога: кольцо и последовательные блоки');
+  await run(page, 2000); eq(await page.locator('.p-finish .fact .v').first().innerText(), '8', 'число минут «набегает» до итогового значения');
   const hist = await page.evaluate(() => JSON.parse(localStorage.getItem('seven:history')));
   eq(hist.length, 1, 'запись в истории'); eq(hist[0].durationSec, 475, 'время тренировки 475 с (подготовка не входит)');
   eq(hist[0].completed, true, 'completed');
@@ -726,8 +728,18 @@ await test('Главная: карточка «Сегодня» предлага
   ok(!f2.errors.length, 'ошибки: ' + f2.errors.join(' | ')); await f2.ctx.close();
 });
 
+await test('Уменьшение анимации: переходы и появление отключаются, индикатор загрузки статичен', async () => {
+  const { page, errors, ctx } = await fresh();
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await tab(page, 'workouts');
+  const d = await page.evaluate(() => { const e = document.querySelector('#screen > .pad > *'); return parseFloat(getComputedStyle(e).animationDuration) * 1000; });
+  ok(d <= 1, 'длительность анимации появления ≈ 0: ' + d);
+  ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
+});
+
 await browser.close(); srv.close();
 console.log(results.join('\n'));
 console.log(`\nИтого: ${pass} пройдено, ${fail} провалено`);
 process.exit(fail ? 1 : 0);
+
 

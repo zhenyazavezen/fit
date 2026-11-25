@@ -1,5 +1,5 @@
 // Экран тренировки: крупный таймер или число повторений, инструкция текстом, пауза, переходы, выход, итог.
-import { h, icon, fmtClock } from '../util.js';
+import { h, icon, fmtClock, countUp, svgEl } from '../util.js';
 import { t } from '../i18n.js';
 import * as router from '../router.js';
 import { tg } from '../tg.js';
@@ -211,21 +211,26 @@ export default function player(params = {}) {
     if (!savedOk) toast(t('player.saveFailed'), 4000);
     const days = streak(history.all(), now), mins = Math.max(1, Math.round(r.durationSec / 60));
     const changes = log.map((l) => ({ ex: l.ex, text: changeText(l, lastLog(before, l.ex)) }));
-    const rankBox = h('div', { class: 'card row-flex', hidden: true });
+    const rankBox = h('div', { class: 'card row-flex seq', style: { '--i': '0' }, hidden: true });
     const shareText = t('finish.shareText', { min: mins, sets: r.setsDone, days: Math.max(1, days) });
+    const nums = { mins: h('div', { class: 'v' }), sets: h('div', { class: 'v' }), days: h('div', { class: 'v' }) };
+    let seq = 0; const s = (extra, style = {}) => ({ class: 'seq' + (extra ? ' ' + extra : ''), style: { '--i': String(seq++), ...style } });
+    const ring = svgEl('svg', { class: 'fin-ring', viewBox: '0 0 84 84', 'aria-hidden': 'true' }, svgEl('circle', { cx: 42, cy: 42, r: 36 }), svgEl('path', { d: 'M27 43l10 10 20-22' }));
     el.replaceChildren(h('div', { class: 'p-body p-finish', style: { overflowY: 'auto' } },
-      h('h1', { class: 'p-name', style: { marginTop: '8px' } }, t('finish.title')),
-      h('div', { class: 'muted', style: { textAlign: 'center' } }, t(r.completed ? 'finish.sub' : 'player.finishPartial')),
-      h('div', { class: 'facts', style: { marginTop: '16px' } },
-        h('div', { class: 'fact' }, h('div', { class: 'v' }, String(mins)), h('div', { class: 'l' }, t('finish.minutes'))),
-        h('div', { class: 'fact' }, h('div', { class: 'v' }, String(r.setsDone)), h('div', { class: 'l' }, t('finish.sets'))),
-        h('div', { class: 'fact' }, h('div', { class: 'v' }, String(days)), h('div', { class: 'l' }, t('finish.streak')))),
-      changes.length ? h('div', { class: 'stack', style: { gap: '8px', marginTop: '16px', textAlign: 'left' } }, h('h2', { class: 'h3' }, t('finish.changed')),
+      ring,
+      h('h1', s('p-name', { marginTop: '0' }), t('finish.title')),
+      h('div', s('muted', { textAlign: 'center' }), t(r.completed ? 'finish.sub' : 'player.finishPartial')),
+      h('div', s('facts', { marginTop: '16px' }),
+        h('div', { class: 'fact' }, nums.mins, h('div', { class: 'l' }, t('finish.minutes'))),
+        h('div', { class: 'fact' }, nums.sets, h('div', { class: 'l' }, t('finish.sets'))),
+        h('div', { class: 'fact' }, nums.days, h('div', { class: 'l' }, t('finish.streak')))),
+      changes.length ? h('div', s('stack', { gap: '8px', marginTop: '16px', textAlign: 'left' }), h('h2', { class: 'h3' }, t('finish.changed')),
         h('div', { class: 'list' }, ...changes.map((c) => h('div', { class: 'item', style: { cursor: 'default' } }, h('div', { class: 'grow t' }, exName(c.ex)), h('div', { class: 'value' }, c.text))))) : null,
       rankBox,
-      h('div', { class: 'p-controls', style: { gridTemplateColumns: '1fr', marginTop: '16px' } },
+      h('div', s('p-controls', { gridTemplateColumns: '1fr', marginTop: '16px' }),
         h('button', { class: 'btn', onClick: () => router.openTab('home') }, t('finish.done')),
         h('button', { class: 'btn ghost', onClick: () => tg.openLink('https://t.me/share/url?url=' + encodeURIComponent(CONFIG.siteUrl) + '&text=' + encodeURIComponent(shareText)) }, t('finish.share')))));
+    countUp(nums.mins, mins, 700, 450); countUp(nums.sets, r.setsDone, 700, 550); countUp(nums.days, days, 700, 650);
     loadRank(rankBox, savedOk);
   }
 
