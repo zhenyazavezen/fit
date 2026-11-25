@@ -18,7 +18,7 @@ export const tg = {
     if (!w) return;
     try { w.ready(); } catch { /* ignore */ }
     try { w.expand(); } catch { /* ignore */ }
-    try { w.setHeaderColor?.('#0A0A0B'); w.setBackgroundColor?.('#0A0A0B'); w.setBottomBarColor?.('#121214'); } catch { /* старые клиенты */ }
+    try { w.setHeaderColor?.('#0F0F12'); w.setBackgroundColor?.('#0F0F12'); w.setBottomBarColor?.('#19191D'); } catch { /* старые клиенты */ }
     try { w.disableVerticalSwipes?.(); } catch { /* ignore */ }
     const apply = () => this.applyViewport();
     apply();
