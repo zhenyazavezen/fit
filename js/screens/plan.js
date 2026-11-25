@@ -27,11 +27,10 @@ export default function plan() {
   const levelBox = h('div', { class: 'stack', style: { gap: '10px' } });
   const ready = () => allPrograms().filter((x) => !x.custom && !x.id.startsWith('r'));
   function drawLevels() {
-    levelBox.replaceChildren(...LEVELS.map((lv) => h('button', { class: 'card level-plate' + (p.level === lv ? ' yours' : ''), type: 'button', 'aria-pressed': String(p.level === lv), onClick: () => { save({ level: lv }); drawLevels(); } },
+    levelBox.replaceChildren(...LEVELS.map((lv) => h('button', { class: 'card level-plate' + (p.level === lv ? ' yours' : ''), type: 'button', onClick: () => router.go('level', { level: lv }) },
       h('div', { class: 'grow stack', style: { gap: '4px', textAlign: 'left' } },
         h('div', { class: 'row-flex', style: { gap: '8px' } }, h('span', { class: 'h3' }, t('level.' + lv)), p.level === lv ? h('span', { class: 'badge' }, t('workouts.yourLevel')) : null),
-        h('div', { class: 'small muted' }, t('level.desc.' + lv)), h('div', { class: 'small muted' }, t('workouts.progs', { n: ready().filter((x) => x.level === lv).length }))))),
-      h('button', { class: 'link-btn row-flex', style: { gap: '4px', alignSelf: 'flex-start' }, type: 'button', onClick: () => router.go('level', { level: p.level }) }, t('plan.levelPrograms', { level: t('level.' + p.level).toLowerCase() }), icon('chev-r', 16)));
+        h('div', { class: 'small muted' }, t('level.desc.' + lv)), h('div', { class: 'small muted' }, t('workouts.progs', { n: ready().filter((x) => x.level === lv).length }))), icon('chev-r', 18))));
   }
   // Один выбор: переносимые «таблетки» (длинные подписи не обрезаются).
   const single = (label, all, key, tkey) => {

@@ -23,13 +23,13 @@ const nameOf = (id, custom) => (id.startsWith('c_') ? custom.find((c) => c.id ==
 let bar = null;
 export function renderTabbar() {
   if (!bar) return;
-  const { visible, custom } = resolveTabs();
+  const { visible, custom } = resolveTabs(), { hideAdd } = tabsCfg.get();
   const items = visible.map((id) => {
     const c = custom.find((x) => x.id === id);
     const glyph = c ? (c.icon && TAB_ICONS.includes(c.icon) ? icon(c.icon) : h('i', { class: 'tab-emoji' }, (c.name[0] || '•').toUpperCase())) : icon(id);
     return h('button', { dataset: { tab: id }, type: 'button' }, glyph, h('span', null, nameOf(id, custom)));
   });
-  const add = custom.length < MAX_CUSTOM ? h('button', { class: 'tab-add', type: 'button', 'aria-label': t('tabs.add'), onClick: () => editCustom(null) }, icon('plus', 22), h('span', null, t('tabs.addShort'))) : null;
+  const add = !hideAdd && custom.length < MAX_CUSTOM ? h('button', { class: 'tab-add', type: 'button', 'aria-label': t('tabs.add'), onClick: () => editCustom(null) }, icon('plus', 22), h('span', null, t('tabs.addShort'))) : null;
   bar.replaceChildren(...items, add);
   router.syncTabbar();
 }
@@ -62,7 +62,7 @@ export function editCustom(id, onDone = () => {}) {
     foot: [
       cur ? h('button', { class: 'btn secondary', onClick: async () => {
         if (!(await confirmDialog({ title: t('tabs.delTitle'), text: t('tabs.delText'), confirm: t('tabs.delete'), danger: true }))) return;
-        const c = tabsCfg.get(); tabsCfg.set({ order: c.order.filter((x) => x !== id), hidden: c.hidden.filter((x) => x !== id), custom: c.custom.filter((x) => x.id !== id) });
+        const c = tabsCfg.get(); tabsCfg.set({ ...c, order: c.order.filter((x) => x !== id), hidden: c.hidden.filter((x) => x !== id), custom: c.custom.filter((x) => x.id !== id) });
         pages.remove(id); f.close(); onDone();
         if (document.body.dataset.route === 'ctab') router.openTab('home');
       } }, t('tabs.delete')) : null,
@@ -72,7 +72,7 @@ export function editCustom(id, onDone = () => {}) {
         if (cur) tabsCfg.set({ ...c, custom: c.custom.map((x) => (x.id === id ? { id: x.id, name: nm, icon: pick } : x)) });
         else {
           const nid = 'c_' + uid();
-          tabsCfg.set({ order: [...resolveTabs(c).order, nid], hidden: c.hidden, custom: [...c.custom, { id: nid, name: nm, icon: pick }] });
+          tabsCfg.set({ ...c, order: [...resolveTabs(c).order, nid], custom: [...c.custom, { id: nid, name: nm, icon: pick }] });
           f.close(); onDone(); router.openTab(nid); return;
         }
         f.close(); onDone();
@@ -101,8 +101,9 @@ export function openTabsEditor() {
         id === 'profile' ? h('span', { class: 'small muted', style: { minWidth: '52px', textAlign: 'center' } }, t('tabs.always')) : tg);
     }));
     foot.replaceChildren(
+      h('div', { class: 'item' }, h('div', { class: 'grow' }, h('div', { class: 't' }, t('tabs.showAdd'))), toggle(!cfg.hideAdd, (v) => { tabsCfg.set({ ...cfg, hideAdd: !v }); draw(); }, t('tabs.showAdd'))),
       r.custom.length < MAX_CUSTOM ? h('button', { class: 'btn', onClick: () => editCustom(null, () => { s.close(); }) }, icon('plus'), t('tabs.add')) : null,
-      h('button', { class: 'btn secondary', onClick: () => { tabsCfg.set({ order: [], hidden: [], custom: cfg.custom }); draw(); } }, t('tabs.reset')));
+      h('button', { class: 'btn secondary', onClick: () => { tabsCfg.set({ order: [], hidden: [], custom: cfg.custom, hideAdd: cfg.hideAdd }); draw(); } }, t('tabs.reset')));
   }
   draw();
 }

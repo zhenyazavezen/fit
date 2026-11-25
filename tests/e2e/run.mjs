@@ -27,7 +27,7 @@ async function fresh({ w = 390, h = 844, clock = true, tgMock = false, pre } = {
 }
 const tab = (p, name) => p.locator(`#tabbar [data-tab="${name}"]`).click();
 const btn = (p, name, opts = {}) => p.getByRole('button', { name, ...opts });
-async function openLevel(page, name) { await tab(page, 'workouts'); await page.locator('.plan-plate', { hasText: 'Мой план' }).click(); await page.waitForSelector('.level-plate'); await page.locator('.level-plate:not(.plan-plate)', { hasText: name }).click(); await page.getByRole('button', { name: /Все программы/ }).click(); }
+async function openLevel(page, name) { await tab(page, 'workouts'); await page.locator('.plan-plate', { hasText: 'Мой план' }).click(); await page.waitForSelector('.level-plate'); await page.locator('.level-plate:not(.plan-plate)', { hasText: name }).click(); await page.waitForSelector('.pcard-wide, .empty'); }
 const shot = async (p, n) => { if (SHOTS) await p.screenshot({ path: `${SHOTS}/${n}.png` }); };
 const text = (p, sel) => p.locator(sel).innerText();
 const run = (p, ms) => p.clock.runFor(ms);
@@ -581,8 +581,21 @@ await test('Мой план: выбор уровня меняет метку «�
   ok(!(await text(page, '#screen')).includes('Мой план'), 'в профиле «Мой план» нет');
   ok((await text(page, '#screen')).includes('Поддержка') && (await text(page, '#screen')).includes('@zhenya_zavezen'), 'поддержка с ником');
   await tab(page, 'workouts'); await page.locator('.plan-plate', { hasText: 'Мой план' }).click(); await page.waitForSelector('.level-plate');
+  eq(await page.locator('.level-plate.yours').innerText().then((x) => x.includes('Начальный')), true, 'по умолчанию «Ваш уровень» — начальный');
   await page.locator('.level-plate:not(.plan-plate)', { hasText: 'Продвинутый' }).click();
-  eq(await page.locator('.level-plate.yours').innerText().then((x) => x.includes('Продвинутый')), true, 'метка у выбранного уровня');
+  await page.waitForSelector('.pcard-wide, .empty'); await page.goBack().catch(() => {}); await page.waitForSelector('.level-plate');
+  eq(await page.locator('.level-plate.yours').innerText().then((x) => x.includes('Начальный')), true, 'просмотр уровня не меняет ваш уровень');
+  await page.locator('.level-plate:not(.plan-plate)', { hasText: 'Продвинутый' }).click();
+  await page.getByRole('button', { name: 'Сделать моим уровнем' }).click();
+  await page.goBack().catch(() => {}); await page.waitForSelector('.level-plate');
+  eq(await page.locator('.level-plate.yours').innerText().then((x) => x.includes('Продвинутый')), true, 'уровень меняется только явной кнопкой');
+  // кнопка «Добавить» на нижней панели скрывается в «Нижней панели» профиля
+  ok((await page.locator('.tab-add').count()) === 1, 'кнопка «Добавить» на панели есть');
+  await tab(page, 'profile'); await page.getByText('Нижняя панель').click();
+  await page.getByRole('switch', { name: /Кнопка «Добавить»/ }).click();
+  eq(await page.locator('.tab-add').count(), 0, 'кнопку «Добавить» можно убрать с панели');
+  await page.getByRole('switch', { name: /Кнопка «Добавить»/ }).click();
+  eq(await page.locator('.tab-add').count(), 1, 'и вернуть');
   eq(errors.length, 0, errors.join(' | ')); await ctx.close();
 });
 

@@ -164,7 +164,7 @@ export const workoutsToday = dayLists('wtodos');
 
 // ---- Нижняя панель: { order:[id…], hidden:[id…], custom:[{id,name,icon}] }; страницы своих вкладок: { id: {note, items:[{id,t,d}]} }
 export const tabsCfg = {
-  get() { const v = store.get('tabs', null); return v && typeof v === 'object' && !Array.isArray(v) ? { order: v.order || [], hidden: v.hidden || [], custom: v.custom || [] } : { order: [], hidden: [], custom: [] }; },
+  get() { const v = store.get('tabs', null); return v && typeof v === 'object' && !Array.isArray(v) ? { order: v.order || [], hidden: v.hidden || [], custom: v.custom || [], hideAdd: v.hideAdd === true } : { order: [], hidden: [], custom: [], hideAdd: false }; },
   set(c) { return store.set('tabs', c); },
 };
 export const pages = {
