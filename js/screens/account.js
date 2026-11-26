@@ -24,7 +24,7 @@ function gate(done) {
   const box = h('div', { class: 'stack', style: { gap: '12px' } });
   const msg = h('p', { class: 'small', style: { color: 'var(--danger)' }, role: 'alert' });
   if (!apiEnabled()) { box.append(noteBox(t('auth.disabled'))); return box; }
-  const robot = isStandalone() ? null : h('img', { class: 'robot-hero', src: 'assets/robot.jpg', alt: '', width: 160, height: 289, loading: 'lazy', onError: (e) => e.target.remove() });
+  const robot = isStandalone() ? null : h('img', { class: 'robot-hero', src: 'assets/robot.jpg', alt: '', width: 122, height: 220, onError: (e) => e.target.remove() });
   box.append(h('div', { class: 'gate-hero' }, robot), h('h1', { class: 'h1' }, t('auth.title')), h('p', { class: 'muted' }, t('auth.text')));
   if (tg.available) box.append(h('button', { class: 'btn', onClick: async () => { msg.textContent = ''; try { await loginWithTelegram(); done(); } catch (e) { msg.textContent = errText(e); } } }, icon('profile'), t('auth.telegram')));
   else box.append(noteBox(t('auth.telegramHint')));

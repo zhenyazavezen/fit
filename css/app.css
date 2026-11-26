@@ -260,7 +260,7 @@ body[data-route="player"] .toast { bottom: calc(var(--safe-bottom) + var(--tg-bo
 
 /* вход и робот */
 .gate-hero { display: flex; justify-content: center; }
-.robot-hero { height: 220px; width: auto; border-radius: var(--r-l); object-fit: cover; }
+.robot-hero { height: 220px; width: 122px; background: var(--s1); border-radius: var(--r-l); object-fit: cover; }
 .gsi-slot { display: flex; justify-content: center; min-height: 44px; }
 .exercise-card { width: 100%; height: auto; border-radius: var(--r-l); margin-top: var(--sp-4); }
 .pcard-wide .top > .t { min-width: 0; overflow-wrap: anywhere; }
