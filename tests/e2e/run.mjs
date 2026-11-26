@@ -436,16 +436,20 @@ await test('Личные данные: у разных аккаунтов Telegr
 await test('Главная: плашки меняются местами перетаскиванием; календарь по нажатию; панель с «+»', async () => {
   const { page, errors, ctx } = await fresh();
   const keys = () => page.locator('.htile').evaluateAll((n) => n.map((e) => e.dataset.key).join());
-  eq(await keys(), 'week,todo', 'порядок по умолчанию: календарь, дела');
+  eq(await keys(), 'today,week,todo', 'порядок по умолчанию: сегодня, календарь, дела');
   const gaps = await page.locator('.htile').evaluateAll((n) => { const r = n.map((e) => e.getBoundingClientRect()); return Math.round(r[1].top - r[0].bottom); });
   ok(gaps >= 12 && gaps <= 20, 'отступ между плашками: ' + gaps);
   const a = await page.locator('.htile[data-key="week"] .dots').boundingBox(), b = await page.locator('.htile[data-key="todo"] .bar').boundingBox();
   await page.mouse.move(a.x + 20, a.y + 20); await page.mouse.down(); await page.clock.runFor(500);
   await page.mouse.move(b.x + 20, b.y + 60, { steps: 14 }); await page.mouse.up(); await page.clock.runFor(600);
-  eq(await keys(), 'todo,week', 'плашки поменялись');
+  eq(await keys(), 'today,todo,week', 'плашки поменялись');
   ok(await page.locator('.cal-card').count() === 0, 'отпускание не открыло календарь');
   await page.reload(); await page.waitForSelector('.htile');
-  eq(await keys(), 'todo,week', 'порядок сохранился');
+  eq(await keys(), 'today,todo,week', 'порядок сохранился');
+  const tb = await page.locator('.htile[data-key="today"] .h2').boundingBox(), wb = await page.locator('.htile[data-key="week"] .dots').boundingBox();
+  await page.mouse.move(tb.x + 20, tb.y + 10); await page.mouse.down(); await page.clock.runFor(500);
+  await page.mouse.move(wb.x + 20, wb.y + 60, { steps: 14 }); await page.mouse.up(); await page.clock.runFor(600);
+  ok((await keys()).split(',')[0] !== 'today', 'плашку «Сегодня» можно перетащить: ' + await keys());
   await page.locator('.htile[data-key="week"]').click(); await page.waitForSelector('.cal-card');
   eq(await page.locator('.cal-cell:not(.empty)').count(), 30, 'ноябрь: 30 дней');
   await page.getByRole('button', { name: 'Назад', exact: true }).first().click().catch(() => {});

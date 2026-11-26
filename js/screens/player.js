@@ -144,7 +144,7 @@ export default function player(params = {}) {
     if (!events.length) return;
     if (events.some((e) => e.type === 'finish')) { finish(); return; }
     const s = session.step;
-    if (events.length === 1 && s.type === 'work') { beep('go'); haptic('medium'); } else if (events.length === 1) haptic('light');
+    if (events.length === 1 && s.type === 'work') { beep('go'); haptic('medium'); } else if (events.length === 1) { if (s.type === 'rest' || s.type === 'switch') beep('rest'); haptic('light'); }
     render(); persist();
   }
   function act(fn) { handle(fn()); }
@@ -269,6 +269,7 @@ export default function player(params = {}) {
       if (params.resume) session.paused = true;
       if (!session.paused) lock();
       render(); persist();
+      if (!params.resume && session.step?.type === 'prep') beep('prep');
       timerId = setInterval(loop, 200);
     },
     destroy() { if (!over && !exiting) { persist(); } cleanup(); },

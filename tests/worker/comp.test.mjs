@@ -77,3 +77,12 @@ test('фото в рейтинге: маленький JPEG или ссылка 
   await post(e, b.token, '/comp/photo', { photo: '' });
   assert.equal((await get(e, b.token, '/comp/me')).body.photo, '');
 });
+
+test('рейтинг считает и незавершённые тренировки (как «Прогресс»)', async () => {
+  const e = env();
+  const a = await login(e, 7, 'A');
+  await post(e, a.token, '/sync', { sessions: [{ id: 'p1', at: Date.now(), durationSec: 120, completed: false }, { id: 'p2', at: Date.now(), durationSec: 60, completed: true }] });
+  await post(e, a.token, '/comp/global', { on: true, nick: 'Альфа' });
+  const r = (await get(e, a.token, '/comp/board?scope=global&period=week')).body;
+  assert.deepEqual([r.rows[0].workouts, r.rows[0].minutes], [2, 3]);
+});

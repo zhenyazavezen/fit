@@ -89,7 +89,7 @@ export function openTabsEditor() {
   s.body.append(foot);
   function draw() {
     const cfg = tabsCfg.get(), r = resolveTabs(cfg);
-    list.replaceChildren(...r.order.map((id) => {
+    list.replaceChildren(...[...r.order.map((id) => {
       const isCustom = id.startsWith('c_'), on = r.visible.includes(id);
       const tg = toggle(on, (v) => {
         const hidden = new Set(r.hidden); if (v) hidden.delete(id); else hidden.add(id);
@@ -99,9 +99,9 @@ export function openTabsEditor() {
         h('div', { class: 'grow' }, h('div', { class: 't' }, nameOf(id, r.custom)), isCustom ? h('div', { class: 's' }, t('tabs.mine')) : null),
         isCustom ? h('button', { class: 'icon-btn', 'aria-label': t('tabs.edit'), onClick: () => editCustom(id, draw) }, icon('edit', 18)) : null,
         id === 'profile' ? h('span', { class: 'small muted', style: { minWidth: '52px', textAlign: 'center' } }, t('tabs.always')) : tg);
-    }));
+    }),
+      h('div', { class: 'item' }, h('div', { class: 'grow' }, h('div', { class: 't' }, t('tabs.showAdd'))), toggle(!cfg.hideAdd, (v) => { tabsCfg.set({ ...cfg, hideAdd: !v }); draw(); }, t('tabs.showAdd')))]);
     foot.replaceChildren(
-      h('div', { class: 'item' }, h('div', { class: 'grow' }, h('div', { class: 't' }, t('tabs.showAdd'))), toggle(!cfg.hideAdd, (v) => { tabsCfg.set({ ...cfg, hideAdd: !v }); draw(); }, t('tabs.showAdd'))),
       r.custom.length < MAX_CUSTOM ? h('button', { class: 'btn', onClick: () => editCustom(null, () => { s.close(); }) }, icon('plus'), t('tabs.add')) : null,
       h('button', { class: 'btn secondary', onClick: () => { tabsCfg.set({ order: [], hidden: [], custom: cfg.custom, hideAdd: cfg.hideAdd }); draw(); } }, t('tabs.reset')));
   }

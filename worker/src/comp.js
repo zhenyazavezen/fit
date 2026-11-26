@@ -132,7 +132,7 @@ export async function leaveRoom(db, accountId, roomId) {
 export async function board(db, accountId, scope, period, now) {
   const per = period === 'month' ? 'month' : 'week', { from, to } = periodRange(per, now);
   const sums = `SELECT w.account_id AS a, COUNT(*) AS n, COALESCE(SUM(json_extract(w.data, '$.durationSec')), 0) AS sec
-    FROM workout_sessions w WHERE w.deleted = 0 AND w.at >= ?1 AND w.at < ?2 AND COALESCE(json_extract(w.data, '$.completed'), 1) != 0 GROUP BY w.account_id`;
+    FROM workout_sessions w WHERE w.deleted = 0 AND w.at >= ?1 AND w.at < ?2 GROUP BY w.account_id`;
   let rows, title = null;
   if (scope === 'global') {
     const mine = await db.prepare('SELECT global FROM comp_profile WHERE account_id = ?1').bind(accountId).first();

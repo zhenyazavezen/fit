@@ -48,9 +48,13 @@ export default function plan() {
     return h('div', null, h('h2', { class: 'h3 group-title' }, t('plan.days')), box, h('p', { class: 'small muted', style: { marginTop: '8px' } }, t('plan.daysHint')));
   };
   const timePick = () => {
-    const inp = h('input', { class: 'input', type: 'time', value: p.time, 'aria-label': t('plan.time'), style: { maxWidth: '160px' }, onChange: (e) => save({ time: e.target.value }) });
-    const clear = h('button', { class: 'link-btn', type: 'button', onClick: () => { inp.value = ''; save({ time: '' }); } }, t('plan.timeClear'));
-    return h('div', null, h('h2', { class: 'h3 group-title' }, t('plan.time')), h('div', { class: 'row-flex', style: { gap: '12px' } }, inp, clear));
+    const inp = h('input', { type: 'time', value: p.time, 'aria-label': t('plan.time'), class: 'time-native', onChange: (e) => { save({ time: e.target.value }); draw(); } });
+    const btn = h('button', { class: 'chip time-btn', type: 'button', onClick: () => { try { inp.showPicker(); } catch { inp.focus(); inp.click(); } } });
+    const clear = h('button', { class: 'link-btn', type: 'button', onClick: () => { inp.value = ''; save({ time: '' }); draw(); } }, t('plan.timeClear'));
+    const row = h('div', { class: 'row-flex', style: { gap: '12px', position: 'relative' } });
+    const draw = () => { btn.replaceChildren(icon('clock', 18), p.time || t('plan.timePick')); btn.setAttribute('aria-pressed', String(!!p.time)); row.replaceChildren(btn, inp, ...(p.time ? [clear] : [])); };
+    draw();
+    return h('div', null, h('h2', { class: 'h3 group-title' }, t('plan.time')), row);
   };
   const field = (label, key, min, max) => h('label', { class: 'stack', style: { gap: '6px', flex: 1 } }, h('span', { class: 'small muted' }, label),
     h('input', { class: 'input', type: 'number', inputmode: 'decimal', min, max, value: p[key] ?? '', 'aria-label': label,

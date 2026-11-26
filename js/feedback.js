@@ -14,37 +14,52 @@ export function unlockAudio() {
   }
 }
 
-// Нота: [частота Гц, длительность с, громкость, сдвиг начала с]
+// Нота: [частота Гц, длительность с, громкость 0–1, сдвиг начала с]. Тембр — треугольная волна + октава сверху: слышно через динамик телефона.
+// Сигналы различаются на слух: prep — два коротких «пинга», tick — отсчёт 3-2-1, go — взлёт вверх (начали!),
+// rest — спад вниз (отдых), done — мажорный аккорд (конец тренировки).
 const PATTERNS = {
-  tick: [[880, 0.1, 0.16, 0]],
-  go: [[1175, 0.16, 0.2, 0]],
-  done: [
-    [880, 0.14, 0.16, 0],
-    [1175, 0.14, 0.18, 0.16],
-    [1568, 0.3, 0.18, 0.32],
-  ],
+  prep: [[659, 0.14, 0.6, 0], [659, 0.14, 0.6, 0.22]],
+  tick: [[988, 0.11, 0.7, 0]],
+  go: [[784, 0.1, 0.7, 0], [1047, 0.1, 0.75, 0.1], [1568, 0.42, 0.9, 0.2]],
+  rest: [[1047, 0.14, 0.7, 0], [698, 0.34, 0.8, 0.16]],
+  done: [[523, 0.16, 0.7, 0], [659, 0.16, 0.7, 0.16], [784, 0.16, 0.75, 0.32], [1047, 0.75, 0.9, 0.48], [1319, 0.75, 0.6, 0.48]],
 };
 
-function playNote([hz, len, level, shift]) {
-  const start = audio.currentTime + shift;
-  const osc = audio.createOscillator();
-  const amp = audio.createGain();
-  osc.frequency.value = hz;
-  amp.gain.setValueAtTime(0.0001, start);
-  amp.gain.exponentialRampToValueAtTime(level, start + 0.01);
-  amp.gain.exponentialRampToValueAtTime(0.0001, start + len);
-  osc.connect(amp);
-  amp.connect(audio.destination);
-  osc.start(start);
-  osc.stop(start + len + 0.02);
+let master = null;
+function out() {
+  if (master) return master;
+  const comp = audio.createDynamicsCompressor();           // выравнивает пики: звук громче без треска
+  comp.connect(audio.destination);
+  master = audio.createGain(); master.connect(comp);
+  return master;
 }
 
-export function beep(kind) {
-  if (!settings.get().sound) return;
+function playNote([hz, len, level, shift], vol) {
+  const start = audio.currentTime + shift, peak = Math.max(0.0002, level * vol);
+  const amp = audio.createGain();
+  amp.gain.setValueAtTime(0.0001, start);
+  amp.gain.exponentialRampToValueAtTime(peak, start + 0.012);
+  amp.gain.setValueAtTime(peak, start + Math.max(0.02, len * 0.55));
+  amp.gain.exponentialRampToValueAtTime(0.0001, start + len);
+  amp.connect(out());
+  for (const [type, mul, g] of [['triangle', 1, 1], ['sine', 2, 0.35]]) {
+    const osc = audio.createOscillator(), gg = audio.createGain();
+    osc.type = type; osc.frequency.value = hz * mul; gg.gain.value = g;
+    osc.connect(gg); gg.connect(amp);
+    osc.start(start); osc.stop(start + len + 0.03);
+  }
+}
+
+/** Громкость 0.2–1 из настроек (по умолчанию 0.9). */
+export const volumeOf = () => { const v = Number(settings.get().volume); return Number.isFinite(v) ? Math.min(1, Math.max(0.2, v)) : 0.9; };
+
+export function beep(kind, { force = false } = {}) {
+  if (!force && !settings.get().sound) return;
   unlockAudio();
   const notes = PATTERNS[kind];
   if (!audio || !notes) return;
-  notes.forEach(playNote);
+  const vol = volumeOf();
+  notes.forEach((n) => playNote(n, vol));
 }
 
 const VIBRATION = { success: [20, 40, 20] };

@@ -60,13 +60,16 @@ export default function compete() {
       h('div', { class: 'grow' }, h('div', { class: 't' }, r.name), h('div', { class: 's' }, t('comp.members', { n: r.members }))), icon('chev-r', 18)));
     body.replaceChildren(
       h('p', { class: 'muted' }, t('comp.intro')),
+      h('button', { class: 'item card-item', type: 'button', onClick: () => guard(async () => { const n = await askNick(m.nick); if (n) { st.me = await call('/nick', 'POST', { nick: n }); draw(); } }) },
+        avatarNode(m.photo || photo.v, m.nick || tg.user?.first_name || '?', 'sm'),
+        h('div', { class: 'grow' }, h('div', { class: 's' }, t('comp.nickRow')), h('div', { class: 't' }, m.nick || t('comp.nickNone'))),
+        h('span', { class: 'small row-flex', style: { gap: '4px', color: 'var(--silver)', fontWeight: 600 } }, icon('edit', 16), t('comp.nickEdit'))),
       h('div', { class: 'list' }, globalRow,
         m.global ? h('button', { class: 'item', onClick: () => { st.view = 'global'; draw(); } }, icon('progress'), h('div', { class: 'grow t' }, t('comp.openGlobal')), icon('chev-r', 18)) : null),
       h('h2', { class: 'h3 group-title' }, t('comp.rooms')),
       rooms.length ? h('div', { class: 'list' }, ...rooms) : h('p', { class: 'muted small' }, t('comp.noRooms')),
       h('button', { class: 'btn', onClick: () => guard(createRoom) }, icon('plus'), t('comp.create')),
-      h('button', { class: 'btn secondary', onClick: () => guard(joinRoom) }, t('comp.join')),
-      m.nick ? h('button', { class: 'link-btn', onClick: () => guard(async () => { const n = await askNick(m.nick); if (n) { st.me = await call('/nick', 'POST', { nick: n }); draw(); } }) }, t('comp.nickChange', { nick: m.nick })) : null);
+      h('button', { class: 'btn secondary', onClick: () => guard(joinRoom) }, t('comp.join')));
   }
 
   async function createRoom() {

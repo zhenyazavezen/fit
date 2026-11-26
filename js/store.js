@@ -69,7 +69,7 @@ export function migrate() {
 }
 
 // ---- Настройки
-const DEFAULT_SETTINGS = { sound: true, haptics: true, wake: true, lang: null, homeOrder: null };
+const DEFAULT_SETTINGS = { sound: true, volume: 0.9, haptics: true, wake: true, lang: null, homeOrder: null };
 export const settings = {
   get() { return { ...DEFAULT_SETTINGS, ...(store.get('settings', {}) || {}) }; },
   set(patch) { return store.set('settings', { ...this.get(), ...patch }); },

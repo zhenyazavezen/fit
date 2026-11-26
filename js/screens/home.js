@@ -46,7 +46,7 @@ function todayCard(hist, now) {
   const plan = up.days.includes(dow) ? (up.time ? ' · ' + t('today.planned', { time: up.time }) : '') : up.days.length ? ' · ' + t('today.restDay') : '';
   const head = h('div', { class: 'eyebrow' }, t('today.title') + plan);
   if (doneSec > 0) {
-    return h('section', { class: 'card stack today', 'aria-label': t('today.title') }, head,
+    return h('section', { class: 'card stack today htile', dataset: { key: 'today' }, 'aria-label': t('today.title') }, head,
       h('div', { class: 'row-flex', style: { gap: '8px' } }, icon('check', 22), h('div', { class: 'h2' }, t('today.done'))),
       h('div', { class: 'muted' }, t('today.doneSub', { min: Math.max(1, Math.round(doneSec / 60)) })), note,
       h('button', { class: 'link-btn row-flex', style: { gap: '4px', alignSelf: 'flex-start' }, type: 'button', onClick: () => router.openTab('workouts') }, t('today.others'), icon('chev-r', 16)));
@@ -55,7 +55,7 @@ function todayCard(hist, now) {
   let prog = recommendPrograms(userProfile.get(), ctx, { limit: 1 })[0]?.program;
   if (!prog) prog = recommend(hist, allPrograms(), now)?.program;
   if (!prog) return null;
-  return h('section', { class: 'card stack today', 'aria-label': t('today.title') }, head,
+  return h('section', { class: 'card stack today htile', dataset: { key: 'today' }, 'aria-label': t('today.title') }, head,
     h('div', { class: 'h2' }, progText(prog).name),
     h('div', { class: 'muted' }, t('today.meta', { n: prog.items.length, time: durationLabel(programEstimate(prog)) })),
     h('button', { class: 'btn', type: 'button', onClick: () => startPlan(planForProgram(prog)) }, icon('play'), t('today.start')),
@@ -77,7 +77,7 @@ function weekTile(hist, now) {
       h('div', { class: 'kpi' }, h('div', { class: 'v' }, String(Math.round(ws.sec / 60))), h('div', { class: 'l' }, t('home.weekMinutes')))));
 }
 
-const TILES = ['week', 'todo'];
+const TILES = ['today', 'week', 'todo'];
 export default function home() {
   const hist = history.all(), now = Date.now();
   const name = tg.user?.first_name;
@@ -91,10 +91,8 @@ export default function home() {
 
   // Две плашки: порядок задаёт пользователь — зажать плашку и перетащить (без кнопок и настроек).
   const saved = String(settings.get().homeOrder || '').split(',').filter((k) => TILES.includes(k));
-  const order = [...new Set([...saved, ...TILES])];
-  const makers = { week: () => weekTile(hist, now), todo: todoCard };
-  const today = todayCard(hist, now);
-  if (today) el.append(today);
+  const order = [...new Set([...(saved.includes('today') ? [] : ['today']), ...saved, ...TILES])];
+  const makers = { today: () => todayCard(hist, now), week: () => weekTile(hist, now), todo: todoCard };
   const tiles = h('div', { class: 'home-tiles' }, ...order.map((k) => makers[k]()).filter(Boolean));
   el.append(tiles);
   dragSort(tiles, { itemSel: '[data-key]', axis: 'y', scale: 1.02, onDrop: (keys) => settings.set({ homeOrder: keys.join(',') }) });
