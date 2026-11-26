@@ -106,7 +106,7 @@ export function confirmDialog({ title, text, confirm, cancel = t('common.cancel'
 }
 
 let toastTimer;
-export function toast(message, ms = 2400) {
+export function toast(message, ms = 1800) {
   layer().querySelectorAll('.toast').forEach((n) => n.remove());
   const el = h('div', { class: 'toast', role: 'status' }, message);
   layer().append(el);

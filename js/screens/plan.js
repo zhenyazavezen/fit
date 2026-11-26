@@ -67,7 +67,7 @@ export default function plan() {
       ...(recs.length ? recs.map((r) => h('button', { class: 'card stack', style: { gap: '6px', textAlign: 'left', marginBottom: '12px', width: '100%' }, onClick: () => router.go('program', { id: r.program.id }) },
         h('div', { class: 'h3' }, progText(r.program).name),
         h('div', { class: 'small muted' }, `${durationLabel(programEstimate(r.program))} · ${t('level.' + r.program.level)}`),
-        ...r.reasons.map((x) => h('div', { class: 'small' }, '＋ ' + reasonText(x))),
+        h('div', { class: 'small' }, r.reasons.filter((x) => x.key !== 'noConflicts').map(reasonText).join(' · ')),
         ...r.warnings.map((x) => h('div', { class: 'small muted' }, '! ' + reasonText(x))))) : [noteBox(t('plan.noRecs'))]));
   }
 

@@ -3,7 +3,7 @@ import { t } from './i18n.js';
 import { fmtClock } from './util.js';
 
 export function durationLabel({ sec, exact }) {
-  if (exact) return t('dur.exact', { time: fmtClock(sec) });
+  if (exact) return spentLabel(sec);
   return t('dur.approx', { n: Math.max(1, Math.round(sec / 60)) });
 }
 

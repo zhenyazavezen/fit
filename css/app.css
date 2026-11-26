@@ -476,3 +476,5 @@ button.card:active, .pcard-wide:active, .pcard:active, .level-plate:active { tra
 .card-item { background: var(--s1); border: 1px solid var(--s3); border-radius: var(--r-l); }
 .time-native { position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; pointer-events: none; }
 .time-btn { min-height: 48px; font-size: var(--fs-l); }
+
+.icon-btn[disabled] { opacity: .3; pointer-events: none; }

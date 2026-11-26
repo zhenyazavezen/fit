@@ -34,8 +34,9 @@ export default function builder({ id } = {}) {
         h('div', { class: 'lead' }, String(i + 1)),
         h('button', { class: 'grow', style: { textAlign: 'left' }, onClick: () => editItem(st.items[i], st.rest, (next) => { st.items[i] = next; touch(); }) }, h('div', { class: 't' }, exName(it.ex)), h('div', { class: 's' }, doseLabel(r))),
         h('div', { class: 'mini' },
-          h('button', { class: 'icon-btn', 'aria-label': t('builder.up'), disabled: i === 0, onClick: () => { swap(i, i - 1); } }, icon('up')),
-          h('button', { class: 'icon-btn', 'aria-label': t('builder.down'), disabled: i === st.items.length - 1, onClick: () => { swap(i, i + 1); } }, icon('down')),
+          ...(st.items.length > 1 ? [
+            h('button', { class: 'icon-btn', 'aria-label': t('builder.up'), disabled: i === 0, onClick: () => { swap(i, i - 1); } }, icon('up')),
+            h('button', { class: 'icon-btn', 'aria-label': t('builder.down'), disabled: i === st.items.length - 1, onClick: () => { swap(i, i + 1); } }, icon('down'))] : []),
           h('button', { class: 'icon-btn', 'aria-label': t('builder.remove'), onClick: () => { st.items.splice(i, 1); touch(); } }, icon('trash'))));
     })));
   }

@@ -99,7 +99,7 @@ await test('Программа «Экспресс-круг (средний)»: 7
   const { page, errors, ctx } = await fresh();
   await openLevel(page, 'Средний'); await page.locator('.pcard-wide', { hasText: 'Экспресс-круг (средний)' }).click();
   await page.waitForSelector('.facts');
-  ok((await text(page, '.facts')).includes('7:55'), 'длительность 7:55 на карточке: ' + await text(page, '.facts'));
+  ok((await text(page, '.facts')).includes('7 мин 55 с'), 'длительность 7 мин 55 с на карточке: ' + await text(page, '.facts'));
   ok(!(await text(page, 'body')).includes('7 минут'), 'нет названия «7 минут»');
   ok((await text(page, '.list')).includes('по 15') || (await text(page, '.list')).includes('15 с'), 'доза боковой планки');
   await shot(page, 'program-circuit');
@@ -593,7 +593,7 @@ await test('Конструктор: сводка, фильтр по группе
   ok((await text(page, '#sheets, body')).includes('Добавить ещё раз'), 'вопрос о повторе');
   await page.getByRole('button', { name: 'Отмена' }).last().click();
   await page.locator('.sheet .btn', { hasText: 'Готово' }).click();
-  ok(/1 упр\. · ≈/.test(await text(page, '.pad')), 'сводка: ' + await text(page, '.pad'));
+  ok(/1 упр\. · /.test(await text(page, '#screen')), 'сводка: ' + await text(page, '#screen'));
   ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
 });
 

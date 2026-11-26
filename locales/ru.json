@@ -81,7 +81,7 @@
   "builder.items": "Упражнения",
   "builder.add": "Добавить упражнение",
   "builder.itemsEmpty": "Пока нет упражнений. Добавьте хотя бы одно.",
-  "builder.summary": "{n} упр. · ≈ {time}",
+  "builder.summary": "{n} упр. · {time}",
   "builder.allCats": "Все",
   "builder.dupTitle": "Уже в тренировке",
   "builder.dupText": "«{name}» уже есть в списке. Добавить ещё раз?",
