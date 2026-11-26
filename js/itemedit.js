@@ -4,7 +4,7 @@ import { h, icon, uid } from './util.js';
 import { t } from './i18n.js';
 import { D, exName, exText, resolved, applyCustomEx } from './data.js';
 import { customPrograms, customEx } from './store.js';
-import { sheet, stepper, segmented, confirmDialog, toast } from './ui.js';
+import { sheet, stepper, segmented, confirmDialog, toast, chip } from './ui.js';
 import { sortByName, filterExercises, emptyFilter } from './catalog.js';
 
 const row = (label, control) => h('div', { class: 'row-flex', style: { justifyContent: 'space-between' } }, h('div', { class: 'h3' }, label), control);
@@ -44,14 +44,23 @@ export function editItem(it, rest, onSave) {
 }
 
 /** Окно выбора упражнений (можно добавить несколько). onAdd(элемент); onRemoved(id) — когда удалено своё упражнение. */
-export function pickExercises({ onAdd, onRemoved }) {
-  let q = '', added = 0;
+const PICK_CATS = ['fullbody', 'legs', 'glutes', 'abs', 'chest', 'back', 'shoulders', 'arms', 'cardio', 'mobility', 'stretch'];
+
+export function pickExercises({ onAdd, onRemoved, count = () => 0 }) {
+  let q = '', added = 0, cat = null;
+  const extra = new Map();
   const input = h('input', { class: 'input', id: 'pick-q', type: 'search', placeholder: t('builder.pickSearch'), 'aria-label': t('builder.pickSearch'), autocomplete: 'off' });
   const hint = h('p', { class: 'small muted' }, t('builder.pickHint'));
   const list = h('div', { class: 'list' }), counter = h('div', { class: 'small muted' });
-  const addEx = (ex) => { added++; counter.textContent = t('builder.picked', { n: added }); onAdd(itemFromEx(ex)); };
+  const have = (id) => Math.max(count(id), extra.get(id) || 0);
+  const addEx = async (ex) => {
+    if (have(ex.id) > 0 && !(await confirmDialog({ title: t('builder.dupTitle'), text: t('builder.dupText', { name: exText(ex.id).name }), confirm: t('builder.dupYes'), cancel: t('common.cancel') }))) return;
+    added++; extra.set(ex.id, (extra.get(ex.id) || 0) + 1); counter.textContent = t('builder.picked', { n: added }); onAdd(itemFromEx(ex)); draw();
+  };
+  const cats = h('div', { class: 'chipset', role: 'group' });
+  const drawCats = () => cats.replaceChildren(...[null, ...PICK_CATS].map((c) => chip({ label: c ? t('cat.' + c) : t('builder.allCats'), pressed: cat === c, onClick: () => { cat = c; drawCats(); draw(); } })));
   const draw = () => {
-    const f = { ...emptyFilter(), q };
+    const f = { ...emptyFilter(), q }; if (cat) f.cats = new Set([cat]);
     const pool = [...[...D.exById.values()].filter((e) => e.custom), ...D.exercises];
     const items = sortByName(filterExercises(pool, D.content.exercises, f), D.content.exercises);
     const nm = q.trim(), exact = items.some((e) => exText(e.id).name.toLowerCase() === nm.toLowerCase());
@@ -61,7 +70,7 @@ export function pickExercises({ onAdd, onRemoved }) {
       applyCustomEx(); addEx(D.exById.get(rec.id)); q = ''; input.value = ''; draw();
     } }, icon('plus', 20), h('div', { class: 'grow t' }, t('builder.createNamed', { name: nm.slice(0, 40) }))) : null;
     list.replaceChildren(...[create].filter(Boolean), ...items.map((ex) => {
-      const body = h('div', { class: 'grow' }, h('div', { class: 't' }, exText(ex.id).name), h('div', { class: 's' }, ex.custom ? t('myex.mine') : t('level.' + ex.level)));
+      const body = h('div', { class: 'grow' }, h('div', { class: 't' }, exText(ex.id).name), h('div', { class: 's' }, (ex.custom ? t('myex.mine') : t('level.' + ex.level)) + (have(ex.id) ? ' · ' + t('builder.inWorkout', { n: have(ex.id) }) : '')));
       if (!ex.custom) return h('button', { class: 'item', onClick: () => addEx(ex) }, body, icon('plus', 20));
       return h('div', { class: 'item' }, h('button', { class: 'row-flex grow', style: { textAlign: 'left', gap: '12px' }, onClick: () => addEx(ex) }, body, icon('plus', 20)),
         h('button', { class: 'icon-btn', 'aria-label': t('myex.delete'), onClick: async () => {
@@ -73,6 +82,6 @@ export function pickExercises({ onAdd, onRemoved }) {
     }));
   };
   input.addEventListener('input', () => { q = input.value; draw(); });
-  draw();
-  const s = sheet({ title: t('builder.pick'), body: [input, hint, counter, list], foot: [h('button', { class: 'btn', onClick: () => s.close() }, t('common.done'))] });
+  drawCats(); draw();
+  const s = sheet({ title: t('builder.pick'), body: [input, cats, hint, counter, list], foot: [h('button', { class: 'btn', onClick: () => s.close() }, t('common.done'))] });
 }

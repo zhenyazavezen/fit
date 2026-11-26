@@ -1,9 +1,9 @@
 import { h, icon, uid } from '../util.js';
 import { t } from '../i18n.js';
 import * as router from '../router.js';
-import { D, exName, resolved } from '../data.js';
+import { D, exName, resolved, programEstimate } from '../data.js';
 import { customPrograms } from '../store.js';
-import { doseLabel } from '../format.js';
+import { doseLabel, durationLabel } from '../format.js';
 import { topbar, stepper, confirmDialog, toast } from '../ui.js';
 import { editItem, pickExercises } from '../itemedit.js';
 
@@ -16,9 +16,14 @@ export default function builder({ id } = {}) {
   const nameInput = h('input', { class: 'input', id: 'prog-name', type: 'text', maxlength: '40', value: st.name, placeholder: t('builder.namePlaceholder'), 'aria-label': t('builder.name') });
   nameInput.addEventListener('input', () => { st.name = nameInput.value; dirty = true; validate(); });
   const itemsBox = h('div'), hint = h('p', { class: 'small muted' }, t('builder.hint'));
+  const summary = h('div', { class: 'small muted', style: { textAlign: 'center' } });
   const saveBtn = h('button', { class: 'btn', type: 'button', onClick: save }, t('builder.save'));
 
-  function validate() { const ok = st.name.trim().length >= 2 && st.items.length > 0; saveBtn.disabled = !ok; hint.hidden = ok; }
+  function validate() {
+    summary.hidden = !st.items.length;
+    if (st.items.length) summary.textContent = t('builder.summary', { n: st.items.length, time: durationLabel(programEstimate({ items: st.items, restBetween: st.rest })) });
+    const ok = st.name.trim().length >= 2 && st.items.length > 0; saveBtn.disabled = !ok; hint.hidden = ok;
+  }
 
   function renderItems() {
     itemsBox.replaceChildren();
@@ -37,7 +42,7 @@ export default function builder({ id } = {}) {
   const swap = (a, b) => { [st.items[a], st.items[b]] = [st.items[b], st.items[a]]; touch(); };
 
   const row = (label, control) => h('div', { class: 'row-flex', style: { justifyContent: 'space-between' } }, h('div', { class: 'h3' }, label), control);
-  const pick = () => pickExercises({ onAdd: (it) => { st.items.push(it); touch(); }, onRemoved: (id) => { st.items = st.items.filter((i) => i.ex !== id); renderItems(); validate(); } });
+  const pick = () => pickExercises({ count: (id) => st.items.filter((i) => i.ex === id).length, onAdd: (it) => { st.items.push(it); touch(); }, onRemoved: (id) => { st.items = st.items.filter((i) => i.ex !== id); renderItems(); validate(); } });
 
   async function save() {
     if (saveBtn.disabled) return;
@@ -51,11 +56,11 @@ export default function builder({ id } = {}) {
   el.append(topbar({ title: existing ? t('builder.edit') : t('builder.new') }),
     h('div', { class: 'pad stack' },
       h('div', null, h('label', { class: 'eyebrow', for: 'prog-name', style: { display: 'block', marginBottom: '8px' } }, t('builder.name')), nameInput),
-      row(t('builder.rest'), stepper({ value: st.rest, min: 1, max: 180, step: 1, onChange: (v) => { st.rest = v; dirty = true; renderItems(); }, label: t('builder.rest') })),
+      row(t('builder.rest'), stepper({ value: st.rest, min: 1, max: 180, step: 1, onChange: (v) => { st.rest = v; dirty = true; renderItems(); validate(); }, label: t('builder.rest') })),
       h('h2', { class: 'h3' }, t('builder.items')),
       h('button', { class: 'btn secondary', onClick: pick }, icon('plus'), t('builder.add')),
       itemsBox,
-      hint, saveBtn));
+      hint, summary, saveBtn));
   renderItems(); validate();
 
   return {

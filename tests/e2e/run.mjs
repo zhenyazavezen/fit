@@ -577,6 +577,26 @@ await test('Мой день: расписание по дням недели, и
   eq(errors.length, 0, errors.join(' | ')); await ctx.close();
 });
 
+await test('Конструктор: сводка, фильтр по группе мышц, подтверждение повтора', async () => {
+  const { page, errors, ctx } = await fresh();
+  await tab(page, 'workouts'); await btn(page, /Создать свою тренировку/).click(); await page.waitForSelector('#prog-name');
+  eq(await page.locator('.pad .small.muted', { hasText: 'упр.' }).count(), 0, 'без упражнений сводки нет');
+  await btn(page, /^Добавить упражнение/).click(); await page.waitForSelector('#pick-q');
+  const all = await page.locator('.sheet .list .item').count();
+  await page.locator('.sheet .chip', { hasText: 'Пресс' }).click();
+  const abs = await page.locator('.sheet .list .item').count();
+  ok(abs > 0 && abs < all, 'фильтр «Пресс» сужает список: ' + abs + ' из ' + all);
+  await page.locator('.sheet .list .item').first().click();
+  await run(page, 300);
+  ok((await page.locator('.sheet').first().innerText()).includes('в тренировке ×1'), 'отметка «в тренировке»: ' + (await page.locator('.sheet .list .item').first().innerText()));
+  await page.locator('.sheet .list .item').first().click();
+  ok((await text(page, '#sheets, body')).includes('Добавить ещё раз'), 'вопрос о повторе');
+  await page.getByRole('button', { name: 'Отмена' }).last().click();
+  await page.locator('.sheet .btn', { hasText: 'Готово' }).click();
+  ok(/1 упр\. · ≈/.test(await text(page, '.pad')), 'сводка: ' + await text(page, '.pad'));
+  ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
+});
+
 await test('Конструктор: одна плашка «Добавить упражнение»; отдых от 1 с, удержание меняет значение', async () => {
   const { page, errors, ctx } = await fresh();
   await tab(page, 'workouts'); await btn(page, /Создать свою тренировку/).click(); await page.waitForSelector('.stepper');
