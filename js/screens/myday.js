@@ -3,7 +3,7 @@ import { h, icon, uid } from '../util.js';
 import { t } from '../i18n.js';
 import { todos as todayTodos, workoutsToday, weekdayOf } from '../store.js';
 import { dayKey } from '../dates.js';
-import { topbar, chip, toast } from '../ui.js';
+import { topbar, chip } from '../ui.js';
 
 const ALL = [1, 2, 3, 4, 5, 6, 7];
 const daysLabel = (days) => (days.length === 7 ? t('myday.everyDay') : days.map((n) => t('day.' + (n - 1))).join(', '));
@@ -15,8 +15,10 @@ export default function myday({ kind } = {}) {
   const el = h('div'), body = h('div', { class: 'pad stack' });
   el.append(topbar({ title: t(P + '.title') }), body);
 
-  const addToday = (text) => { todos.set(today, [...todos.forDay(today), { id: 't_' + uid(), t: text, d: false }]); toast(t(P + '.added')); draw(); };
-  const schedule = (text, days) => { todos.setDaily([...todos.daily(), ...[].concat(text).map((x) => ({ id: 'r_' + uid(), t: x, days }))]); draw(); };
+  const schedule = (text, days) => {
+    const cur = todos.daily(), has = (x) => cur.some((r) => r.t.trim().toLowerCase() === x.trim().toLowerCase() && days.every((d) => r.days.includes(d)));
+    todos.setDaily([...cur, ...[].concat(text).filter((x) => !has(x)).map((x) => ({ id: 'r_' + uid(), t: x, days }))]); draw();
+  };
   const unschedule = (r, wd) => {
     const rest = r.days.filter((n) => n !== wd), all = todos.daily();
     todos.setDaily(rest.length ? all.map((x) => (x.id === r.id ? { ...x, days: rest } : x)) : all.filter((x) => x.id !== r.id));
@@ -29,7 +31,6 @@ export default function myday({ kind } = {}) {
     const input = h('input', { class: 'input', type: 'text', maxlength: '160', placeholder: t(P + '.add'), 'aria-label': t(P + '.add'), enterkeyhint: 'done', autocomplete: 'off' });
     const add = () => { const v = input.value.replace(/\s+/g, ' ').trim(); if (v) schedule(v, st.all ? ALL : [st.wd]); };
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); add(); } });
-    const todayTexts = new Set(todos.forDay(today).map((x) => x.t.trim().toLowerCase()));
     const hist = todos.history().filter((x) => x.t.trim());
 
     body.replaceChildren(
@@ -46,12 +47,8 @@ export default function myday({ kind } = {}) {
       h('h2', { class: 'h3 group-title' }, t(P + '.history')),
       hist.length
         ? h('div', { class: 'stack', style: { gap: '8px' } }, h('p', { class: 'small muted' }, t(P + '.historyHint', { day: t('day.' + (st.wd - 1)) })),
-            h('div', { class: 'list' }, ...hist.map((x) => {
-              const inToday = todayTexts.has(x.t.trim().toLowerCase());
-              return h('div', { class: 'item' }, h('div', { class: 'grow t' }, x.t),
-                h('button', { class: 'icon-btn', type: 'button', disabled: inToday, 'aria-label': t('myday.toToday'), onClick: () => addToday(x.t) }, icon('plus', 20)),
-                h('button', { class: 'icon-btn', type: 'button', 'aria-label': t('myday.toSchedule'), onClick: () => schedule(x.t, [st.wd]) }, icon('repeat', 20)));
-            })))
+            h('div', { class: 'list' }, ...hist.map((x) => h('div', { class: 'item' }, h('div', { class: 'grow t' }, x.t),
+              h('button', { class: 'link-btn row-flex', type: 'button', style: { gap: '4px' }, onClick: () => schedule(x.t, st.all ? ALL : [st.wd]) }, icon('plus', 16), t('myday.toSchedule'))))))
         : h('p', { class: 'muted small' }, t(P + '.noHistory')));
   }
   draw();

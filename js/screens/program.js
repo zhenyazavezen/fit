@@ -22,7 +22,7 @@ export default function program({ id }) {
   body.append(h('div', { class: 'facts' },
     fact(durationLabel(est), t('program.duration')),
     fact(String(p.items.length), t('program.exercises')),
-    fact(p.custom ? t('workouts.custom') : t('level.' + p.level), t('program.level'))));
+    fact(p.custom ? t('workouts.custom') : t('level.' + p.level), t('program.level'), true)));
   if (p.restBetween != null) body.append(h('p', { class: 'small muted' }, t('program.rest', { sec: p.restBetween })));
 
   body.append(h('h2', { class: 'h3', style: { marginTop: '12px' } }, t('program.order')));
@@ -48,4 +48,4 @@ export default function program({ id }) {
   return { el };
 }
 
-const fact = (v, l) => h('div', { class: 'fact' }, h('div', { class: 'v' }, v), h('div', { class: 'l' }, l));
+const fact = (v, l, word) => h('div', { class: 'fact' }, h('div', { class: 'v' + (word ? ' word' : '') }, v), h('div', { class: 'l' }, l));

@@ -81,7 +81,7 @@ export default function progress() {
       calendarCard(p, (k) => { state.day = state.day === k ? null : k; draw(); }),
       h('div', { class: 'tiles', style: { marginTop: '12px' } },
         tile(String(p.total.workouts), t('progress.workouts')), tile(p.total.sec ? spentLabel(p.total.sec) : '0', t('progress.time')), tile(String(p.total.sets), t('progress.sets'))),
-      h('div', { class: 'card', style: { marginTop: '12px' } }, h('div', { class: 'eyebrow', style: { marginBottom: '8px' } }, t('progress.chartTitle')), chart(p), vs ? h('div', { class: 'small muted', style: { marginTop: '8px' } }, vs) : null),
+      h('div', { class: 'card', style: { marginTop: '12px' } }, h('div', { class: 'eyebrow', style: { marginBottom: '8px' } }, t('progress.chartTitle')), p.bars.some((b) => b.sec) ? chart(p) : h('p', { class: 'muted small', style: { padding: '12px 0' } }, t('progress.noData')), vs ? h('div', { class: 'small muted', style: { marginTop: '8px' } }, vs) : null),
       ...stats(now),
       h('h2', { class: 'h3', style: { margin: '28px 0 0' } }, state.day ? t('cal.dayList') : t('progress.history')),
       ...(state.day && !groupByDay(hist).some((g) => g.key === state.day) ? [h('p', { class: 'muted small' }, t('cal.noDay'))] : []),
@@ -96,7 +96,7 @@ export default function progress() {
     const ma = monthActive(hist, now), cur = streak(hist, now), best = Math.max(bestStreak(hist), cur);
     const group = (title, ...rows) => [h('h2', { class: 'h3 group-title' }, title), h('div', { class: 'list' }, ...rows)];
     return [...group(t('progress.records'), row(t('progress.bestWeek'), mins(bestWeekSec(hist))), row(t('progress.totalWorkouts'), String(hist.length))),
-      ...group(t('progress.activeTime'), row(t('progress.monthActive'), mins(ma.sec)), row(t('progress.avgDay'), t('progress.avgDayValue', { n: Math.round(ma.avgSec / 60) }))),
+      ...group(t('progress.activeTime'), row(t('progress.monthActive'), mins(ma.sec)), row(t('progress.avgDay'), t('progress.avgDayValue', { n: mins(ma.avgSec) }))),
       ...group(t('progress.streakTitle'), row(t('progress.streakNow'), t('progress.days', { n: cur })), row(t('progress.streakBest'), t('progress.days', { n: best })))];
   };
   const tile = (v, l) => h('div', { class: 'fact' }, h('div', { class: 'v' }, v), h('div', { class: 'l' }, l));

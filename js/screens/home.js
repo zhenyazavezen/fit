@@ -2,14 +2,15 @@ import { h, icon, uid } from '../util.js';
 import { t } from '../i18n.js';
 import * as router from '../router.js';
 import { tg } from '../tg.js';
-import { history, activeSession, todos, settings, workoutsToday } from '../store.js';
+import { history, activeSession, todos, settings } from '../store.js';
 import { recommendPrograms } from '../planner.js';
 import { userProfile } from '../profile-data.js';
 import { dayCard } from '../todocard.js';
 import { dragSort } from '../dragsort.js';
 import { checklist } from '../checklist.js';
-import { recommend } from '../stats.js';
-import { dayKey } from '../dates.js';
+import { recommend, streak } from '../stats.js';
+import { dayKey, startOfWeek } from '../dates.js';
+import { spentLabel } from '../format.js';
 import { D, allPrograms, stepsOfItems, getProgram, progText, programEstimate, planForProgram } from '../data.js';
 import { startPlan } from '../start.js';
 import { durationLabel } from '../format.js';
@@ -40,8 +41,8 @@ function resumeCard() {
 // «Сегодня»: открыл приложение — сразу видно, что делать. Тренировка подбирается по уровню, цели и отдыху мышц.
 function todayCard(hist, now) {
   const day = dayKey(now), doneSec = hist.filter((s) => dayKey(s.at) === day).reduce((a, s) => a + (s.durationSec || 0), 0);
-  const pending = workoutsToday.forDay(day).filter((x) => !x.d).length;
-  const note = pending ? h('button', { class: 'link-btn row-flex', style: { gap: '4px', alignSelf: 'flex-start' }, type: 'button', onClick: () => router.openTab('workouts') }, t('today.pending', { n: pending }), icon('chev-r', 16)) : null;
+  const wk = startOfWeek(now), weekSec = hist.filter((s) => s.at >= wk).reduce((a, s) => a + (s.durationSec || 0), 0), st = streak(hist, now);
+  const note = st || weekSec ? h('div', { class: 'small muted' }, [st ? t('today.streak', { days: t('home.streakDays', { n: st }) }) : '', weekSec ? t('today.week', { time: spentLabel(weekSec) }) : ''].filter(Boolean).join(' · ')) : null;
   const up = userProfile.get(), dow = (new Date(now).getDay() + 6) % 7;
   const plan = up.days.includes(dow) ? (up.time ? ' · ' + t('today.planned', { time: up.time }) : '') : up.days.length ? ' · ' + t('today.restDay') : '';
   const head = h('div', { class: 'eyebrow' }, t('today.title') + plan);

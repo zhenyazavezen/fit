@@ -570,11 +570,10 @@ await test('Мой день: расписание по дням недели, и
   eq(await page.locator('.item:has(.s)').count(), 0, 'во вторник «Зарядки» нет');
   await page.locator('.days-row .chip').nth(0).click();
   eq(await page.locator('.item:has(.s)', { hasText: 'Зарядка' }).count(), 1, 'в понедельник есть');
-  await page.getByRole('button', { name: 'Добавить на сегодня' }).first().click();
-  await page.goBack(); await page.waitForSelector('.todo');
-  ok((await page.locator('.cl-row .cl-text').allTextContents()).includes('Выпить воду'), 'из истории добавлено на сегодня');
+  await page.locator('.item', { hasText: 'Выпить воду' }).getByRole('button', { name: 'В расписание' }).click();
+  eq(await page.locator('.item:has(.s)').count(), 2, 'дело из истории добавлено в расписание понедельника');
   const sched = await page.evaluate(() => JSON.parse(localStorage.getItem('seven:todos')).daily);
-  eq(JSON.stringify(sched.map((x) => [x.t, x.days])), JSON.stringify([['Зарядка', [1]]]), 'расписание сохранено по дням');
+  eq(JSON.stringify(sched.map((x) => [x.t, x.days])), JSON.stringify([['Зарядка', [1]], ['Выпить воду', [1]]]), 'расписание сохранено по дням');
   eq(errors.length, 0, errors.join(' | ')); await ctx.close();
 });
 
