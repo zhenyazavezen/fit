@@ -3,13 +3,14 @@
 import { store } from './store.js';
 
 export const LEVELS = ['beginner', 'intermediate', 'advanced'];
-export const PROFILE_GOALS = ['strength', 'muscle', 'fitness', 'endurance', 'gpp'];
+export const PROFILE_GOALS = ['lose', 'muscle', 'strength', 'health', 'shape'];
+const LEGACY_GOAL = { fitness: 'health', endurance: 'shape', gpp: 'shape' };   // старые значения профиля
 export const PROFILE_EQUIP = ['chair', 'wall', 'backpack', 'towel'];
 export const PROFILE_LIMITS = ['impact', 'wrist', 'knee', 'shoulder', 'back'];
 
 export const DEFAULT_PROFILE = Object.freeze({
   age: null, heightCm: null, weightKg: null,
-  level: 'beginner', goal: 'fitness', equipment: ['chair', 'wall'], minutes: 20, limits: [],
+  level: 'beginner', goal: 'health', days: [], time: '', equipment: ['chair', 'wall'], minutes: 20, limits: [],
   updatedAt: 0,
 });
 
@@ -22,7 +23,9 @@ export function normalizeProfile(p) {
   return {
     age: num(p.age, 14, 99), heightCm: num(p.heightCm, 100, 230), weightKg: num(p.weightKg, 30, 300),
     level: LEVELS.includes(p.level) ? p.level : DEFAULT_PROFILE.level,
-    goal: PROFILE_GOALS.includes(p.goal) ? p.goal : DEFAULT_PROFILE.goal,
+    goal: PROFILE_GOALS.includes(LEGACY_GOAL[p.goal] || p.goal) ? (LEGACY_GOAL[p.goal] || p.goal) : DEFAULT_PROFILE.goal,
+    days: [...new Set((Array.isArray(p.days) ? p.days : []).map(Number).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6))].sort(),
+    time: typeof p.time === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(p.time) ? p.time : '',
     equipment: pick(p.equipment, PROFILE_EQUIP),
     minutes: [10, 15, 20, 30, 45, 60].includes(Number(p.minutes)) ? Number(p.minutes) : DEFAULT_PROFILE.minutes,
     limits: pick(p.limits, PROFILE_LIMITS),

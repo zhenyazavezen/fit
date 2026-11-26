@@ -589,6 +589,18 @@ await test('Мой план: выбор уровня меняет метку «�
   await page.getByRole('button', { name: 'Сделать моим уровнем' }).click();
   await page.goBack().catch(() => {}); await page.waitForSelector('.level-plate');
   eq(await page.locator('.level-plate.yours').innerText().then((x) => x.includes('Продвинутый')), true, 'уровень меняется только явной кнопкой');
+  // цели, дни и время
+  for (const g of ['Сброс веса', 'Мышечная масса', 'Укрепление', 'Быть здоровее', 'Быть в форме']) ok((await page.getByRole('button', { name: g, exact: true }).count()) === 1, 'цель: ' + g);
+  await page.getByRole('button', { name: 'Быть в форме', exact: true }).click();
+  const dow = await page.evaluate(() => (new Date().getDay() + 6) % 7);
+  const names = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+  await page.locator('.chipset .chip', { hasText: new RegExp('^' + names[dow] + '$') }).click();
+  await page.locator('input[type=time]').fill('19:00'); await page.locator('input[type=time]').dispatchEvent('change');
+  await tab(page, 'home');
+  ok((await text(page, '.card.today')).toLowerCase().includes('по плану · 19:00'), 'на главной видно время по плану');
+  await tab(page, 'workouts'); await page.locator('.plan-plate', { hasText: 'Мой план' }).click(); await page.waitForSelector('.level-plate');
+  eq(await page.locator('.chipset .chip[aria-pressed=true]', { hasText: 'Быть в форме' }).count(), 1, 'цель сохранилась');
+  eq(await page.locator('input[type=time]').inputValue(), '19:00', 'время сохранилось');
   // кнопка «Добавить» на нижней панели скрывается в «Нижней панели» профиля
   ok((await page.locator('.tab-add').count()) === 1, 'кнопка «Добавить» на панели есть');
   await tab(page, 'profile'); await page.getByText('Нижняя панель').click();

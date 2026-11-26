@@ -6,7 +6,7 @@ import { buildSteps, estimate } from './engine.js';
 import { bmi } from './profile-data.js';
 
 const LV = { beginner: 0, intermediate: 1, advanced: 2 };
-const GOAL_TAGS = { strength: ['strength'], muscle: ['muscle'], fitness: ['shape', 'activity', 'home'], endurance: ['endurance', 'activity'], gpp: ['home', 'activity', 'shape', 'strength'] };
+const GOAL_TAGS = { strength: ['strength'], muscle: ['muscle'], lose: ['weight', 'activity'], health: ['home', 'activity'], shape: ['shape', 'activity', 'home'] };
 export const RECOVERY_HOURS = 48;
 export const BREAK_DAYS = 21;
 export const MAX_GROUPS = 3;

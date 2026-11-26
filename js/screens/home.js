@@ -42,7 +42,9 @@ function todayCard(hist, now) {
   const day = dayKey(now), doneSec = hist.filter((s) => dayKey(s.at) === day).reduce((a, s) => a + (s.durationSec || 0), 0);
   const pending = workoutsToday.forDay(day).filter((x) => !x.d).length;
   const note = pending ? h('button', { class: 'link-btn row-flex', style: { gap: '4px', alignSelf: 'flex-start' }, type: 'button', onClick: () => router.openTab('workouts') }, t('today.pending', { n: pending }), icon('chev-r', 16)) : null;
-  const head = h('div', { class: 'eyebrow' }, t('today.title'));
+  const up = userProfile.get(), dow = (new Date(now).getDay() + 6) % 7;
+  const plan = up.days.includes(dow) ? (up.time ? ' · ' + t('today.planned', { time: up.time }) : '') : up.days.length ? ' · ' + t('today.restDay') : '';
+  const head = h('div', { class: 'eyebrow' }, t('today.title') + plan);
   if (doneSec > 0) {
     return h('section', { class: 'card stack today', 'aria-label': t('today.title') }, head,
       h('div', { class: 'row-flex', style: { gap: '8px' } }, icon('check', 22), h('div', { class: 'h2' }, t('today.done'))),

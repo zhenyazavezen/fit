@@ -15,7 +15,7 @@ const prof = (o = {}) => normalizeProfile({ ...DEFAULT_PROFILE, ...o });
 test('Профиль: неверные значения заменяются допустимыми', () => {
   const p = normalizeProfile({ age: 5, heightCm: 'abc', weightKg: 70.44, level: 'god', goal: 'x', equipment: ['backpack', 'jetpack'], minutes: 7, limits: ['knee', 'knee', 'zzz'] });
   assert.equal(p.age, null); assert.equal(p.heightCm, null); assert.equal(p.weightKg, 70.4);
-  assert.equal(p.level, 'beginner'); assert.equal(p.goal, 'fitness'); assert.deepEqual(p.equipment, ['backpack']); assert.equal(p.minutes, 20); assert.deepEqual(p.limits, ['knee']);
+  assert.equal(p.level, 'beginner'); assert.equal(p.goal, 'health'); assert.deepEqual(p.equipment, ['backpack']); assert.equal(p.minutes, 20); assert.deepEqual(p.limits, ['knee']);
 });
 
 test('Новичок получает только программы уровня beginner и объяснение причин', () => {

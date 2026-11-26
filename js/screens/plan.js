@@ -39,6 +39,19 @@ export default function plan() {
     draw();
     return h('div', null, h('h2', { class: 'h3 group-title' }, label), box);
   };
+  // Дни недели (Пн = 0) и удобное время: подсказывают, когда тренироваться; видны на главной в карточке «Сегодня».
+  const daysPick = () => {
+    const box = h('div', { class: 'chipset' });
+    const draw = () => box.replaceChildren(...[0, 1, 2, 3, 4, 5, 6].map((i) => chip({ label: t('day.' + i), pressed: p.days.includes(i), onClick: () => {
+      const cur = new Set(p.days); cur.has(i) ? cur.delete(i) : cur.add(i); save({ days: [...cur].sort() }); draw(); } })));
+    draw();
+    return h('div', null, h('h2', { class: 'h3 group-title' }, t('plan.days')), box, h('p', { class: 'small muted', style: { marginTop: '8px' } }, t('plan.daysHint')));
+  };
+  const timePick = () => {
+    const inp = h('input', { class: 'input', type: 'time', value: p.time, 'aria-label': t('plan.time'), style: { maxWidth: '160px' }, onChange: (e) => save({ time: e.target.value }) });
+    const clear = h('button', { class: 'link-btn', type: 'button', onClick: () => { inp.value = ''; save({ time: '' }); } }, t('plan.timeClear'));
+    return h('div', null, h('h2', { class: 'h3 group-title' }, t('plan.time')), h('div', { class: 'row-flex', style: { gap: '12px' } }, inp, clear));
+  };
   const field = (label, key, min, max) => h('label', { class: 'stack', style: { gap: '6px', flex: 1 } }, h('span', { class: 'small muted' }, label),
     h('input', { class: 'input', type: 'number', inputmode: 'decimal', min, max, value: p[key] ?? '', 'aria-label': label,
       onChange: (e) => save({ [key]: e.target.value === '' ? null : e.target.value }) }));
@@ -60,6 +73,7 @@ export default function plan() {
     h('button', { class: 'card level-plate plan-plate', type: 'button', style: { marginTop: '16px' }, onClick: () => router.go('bodymap') }, icon('target'),
       h('div', { class: 'grow stack', style: { gap: '2px', textAlign: 'left' } }, h('div', { class: 'h3' }, t('map.title')), h('div', { class: 'small muted' }, t('map.hint'))), icon('chev-r', 18)),
     single(t('plan.goal'), PROFILE_GOALS, 'goal', 'pgoal.'),
+    daysPick(), timePick(),
     single(t('plan.minutes'), [10, 15, 20, 30, 45, 60].map(String), 'minutes', 'min.'),
     h('details', { class: 'more' }, h('summary', null, t('plan.more')),
       multi(t('plan.limits'), PROFILE_LIMITS, 'limits', 'limit.'),
