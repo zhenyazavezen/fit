@@ -314,7 +314,6 @@ body[data-route="player"] .toast { bottom: calc(var(--safe-bottom) + var(--tg-bo
 #tabbar { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; touch-action: pan-x; overscroll-behavior-x: contain; }
 #tabbar::-webkit-scrollbar { display: none; }
 #tabbar button { flex: 1 0 70px; min-width: 70px; }
-#tabbar button.tab-add { flex: 0 0 64px; min-width: 64px; }
 
 /* Календарь */
 .cal { display: flex; flex-direction: column; gap: var(--sp-4); }

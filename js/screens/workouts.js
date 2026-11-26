@@ -42,9 +42,8 @@ export default function workouts() {
   const prof = userProfile.get();
   const section = (title, list) => (list.length ? h('section', { class: 'stack', style: { gap: 'var(--sp-3)' } }, h('h2', { class: 'h3' }, title), ...list.map(programCard)) : null);
   el.append(h('div', null, h('h1', { class: 'h1 page-title', style: { paddingBottom: '4px' } }, t('workouts.title')), h('p', { class: 'small muted' }, t('workouts.sub'))),
-    h('button', { class: 'btn secondary', type: 'button', onClick: () => router.go('builder', {}) }, icon('plus'), t('workouts.create')),
-    ...mine.map(mineCard),
-    dayCard({ list: workoutsToday, k: 'wtoday', key: 'wtoday', route: 'mywk' }),
+    dayCard({ list: workoutsToday, k: 'wtoday', key: 'wtoday', route: 'mywk', extra: { label: t('workouts.create'), onClick: () => router.go('builder', {}) } }),
+    ...(mine.length ? [h('h2', { class: 'h3 group-title', style: { margin: '8px 0 0' } }, t('workouts.mineTitle')), ...mine.map(mineCard)] : []),
     h('button', { class: 'card level-plate plan-plate', type: 'button', onClick: () => router.go('plan') }, icon('profile'),
       h('div', { class: 'grow stack', style: { gap: '2px', textAlign: 'left' } }, h('div', { class: 'h3' }, t('plan.title')),
         h('div', { class: 'small muted' }, t('workouts.planHint', { level: t('level.' + prof.level) }))), icon('chev-r', 18)),

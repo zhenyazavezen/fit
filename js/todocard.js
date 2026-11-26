@@ -6,7 +6,7 @@ import { dayKey } from './dates.js';
 import { checklist } from './checklist.js';
 
 /** list — todos или workoutsToday; k — префикс текстов: 'todo' | 'wtoday'; route — экран «Расписание и история». */
-export function dayCard({ list, k, key, route }) {
+export function dayCard({ list, k, key, route, extra }) {
   const day = dayKey(Date.now());
   const bar = h('i'), count = h('span', { class: 'small muted row-flex', style: { gap: '4px', whiteSpace: 'nowrap' } });
   const upd = (items) => {
@@ -26,5 +26,6 @@ export function dayCard({ list, k, key, route }) {
   return h('section', { class: 'card todo htile', dataset: { key }, 'aria-label': t(k + '.title') },
     h('div', { class: 'row-flex', style: { justifyContent: 'space-between' } }, h('h2', { class: 'h3' }, t(k + '.title')), count),
     h('div', { class: 'bar', role: 'progressbar', 'aria-label': t(k + '.title') }, bar), cl.el,
-    h('button', { class: 'link-btn row-flex', style: { gap: '4px', alignSelf: 'flex-start' }, type: 'button', onClick: () => router.go(route) }, t('myday.open'), icon('chev-r', 16)));
+    h('button', { class: 'link-btn row-flex', style: { gap: '4px', alignSelf: 'flex-start' }, type: 'button', onClick: () => router.go(route) }, t('myday.open'), icon('chev-r', 16)),
+    extra ? h('button', { class: 'link-btn row-flex', style: { gap: '4px', alignSelf: 'flex-start' }, type: 'button', onClick: extra.onClick }, icon('plus', 16), extra.label) : null);
 }

@@ -2,13 +2,13 @@ import { h, icon } from '../util.js';
 import { t, getLang } from '../i18n.js';
 import * as router from '../router.js';
 import { history } from '../store.js';
-import { period, groupByDay, streak, bestStreak, bestWeekSec, monthActive } from '../stats.js';
+import { period, byDay, groupByDay, streak, bestStreak, bestWeekSec, monthActive } from '../stats.js';
 import { dayKey, startOfDay, addDays } from '../dates.js';
 import { spentLabel, doseLabel } from '../format.js';
 import { exName } from '../data.js';
 import { segmented, empty, sheet, confirmDialog, toast } from '../ui.js';
 
-const state = { mode: 'week', offset: 0 };
+const state = { mode: 'week', offset: 0, day: null };
 const NS = 'http://www.w3.org/2000/svg';
 const sv = (tag, attrs = {}, text) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); if (text != null) e.textContent = text; return e; };
 
@@ -39,6 +39,19 @@ function dayTitle(ts, now) {
 }
 const timeOf = (ts) => new Date(ts).toLocaleTimeString(getLang(), { hour: '2-digit', minute: '2-digit' });
 
+// Единый календарь: неделя — одна строка, месяц — сетка. Дни с тренировками отмечены; нажатие на день показывает его тренировки ниже.
+function calendarCard(p, onPick) {
+  const days = byDay(history.all()), today = dayKey(Date.now()), first = new Date(p.start);
+  const pad = p.mode === 'month' ? (first.getDay() + 6) % 7 : 0;
+  const cells = [...Array.from({ length: pad }, () => h('div', { class: 'cal-cell empty' })), ...p.bars.map((b) => {
+    const num = p.mode === 'month' ? b.i + 1 : new Date(addDays(startOfDay(p.start), b.i)).getDate();
+    return h('button', { class: 'cal-cell' + (days.get(b.key) ? ' done' : '') + (b.key === today ? ' today' : '') + (state.day === b.key ? ' sel' : ''), type: 'button',
+      'aria-label': `${num}${days.get(b.key) ? ', ' + t('cal.has') : ''}`, 'aria-pressed': String(state.day === b.key), onClick: () => onPick(b.key) }, String(num));
+  })];
+  return h('div', { class: 'card cal-card', style: { marginTop: '12px' } },
+    h('div', { class: 'cal-head' }, ...[0, 1, 2, 3, 4, 5, 6].map((i) => h('span', null, t('day.' + i)))), h('div', { class: 'cal-grid' }, ...cells));
+}
+
 export default function progress() {
   const el = h('div', { class: 'pad' });
   const body = h('div');
@@ -60,17 +73,19 @@ export default function progress() {
     const vs = p.prev.sec === 0 && p.total.sec === 0 ? null : delta === 0 ? t('progress.vsSame')
       : t(state.mode === 'week' ? 'progress.vsPrev' : 'progress.vsPrevMonth', { delta: `${delta > 0 ? '+' : '−'}${Math.abs(delta)} ${t('common.min')}` });
     body.replaceChildren(
-      segmented([{ value: 'week', label: t('progress.week') }, { value: 'month', label: t('progress.month') }], state.mode, (v) => { state.mode = v; state.offset = 0; draw(); }),
+      segmented([{ value: 'week', label: t('progress.week') }, { value: 'month', label: t('progress.month') }], state.mode, (v) => { state.mode = v; state.offset = 0; state.day = null; draw(); }),
       h('div', { class: 'period-nav' },
-        h('button', { class: 'icon-btn', 'aria-label': t('progress.prev'), onClick: () => { state.offset -= 1; draw(); } }, icon('chev-l')),
+        h('button', { class: 'icon-btn', 'aria-label': t('progress.prev'), onClick: () => { state.offset -= 1; state.day = null; draw(); } }, icon('chev-l')),
         h('div', { class: 'lbl' }, label),
-        h('button', { class: 'icon-btn', 'aria-label': t('progress.next'), disabled: state.offset >= 0, onClick: () => { state.offset += 1; draw(); } }, icon('chev-r'))),
-      h('div', { class: 'tiles' },
+        h('button', { class: 'icon-btn', 'aria-label': t('progress.next'), disabled: state.offset >= 0, onClick: () => { state.offset += 1; state.day = null; draw(); } }, icon('chev-r'))),
+      calendarCard(p, (k) => { state.day = state.day === k ? null : k; draw(); }),
+      h('div', { class: 'tiles', style: { marginTop: '12px' } },
         tile(String(p.total.workouts), t('progress.workouts')), tile(p.total.sec ? spentLabel(p.total.sec) : '0', t('progress.time')), tile(String(p.total.sets), t('progress.sets'))),
       h('div', { class: 'card', style: { marginTop: '12px' } }, h('div', { class: 'eyebrow', style: { marginBottom: '8px' } }, t('progress.chartTitle')), chart(p), vs ? h('div', { class: 'small muted', style: { marginTop: '8px' } }, vs) : null),
       ...stats(now),
-      h('h2', { class: 'h3', style: { margin: '28px 0 0' } }, t('progress.history')),
-      ...groupByDay(hist).flatMap((g) => [h('div', { class: 'day-title' }, dayTitle(g.ts, now)),
+      h('h2', { class: 'h3', style: { margin: '28px 0 0' } }, state.day ? t('cal.dayList') : t('progress.history')),
+      ...(state.day && !groupByDay(hist).some((g) => g.key === state.day) ? [h('p', { class: 'muted small' }, t('cal.noDay'))] : []),
+      ...groupByDay(hist).filter((g) => !state.day || g.key === state.day).flatMap((g) => [h('div', { class: 'day-title' }, dayTitle(g.ts, now)),
         h('div', { class: 'list' }, ...g.items.map((s) => h('button', { class: 'item', onClick: () => openRecord(s) },
           h('div', { class: 'grow' }, h('div', { class: 't' }, s.title || t('progress.customWorkout')), h('div', { class: 's' }, `${timeOf(s.at)} · ${t('n.sets', { n: s.setsDone })}`)),
           h('div', { class: 'end' }, spentLabel(s.durationSec)), icon('chev-r', 18))))]));

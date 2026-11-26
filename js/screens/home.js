@@ -8,8 +8,8 @@ import { userProfile } from '../profile-data.js';
 import { dayCard } from '../todocard.js';
 import { dragSort } from '../dragsort.js';
 import { checklist } from '../checklist.js';
-import { weekDots, summary, streak, recommend } from '../stats.js';
-import { startOfWeek, dayKey } from '../dates.js';
+import { recommend } from '../stats.js';
+import { dayKey } from '../dates.js';
 import { D, allPrograms, stepsOfItems, getProgram, progText, programEstimate, planForProgram } from '../data.js';
 import { startPlan } from '../start.js';
 import { durationLabel } from '../format.js';
@@ -64,20 +64,7 @@ function todayCard(hist, now) {
 
 const todoCard = () => dayCard({ list: todos, k: 'todo', key: 'todo', route: 'myday' });
 
-function weekTile(hist, now) {
-  const dots = weekDots(hist, now), ws = summary(hist, startOfWeek(now), Infinity), st = streak(hist, now);
-  const open = () => router.go('calendar');
-  return h('section', { class: 'card weekcard htile', dataset: { key: 'week' }, role: 'button', tabindex: '0', 'aria-label': t('cal.open'), onClick: open, onKeydown: (e) => { if (e.key === 'Enter') open(); } },
-    h('div', { class: 'row-flex', style: { justifyContent: 'space-between' } }, h('h2', { class: 'h3' }, t('cal.title')), h('span', { class: 'small muted row-flex', style: { gap: '2px' } }, t('cal.month'), icon('chev-r', 16))),
-    h('div', { class: 'dots' }, ...dots.map((d) => h('div', { class: 'dot' + (d.done ? ' done' : '') + (d.today ? ' today' : '') + (d.future ? ' future' : '') },
-      h('i', null, String(new Date(d.ts).getDate())), h('span', null, t('day.' + d.i))))),
-    h('div', { class: 'kpis' },
-      h('div', { class: 'kpi' }, h('div', { class: 'v' }, String(st)), h('div', { class: 'l' }, t('home.streak'))),
-      h('div', { class: 'kpi' }, h('div', { class: 'v' }, String(ws.workouts)), h('div', { class: 'l' }, t('home.weekWorkouts'))),
-      h('div', { class: 'kpi' }, h('div', { class: 'v' }, String(Math.round(ws.sec / 60))), h('div', { class: 'l' }, t('home.weekMinutes')))));
-}
-
-const TILES = ['today', 'week', 'todo'];
+const TILES = ['today', 'todo'];
 export default function home() {
   const hist = history.all(), now = Date.now();
   const name = tg.user?.first_name;
@@ -89,10 +76,10 @@ export default function home() {
   if (resume) el.append(resume);
   if (hist.length) { const pc = authPromptCard(); if (pc) el.append(pc); }
 
-  // Две плашки: порядок задаёт пользователь — зажать плашку и перетащить (без кнопок и настроек).
+  // Две плашки («Сегодня» и «Дела»): порядок задаёт пользователь — зажать плашку и перетащить (без кнопок и настроек).
   const saved = String(settings.get().homeOrder || '').split(',').filter((k) => TILES.includes(k));
   const order = [...new Set([...(saved.includes('today') ? [] : ['today']), ...saved, ...TILES])];
-  const makers = { today: () => todayCard(hist, now), week: () => weekTile(hist, now), todo: todoCard };
+  const makers = { today: () => todayCard(hist, now), todo: todoCard };
   const tiles = h('div', { class: 'home-tiles' }, ...order.map((k) => makers[k]()).filter(Boolean));
   el.append(tiles);
   dragSort(tiles, { itemSel: '[data-key]', axis: 'y', scale: 1.02, onDrop: (keys) => settings.set({ homeOrder: keys.join(',') }) });

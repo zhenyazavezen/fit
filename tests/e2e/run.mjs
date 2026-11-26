@@ -28,6 +28,7 @@ async function fresh({ w = 390, h = 844, clock = true, tgMock = false, pre } = {
 const tab = (p, name) => p.locator(`#tabbar [data-tab="${name}"]`).click();
 const btn = (p, name, opts = {}) => p.getByRole('button', { name, ...opts });
 async function openLevel(page, name) { await tab(page, 'workouts'); await page.locator('.plan-plate', { hasText: 'Мой план' }).click(); await page.waitForSelector('.level-plate'); await page.locator('.level-plate:not(.plan-plate)', { hasText: name }).click(); await page.waitForSelector('.pcard-wide, .empty'); }
+async function openExercise(page, name = 'Приседания') { await openLevel(page, 'Начальный'); await page.locator('.pcard-wide').first().click(); await page.waitForSelector('.facts'); await page.locator('.item', { hasText: name }).first().click(); await page.waitForSelector('.steps'); }
 const shot = async (p, n) => { if (SHOTS) await p.screenshot({ path: `${SHOTS}/${n}.png` }); };
 const text = (p, sel) => p.locator(sel).innerText();
 const run = (p, ms) => p.clock.runFor(ms);
@@ -35,8 +36,9 @@ const run = (p, ms) => p.clock.runFor(ms);
 for (const [w, h] of [[360, 780], [390, 844], [430, 932]]) {
   await test(`Запуск ${w}×${h}: без ошибок консоли и горизонтальной прокрутки, 5 вкладок`, async () => {
     const { page, errors, failed, ctx } = await fresh({ w, h });
-    eq(await page.locator('#tabbar [data-tab]').count(), 6, 'вкладок');
-    for (const name of ['workouts', 'catalog', 'progress', 'profile', 'home']) {
+    eq(await page.locator('#tabbar [data-tab]').count(), 5, 'вкладок');
+    eq(await page.locator('#tabbar .tab-add, #tabbar [data-tab="catalog"]').count(), 0, 'нет «Добавить» и «Упражнения»');
+    for (const name of ['workouts', 'progress', 'profile', 'home']) {
       await tab(page, name); await page.waitForTimeout(80);
       ok(!/SEVEN/i.test(await page.locator('body').innerText()), `в интерфейсе вкладки «${name}» нет старого названия`);
       ok(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth || document.getElementById('screen').scrollWidth > document.getElementById('screen').clientWidth)), `горизонтальная прокрутка на ${name}`);
@@ -52,7 +54,7 @@ await test('Нет запросов к видео, картинкам и сто�
   const { page, ctx } = await fresh();
   const reqs = [];
   page.on('request', (r) => reqs.push(r.url()));
-  await tab(page, 'catalog'); await page.locator('.item').first().click(); await page.waitForTimeout(200);
+  await openExercise(page); await page.waitForTimeout(200);
   ok(reqs.every((u) => u.startsWith(srv.url) || u.startsWith('data:')), 'внешние запросы: ' + reqs.filter((u) => !u.startsWith(srv.url)).join(', '));
   ok(!reqs.some((u) => /\.(mp4|webm|gif|jpe?g|png|webp|m4a|mp3)(\?|$)/i.test(u)), 'медиа-запрос');
   ok(!srv.reqs.some((u) => /\.(mp4|webm|gif|jpe?g|webp|m4a|mp3)$/i.test(u)), 'сервер отдавал медиа');
@@ -60,46 +62,22 @@ await test('Нет запросов к видео, картинкам и сто�
   await ctx.close();
 });
 
-await test('Каталог: поиск (ё/е, синонимы), категории, фильтры, избранное, карточка упражнения', async () => {
+await test('Карточка упражнения открывается из программы: шаги, мышцы, избранное; отдельного раздела «Упражнения» нет', async () => {
   const { page, errors, ctx } = await fresh();
-  await tab(page, 'catalog');
-  const total = await page.locator('.item').count();
-  eq(total, 42, 'всего упражнений');
-  await page.fill('#cat-q', 'бёрпи'); await run(page, 300);
-  eq(await page.locator('.item').count(), 2, 'поиск «бёрпи»: бёрпи и облегчённый вариант');
-  await page.fill('#cat-q', 'zzz'); await run(page, 300);
-  ok((await text(page, '.empty')).includes('Ничего не найдено'), 'пустое состояние');
-  await btn(page, 'Сбросить всё').click();
-  eq(await page.locator('.item').count(), 42, 'после сброса');
-  await page.getByRole('button', { name: 'Пресс', exact: true }).click();
-  const abs = await page.locator('.item').count(); ok(abs > 0 && abs < 42, 'категория «Пресс»');
-  await page.getByRole('button', { name: 'Ягодицы', exact: true }).click();
-  ok((await page.locator('.item').count()) > abs, 'две категории расширяют выбор');
-  await page.getByRole('button', { name: 'Все', exact: true }).click();
-  await btn(page, /Фильтры/).click();
-  await page.locator('.sheet').getByRole('button', { name: 'Средний', exact: true }).click();
-  const showTxt = await text(page, '.sheet .foot .btn:last-child'); ok(/Показать: \d+/.test(showTxt), 'счётчик в шторке: ' + showTxt);
-  await page.locator('.sheet .foot .btn:last-child').click();
-  const chair = await page.locator('.item').count(); ok(chair > 0 && chair < 42, 'фильтр «Средний»: ' + chair);
-  await shot(page, 'catalog-filtered');
-  await page.locator('.item').first().click();
-  await page.waitForSelector('.steps');
+  eq(await page.locator('#tabbar [data-tab="catalog"]').count(), 0, 'вкладки «Упражнения» нет');
+  await openExercise(page);
   ok((await page.locator('.steps li').count()) >= 3, 'шаги техники');
   ok((await page.locator('.mchip.primary').count()) >= 1, 'целевые мышцы');
   await shot(page, 'exercise-card');
   await page.locator('.fav-btn').click();
   eq(await page.locator('.fav-btn').getAttribute('aria-pressed'), 'true', 'избранное включено');
-  await page.goBack(); await page.waitForSelector('.catalog-head');
-  await btn(page, 'Избранное').click();
-  eq(await page.locator('.item').count(), 1, 'избранное в каталоге');
   eq(errors.length, 0, errors.join(' | '));
   await ctx.close();
 });
 
 await test('Карточка: «Попробовать» запускает тренировку из одного упражнения (повторения → отдых → завершение)', async () => {
   const { page, errors, ctx } = await fresh();
-  await tab(page, 'catalog'); await page.fill('#cat-q', 'приседания'); await run(page, 300);
-  await page.locator('.item', { hasText: 'Приседания' }).first().click();
+  await openExercise(page);
   await btn(page, 'Попробовать упражнение').click();
   await page.waitForSelector('.player');
   eq(await text(page, '.p-phase'), 'ПРИГОТОВЬТЕСЬ', 'фаза подготовки');
@@ -363,11 +341,10 @@ await test('Фото профиля: выбор из галереи, обрез�
 await test('Главная: без блока «Программы» и ссылок; «Дела на сегодня» со шкалой прогресса', async () => {
   const { page, errors, ctx } = await fresh();
   eq(await page.locator('.hscroll, .pcard, .hero').count(), 0, 'блок «Программы» и рекомендация убраны');
-  ok((await page.locator('.weekcard, .todo').evaluateAll((n) => n.map((e) => e.className.split(' ').includes('todo')))).join() === 'false,true', 'календарь выше дел');
+  eq(await page.locator('.weekcard, .cal-card').count(), 0, 'календаря на главной нет');
   eq(await page.locator('.list .item').count(), 0, 'ссылки под программами убраны');
   ok(!(await text(page, '#screen')).includes('Домашние тренировки'), 'заголовок «Домашние тренировки» убран');
-  eq(await page.locator('.dot i').allTextContents().then((a) => a.every((x) => /^\d{1,2}$/.test(x)) && a.length === 7), true, 'в кружках числа месяца');
-  eq(await page.locator('#tabbar [data-tab]').count(), 6, 'все вкладки на месте');
+  eq(await page.locator('#tabbar [data-tab]').count(), 5, 'все вкладки на месте');
   await page.locator('.todo input').fill('Выпить воду'); await page.locator('.todo .cl-add').tap();
   await page.locator('.todo input').fill('Растяжка'); await page.locator('.cl-add').first().click();
   eq(await page.locator('.cl-row').count(), 2, 'два дела');
@@ -391,24 +368,16 @@ await test('Нижняя панель: зажать и перетащить вк
   await page.clock.runFor(500);
   await page.mouse.move(by.x + by.width / 2 + 25, by.y + 20, { steps: 12 });
   await page.mouse.up(); await page.clock.runFor(600);
-  eq((await names()).slice(0, 5).join(), 'Тренировки,Упражнения,Прогресс,Главная,Рейтинг', 'вкладка «Главная» перетащена');
+  eq((await names()).slice(0, 5).join(), 'Тренировки,Прогресс,Главная,Рейтинг,Профиль', 'вкладка «Главная» перетащена');
   ok(await page.locator('.todo').count() === 1, 'клик после перетаскивания не открыл вкладку');
   await page.reload(); await page.waitForSelector('#tabbar button');
-  eq((await names()).slice(0, 5).join(), 'Тренировки,Упражнения,Прогресс,Главная,Рейтинг', 'порядок сохранился');
+  eq((await names()).slice(0, 5).join(), 'Тренировки,Прогресс,Главная,Рейтинг,Профиль', 'порядок сохранился');
   // быстрое нажатие по-прежнему открывает вкладку
   await tab(page, 'workouts'); await page.waitForSelector('.page-title');
-  // своя вкладка: Профиль → Нижняя панель
-  await page.locator('#tabbar .tab-add').scrollIntoViewIfNeeded(); await page.locator('#tabbar .tab-add').click();
-  await page.locator('.sheet input[type=text]').first().fill('Питание'); await btn(page, 'Готово').tap();
-  await page.waitForSelector('.note-area');
-  ok((await names()).includes('Питание'), 'своя вкладка появилась: ' + (await names()).join());
-  await page.locator('.cl-addrow input').fill('Белок 120 г'); await page.locator('.cl-add').first().click();
-  await page.locator('.note-area').fill('План на неделю'); await page.locator('.note-area').blur();
-  eq(await page.locator('#tabbar [aria-current="true"]').count(), 1, 'активна одна вкладка');
-  await page.reload(); await page.waitForSelector('#tabbar button');
-  await page.locator('#tabbar [data-tab^="c_"]').tap(); await page.waitForSelector('.note-area');
-  eq(await page.locator('.note-area').inputValue(), 'План на неделю', 'заметка сохранилась');
-  eq(await page.locator('.cl-row').count(), 1, 'дело во вкладке сохранилось');
+  eq(await page.locator('.tab-add').count(), 0, 'кнопки «+ Добавить» на панели нет');
+  await tab(page, 'profile'); await page.getByText('Нижняя панель').click();
+  eq(await page.locator('.sheet').getByText('Упражнения').count(), 0, 'в настройках панели нет «Упражнений»');
+  ok((await page.locator('.sheet').innerText()).includes('Главная') && !(await page.locator('.sheet').innerText()).includes('Добавить'), 'в настройках только вкладки и сброс');
   ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
 });
 
@@ -433,43 +402,36 @@ await test('Личные данные: у разных аккаунтов Telegr
   ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
 });
 
-await test('Главная: плашки меняются местами перетаскиванием; календарь по нажатию; панель с «+»', async () => {
+await test('Главная: плашки меняются местами перетаскиванием; календаря на главной нет', async () => {
   const { page, errors, ctx } = await fresh();
   const keys = () => page.locator('.htile').evaluateAll((n) => n.map((e) => e.dataset.key).join());
-  eq(await keys(), 'today,week,todo', 'порядок по умолчанию: сегодня, календарь, дела');
-  const gaps = await page.locator('.htile').evaluateAll((n) => { const r = n.map((e) => e.getBoundingClientRect()); return Math.round(r[1].top - r[0].bottom); });
-  ok(gaps >= 12 && gaps <= 20, 'отступ между плашками: ' + gaps);
-  const a = await page.locator('.htile[data-key="week"] .dots').boundingBox(), b = await page.locator('.htile[data-key="todo"] .bar').boundingBox();
-  await page.mouse.move(a.x + 20, a.y + 20); await page.mouse.down(); await page.clock.runFor(500);
+  eq(await keys(), 'today,todo', 'порядок по умолчанию: сегодня, дела');
+  eq(await page.locator('.cal-card, .weekcard, .htile[data-key="week"]').count(), 0, 'календаря на главной нет');
+  const a = await page.locator('.htile[data-key="today"] .h2').boundingBox(), b = await page.locator('.htile[data-key="todo"] .bar').boundingBox();
+  await page.mouse.move(a.x + 20, a.y + 10); await page.mouse.down(); await page.clock.runFor(500);
   await page.mouse.move(b.x + 20, b.y + 60, { steps: 14 }); await page.mouse.up(); await page.clock.runFor(600);
-  eq(await keys(), 'today,todo,week', 'плашки поменялись');
-  ok(await page.locator('.cal-card').count() === 0, 'отпускание не открыло календарь');
+  eq(await keys(), 'todo,today', 'плашки поменялись');
   await page.reload(); await page.waitForSelector('.htile');
-  eq(await keys(), 'today,todo,week', 'порядок сохранился');
-  const tb = await page.locator('.htile[data-key="today"] .h2').boundingBox(), wb = await page.locator('.htile[data-key="week"] .dots').boundingBox();
-  await page.mouse.move(tb.x + 20, tb.y + 10); await page.mouse.down(); await page.clock.runFor(500);
-  await page.mouse.move(wb.x + 20, wb.y + 60, { steps: 14 }); await page.mouse.up(); await page.clock.runFor(600);
-  ok((await keys()).split(',')[0] !== 'today', 'плашку «Сегодня» можно перетащить: ' + await keys());
-  await page.locator('.htile[data-key="week"]').click(); await page.waitForSelector('.cal-card');
-  eq(await page.locator('.cal-cell:not(.empty)').count(), 30, 'ноябрь: 30 дней');
-  await page.getByRole('button', { name: 'Назад', exact: true }).first().click().catch(() => {});
+  eq(await keys(), 'todo,today', 'порядок сохранился');
   ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
 });
 
-await test('Календарь: месяцы, дни с тренировками, итоги и список', async () => {
+await test('Прогресс: единый календарь — месяцы, дни с тренировками, список по дню', async () => {
   const { page, errors, ctx } = await fresh({ pre: () => {
     const at = (m, d) => new Date(2026, m - 1, d, 10).getTime();
     const mk = (id, ts, title) => ({ id, at: ts, startedAt: ts - 600000, durationSec: 600, title, setsDone: 9, exercisesDone: 5, exerciseIds: ['squat'], completed: true });
     localStorage.setItem('seven:history', JSON.stringify([mk('a', at(11, 10), 'Всё тело A'), mk('b', at(11, 12), 'Кор'), mk('c', at(10, 20), 'Растяжка')]));
   } });
-  await page.locator('.htile[data-key="week"]').click(); await page.waitForSelector('.cal-card');
+  await tab(page, 'progress'); await page.waitForSelector('.cal-card');
+  await page.getByRole('button', { name: 'Месяц', exact: true }).click();
+  eq(await page.locator('.cal-cell:not(.empty)').count(), 30, 'ноябрь: 30 дней');
   eq(await page.locator('.cal-cell.done').count(), 2, 'в ноябре два дня с тренировками');
-  ok((await text(page, '.cal')).includes('Всё тело A'), 'в списке месяца есть тренировка');
   await page.locator('.cal-cell.done').first().click();
-  ok(!(await text(page, '.cal')).includes('Кор'), 'выбран день: чужих тренировок нет');
-  await page.getByRole('button', { name: 'Предыдущий период' }).click().catch(async () => { await page.locator('.period-nav .icon-btn').first().click(); });
+  const t1 = await text(page, '#screen');
+  ok(t1.includes('Всё тело A') !== t1.includes('Кор'), 'выбран день: виден только его список');
+  await page.locator('.period-nav .icon-btn').first().click();
   eq(await page.locator('.cal-cell.done').count(), 1, 'в октябре один день');
-  ok((await text(page, '.cal')).includes('Растяжка'), 'список октября');
+  ok((await text(page, '#screen')).includes('Растяжка'), 'список октября');
   ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
 });
 
@@ -514,9 +476,7 @@ await test('Telegram Mini App (эмуляция): ready/expand, цвета, Back
 
 await test('Главная после тренировки: серия и неделя обновляются', async () => {
   const { page, ctx } = await fresh({ pre: () => { try { if (!localStorage.getItem('seven:seeded')) { localStorage.setItem('seven:seeded', '1'); const d = Date.now(); localStorage.setItem('seven:history', JSON.stringify([{ id: 'a', at: d - 86400000, startedAt: d - 86400000 - 600000, durationSec: 600, title: 'Тест', programId: 'b1_full_a', setsDone: 8, exercisesDone: 4, exerciseIds: ['squat'], completed: true }, { id: 'b', at: d - 1000, startedAt: d - 601000, durationSec: 900, title: 'Тест 2', programId: 'i5_intervals', setsDone: 9, exercisesDone: 5, exerciseIds: ['plank'], completed: true }])); } } catch { /* */ } } });
-  const kpis = await text(page, '.kpis');
-  ok(kpis.replace(/\s+/g, ' ').startsWith('2 Серия'), 'серия 2 дня: ' + kpis);
-  ok(await page.locator('.dot.done').count() >= 1, 'отмечены дни недели');
+  await page.waitForSelector('.htile');
   await tab(page, 'progress'); await page.locator('.item', { hasText: 'Тест 2' }).click();
   ok((await text(page, '.sheet')).includes('Тест 2'), 'карточка записи истории');
   await page.locator('.sheet .btn.danger').click(); await page.locator('.sheet .btn.danger').last().click();
@@ -527,8 +487,7 @@ await test('Главная после тренировки: серия и нед
 await test('Данные сохраняются: перезагрузка и повторное открытие (история, избранное)', async () => {
   const { page, ctx, errors } = await fresh();
   // тренировка из одного упражнения → запись в историю
-  await tab(page, 'catalog'); await page.fill('#cat-q', 'приседания'); await run(page, 300);
-  await page.locator('.item', { hasText: 'Приседания' }).first().click();
+  await openExercise(page);
   await page.locator('.fav-btn').click();
   await btn(page, 'Попробовать упражнение').click(); await page.waitForSelector('.player'); await run(page, 5100);
   for (let i = 0; i < 3; i++) { await btn(page, 'Готово').click(); if (i < 2) await run(page, 45_100); }
@@ -545,22 +504,10 @@ await test('Данные сохраняются: перезагрузка и п�
   const page2 = await ctx.newPage(); await page2.goto(srv.url); await page2.waitForSelector('#tabbar button');
   await page2.locator('#tabbar [data-tab="progress"]').click();
   ok((await page2.locator('#screen').innerText()).includes('Приседания'), 'история видна после повторного открытия');
-  await page2.locator('#tabbar [data-tab="catalog"]').click(); await page2.getByRole('button', { name: 'Избранное' }).click();
-  eq(await page2.locator('.item').count(), 1, 'избранное после повторного открытия');
   eq(errors.length, 0, errors.join(' | '));
   await ctx.close();
 });
 
-await test('Каталог без оборудования: нет рюкзака/стула/стены; у «Бёрпи» есть вариант без прыжка', async () => {
-  const { page, ctx, errors } = await fresh();
-  await tab(page, 'catalog'); await page.fill('#cat-q', 'рюкзак'); await run(page, 300);
-  eq(await page.locator('.item', { hasText: 'рюкзак' }).count(), 0, 'упражнений с рюкзаком нет');
-  await page.fill('#cat-q', 'бёрпи'); await run(page, 300);
-  await page.locator('.item', { hasText: 'Бёрпи', hasNotText: 'без прыжка' }).first().click(); await page.waitForSelector('.steps');
-  ok(await page.getByText('Бёрпи без прыжка и отжимания').first().count() > 0, 'у «Бёрпи» есть вариант «без прыжка и отжимания»');
-  eq(errors.length, 0, errors.join(' | '));
-  await ctx.close();
-});
 await test('Тренировки: без плашек уровней; «Мой план» — уровни и карта тела; программа запускается', async () => {
   const { page, ctx, errors } = await fresh();
   await tab(page, 'workouts'); await page.waitForSelector('.plan-plate');
@@ -605,13 +552,7 @@ await test('Мой план: выбор уровня меняет метку «�
   await tab(page, 'workouts'); await page.locator('.plan-plate', { hasText: 'Мой план' }).click(); await page.waitForSelector('.level-plate');
   eq(await page.locator('.chipset .chip[aria-pressed=true]', { hasText: 'Быть в форме' }).count(), 1, 'цель сохранилась');
   eq(await page.locator('input[type=time]').inputValue(), '19:00', 'время сохранилось');
-  // кнопка «Добавить» на нижней панели скрывается в «Нижней панели» профиля
-  ok((await page.locator('.tab-add').count()) === 1, 'кнопка «Добавить» на панели есть');
-  await tab(page, 'profile'); await page.getByText('Нижняя панель').click();
-  await page.getByRole('switch', { name: /Кнопка «Добавить»/ }).click();
-  eq(await page.locator('.tab-add').count(), 0, 'кнопку «Добавить» можно убрать с панели');
-  await page.getByRole('switch', { name: /Кнопка «Добавить»/ }).click();
-  eq(await page.locator('.tab-add').count(), 1, 'и вернуть');
+  eq(await page.locator('.tab-add').count(), 0, 'кнопки «Добавить» на панели нет');
   eq(errors.length, 0, errors.join(' | ')); await ctx.close();
 });
 
@@ -674,21 +615,6 @@ await test('Конструктор: одна плашка «Добавить у�
   ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
 });
 
-await test('Избранное поднимается наверх списка упражнений; расписание: окно выбора не схлопывается, свои тренировки доступны', async () => {
-  const { page, errors, ctx } = await fresh({ pre: () => {
-    if (localStorage.getItem('seven:programs')) return;
-    localStorage.setItem('seven:programs', JSON.stringify([{ id: 'u_mine', name: 'Моя зарядка', restBetween: 20, items: [{ ex: 'squat', sets: 2, reps: 10 }], custom: true }]));
-  } });
-  await tab(page, 'catalog'); await page.waitForSelector('.list .item');
-  const names = () => page.locator('.list .item .t').allTextContents();
-  const before = await names(); const target = before[5];
-  await page.locator('.list .item', { hasText: target }).first().click(); await page.waitForSelector('.fav-btn');
-  await page.locator('.fav-btn').click();
-  await page.goBack(); await page.waitForSelector('.list .item');
-  eq((await names())[0], target, 'добавленное в избранное стало первым');
-  ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
-});
-
 await test('Рейтинг: вкладка в нижней панели; без входа — просьба войти, без «null»', async () => {
   const { page, errors, ctx } = await fresh();
   await tab(page, 'compete');
@@ -730,7 +656,7 @@ await test('Автономный файл открывается напряму�
   const f = path.join(root, 'standalone/index.html');
   const { page, ctx, errors } = await open(browser, 'file://' + f);
   await page.goto('file://' + f); await page.waitForSelector('#tabbar button', { timeout: 8000 });
-  await tab(page, 'catalog'); eq(await page.locator('.item').count(), 42, 'каталог из встроенных данных');
+  await tab(page, 'workouts'); await page.waitForSelector('.plan-plate'); eq(await page.locator('.mine-card, .plan-plate').count() >= 1, true, 'экран тренировок из встроенных данных');
   eq(errors.length, 0, errors.join(' | '));
   await ctx.close();
 });

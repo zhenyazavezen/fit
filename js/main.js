@@ -64,19 +64,18 @@ async function boot() {
   try { await initI18n(tg.user?.language_code); await loadData(); } catch (e) { console.error(e); showFatal(t('app.loadError')); return; }
 
   const load = (p) => p.then((m) => m.default);
-  const [home, workouts, catalog, progress, profile, program, builder, exercise, player, about, plan, bodymap, account, ctab, calendar, compete, myday, level] = await Promise.all([
-    load(import('./screens/home.js')), load(import('./screens/workouts.js')), load(import('./screens/catalog.js')), load(import('./screens/progress.js')),
+  const [home, workouts, progress, profile, program, builder, exercise, player, about, plan, bodymap, account, ctab, compete, myday, level] = await Promise.all([
+    load(import('./screens/home.js')), load(import('./screens/workouts.js')), load(import('./screens/progress.js')),
     load(import('./screens/profile.js')), load(import('./screens/program.js')), load(import('./screens/builder.js')), load(import('./screens/exercise.js')),
-    load(import('./screens/player.js')), load(import('./screens/about.js')), load(import('./screens/plan.js')), load(import('./screens/bodymap.js')), load(import('./screens/account.js')), load(import('./screens/ctab.js')), load(import('./screens/calendar.js')), load(import('./screens/compete.js')), load(import('./screens/myday.js')), load(import('./screens/level.js'))]);
+    load(import('./screens/player.js')), load(import('./screens/about.js')), load(import('./screens/plan.js')), load(import('./screens/bodymap.js')), load(import('./screens/account.js')), load(import('./screens/ctab.js')), load(import('./screens/compete.js')), load(import('./screens/myday.js')), load(import('./screens/level.js'))]);
 
   router.register('home', home, { tab: 'home' });
   router.register('workouts', workouts, { tab: 'workouts' });
-  router.register('catalog', catalog, { tab: 'catalog' });
   router.register('progress', progress, { tab: 'progress' });
   router.register('profile', profile, { tab: 'profile' });
   router.register('program', program, { tab: 'workouts' });
   router.register('builder', builder, { tab: 'workouts' });
-  router.register('exercise', exercise, { tab: 'catalog' });
+  router.register('exercise', exercise, { tab: 'workouts' });
   router.register('about', about, { tab: 'profile' });
   router.register('plan', plan, { tab: 'workouts' });
   router.register('bodymap', bodymap, { tab: 'workouts' });
@@ -86,7 +85,6 @@ async function boot() {
   router.register('mywk', (p) => myday({ ...p, kind: 'workouts' }), { tab: 'workouts' });
   router.register('level', level, { tab: 'workouts' });
   router.register('ctab', ctab, { tab: (p) => p.id });
-  router.register('calendar', calendar, { tab: 'home' });
   router.register('player', player, { tabs: false });
 
   const tabbar = document.getElementById('tabbar');
@@ -100,7 +98,7 @@ async function boot() {
 }
 
 // Ссылки вида t.me/ZAVEZEN_FIT_BOT/app?startapp=plan открывают нужный экран. Только белый список, остальное игнорируется.
-const START_SCREENS = { compete: 'compete', home: 'home', workouts: 'workouts', catalog: 'catalog', progress: 'progress', profile: 'profile', plan: 'plan', map: 'bodymap', account: 'account' };
+const START_SCREENS = { compete: 'compete', home: 'home', workouts: 'workouts', progress: 'progress', profile: 'profile', plan: 'plan', map: 'bodymap', account: 'account' };
 function startScreen() { return START_SCREENS[tg.startParam] || 'home'; }
 
 boot().catch((e) => { console.error(e); showFatal(String(e?.message || e)); });
