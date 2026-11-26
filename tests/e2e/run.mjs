@@ -512,8 +512,8 @@ await test('Тренировки: без плашек уровней; «Мой �
   const { page, ctx, errors } = await fresh();
   await tab(page, 'workouts'); await page.waitForSelector('.plan-plate');
   const txt = await text(page, '#screen');
-  for (const w of ['Мой план', 'Растяжка и восстановление', 'Тренировки на сегодня']) ok(txt.includes(w), 'есть «' + w + '»');
-  ok(!/Программ: \d/.test(txt) && (await page.locator('.plan-plate').count()) === 1 && !(await page.locator('.level-plate:not(.plan-plate)').count()), 'уровней и карты тела на главной «Тренировок» нет');
+  for (const w of ['Мой план', 'Растяжка и восстановление', 'Создать свою тренировку']) ok(txt.includes(w), 'есть «' + w + '»');
+  ok(!txt.includes('Тренировки на сегодня') && !/Программ: \d/.test(txt) && (await page.locator('.plan-plate').count()) === 1 && !(await page.locator('.level-plate:not(.plan-plate)').count()), 'уровней и карты тела на главной «Тренировок» нет');
   ok(!/рюкзак|гантел|резинк|Premium/i.test(txt), 'нет инвентаря и Premium');
   await page.locator('.plan-plate', { hasText: 'Мой план' }).click(); await page.waitForSelector('.level-plate');
   eq(await page.locator('.level-plate:not(.plan-plate)').count(), 3, 'три плашки уровней в «Моём плане»');
@@ -576,25 +576,6 @@ await test('Мой день: расписание по дням недели, и
   const sched = await page.evaluate(() => JSON.parse(localStorage.getItem('seven:todos')).daily);
   eq(JSON.stringify(sched.map((x) => [x.t, x.days])), JSON.stringify([['Зарядка', [1]]]), 'расписание сохранено по дням');
   eq(errors.length, 0, errors.join(' | ')); await ctx.close();
-});
-
-await test('Тренировки на сегодня: добавить, отметить, повторять; расписание по дням', async () => {
-  const { page, errors, ctx } = await fresh();
-  await tab(page, 'workouts');
-  ok(/Тренировки на сегодня/.test(await text(page, '.todo')), 'блок «Тренировки на сегодня» есть');
-  const inp = page.locator('.todo input');
-  await inp.fill('Отжимания 3×15'); await page.locator('.todo .cl-add').click();
-  eq(await inp.inputValue(), '', 'поле очищается после «+»');
-  await inp.fill('Бицепс'); await inp.press('Enter'); await inp.fill('  Пресс  '); await page.locator('.todo .cl-add').click();
-  eq((await page.locator('.todo .cl-text').allTextContents()).join('|'), 'Отжимания 3×15|Бицепс|Пресс', 'записи в порядке ввода');
-  await page.locator('.todo .cl-main').first().click();
-  await page.locator('.todo .rep').nth(1).click();
-  await tab(page, 'home'); await tab(page, 'workouts');
-  eq((await page.locator('.todo .cl-text').allTextContents()).join('|'), 'Отжимания 3×15|Бицепс|Пресс', 'после перехода всё на месте');
-  eq(await page.locator('.todo .cl-row.done').count(), 1, 'отметка сохранена');
-  await page.getByRole('button', { name: /Расписание и история/ }).click(); await page.waitForSelector('.days-row');
-  ok((await text(page, '#screen')).includes('Бицепс'), 'постоянная тренировка в расписании дня');
-  ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
 });
 
 await test('Конструктор: одна плашка «Добавить упражнение»; отдых от 1 с, удержание меняет значение', async () => {

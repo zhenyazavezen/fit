@@ -3,8 +3,6 @@ import { t, getLang } from '../i18n.js';
 import * as router from '../router.js';
 import { allPrograms, getProgram, progText, programEstimate, exName, resolved } from '../data.js';
 import { doseLabel } from '../format.js';
-import { workoutsToday } from '../store.js';
-import { dayCard } from '../todocard.js';
 import { durationLabel } from '../format.js';
 import { empty, confirmDialog, toast } from '../ui.js';
 import { customPrograms } from '../store.js';
@@ -42,11 +40,13 @@ export default function workouts() {
   const prof = userProfile.get();
   const section = (title, list) => (list.length ? h('section', { class: 'stack', style: { gap: 'var(--sp-3)' } }, h('h2', { class: 'h3' }, title), ...list.map(programCard)) : null);
   el.append(h('div', null, h('h1', { class: 'h1 page-title', style: { paddingBottom: '4px' } }, t('workouts.title')), h('p', { class: 'small muted' }, t('workouts.sub'))),
-    dayCard({ list: workoutsToday, k: 'wtoday', key: 'wtoday', route: 'mywk', extra: { label: t('workouts.create'), onClick: () => router.go('builder', {}) } }),
+    h('div', { class: 'card stack', style: { gap: '0', padding: '4px 6px' } },
+      h('button', { class: 'level-plate plan-plate', type: 'button', onClick: () => router.go('plan') }, icon('profile'),
+        h('div', { class: 'grow stack', style: { gap: '2px', textAlign: 'left' } }, h('div', { class: 'h3' }, t('plan.title')),
+          h('div', { class: 'small muted' }, t('workouts.planHint', { level: t('level.' + prof.level) }))), icon('chev-r', 18)),
+      h('div', { style: { height: '1px', background: 'var(--line, rgba(255,255,255,.08))', margin: '0 14px' } }),
+      h('button', { class: 'link-btn row-flex', style: { gap: '8px', padding: '4px 14px' }, type: 'button', onClick: () => router.go('builder', {}) }, icon('plus', 16), t('workouts.create'))),
     ...(mine.length ? [h('h2', { class: 'h3 group-title', style: { margin: '8px 0 0' } }, t('workouts.mineTitle')), ...mine.map(mineCard)] : []),
-    h('button', { class: 'card level-plate plan-plate', type: 'button', onClick: () => router.go('plan') }, icon('profile'),
-      h('div', { class: 'grow stack', style: { gap: '2px', textAlign: 'left' } }, h('div', { class: 'h3' }, t('plan.title')),
-        h('div', { class: 'small muted' }, t('workouts.planHint', { level: t('level.' + prof.level) }))), icon('chev-r', 18)),
     section(t('workouts.sec.recovery'), recovery));
   if (!all.length) el.append(empty({ title: t('workouts.empty') }));
   return { el };
