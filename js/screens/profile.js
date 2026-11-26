@@ -36,7 +36,7 @@ export default function profile() {
     row('profile', t('profile.account'), auth.signedIn ? t('profile.accountOn') : t('profile.accountOff'), () => router.go('account')));
 
   group(t('profile.settings'),
-    sw('sound', 'sound', t('profile.sound')), sw('haptics', 'vibrate', t('profile.haptics')), sw('wake', 'screen', t('profile.wake')),
+    sw('sound', 'sound', t('profile.sound')), sw('music', 'sound', t('profile.music')), sw('haptics', 'vibrate', t('profile.haptics')), sw('wake', 'screen', t('profile.wake')),
     volumeRow(),
     row('list', t('tabs.title'), '', () => openTabsEditor()),
   );

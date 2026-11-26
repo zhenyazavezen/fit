@@ -8,6 +8,7 @@ import { Session, withPrep } from '../engine.js';
 import { D, exText, exName, stepsOfItems, resolved } from '../data.js';
 import { doseLabel, sideLabel, spentLabel } from '../format.js';
 import { beep, haptic } from '../feedback.js';
+import { startMusic, stopMusic } from '../music.js';
 import { sheet, toast } from '../ui.js';
 import { streak } from '../stats.js';
 import { CONFIG } from '../config.js';
@@ -163,7 +164,7 @@ export default function player(params = {}) {
   function loop() {
     const now = Date.now();
     handle(session.tick(now));
-    if (!over) { update(now); if (now - saved > 10_000) persist(now); }
+    if (!over) { update(now); if (now - saved > 10_000) persist(now); session.paused ? stopMusic() : startMusic(); }
   }
   const onVis = () => { if (document.hidden) persist(); else { loop(); lock(); } };
 
@@ -250,6 +251,7 @@ export default function player(params = {}) {
   }
 
   function cleanup(keepGuard) {
+    stopMusic();
     clearInterval(timerId); timerId = null;
     document.removeEventListener('visibilitychange', onVis); window.removeEventListener('pagehide', persistHide);
     try { wake?.release?.(); } catch { /* ignore */ }
@@ -270,6 +272,7 @@ export default function player(params = {}) {
       if (!session.paused) lock();
       render(); persist();
       if (!params.resume && session.step?.type === 'prep') beep('prep');
+      if (!session.paused) startMusic();
       timerId = setInterval(loop, 200);
     },
     destroy() { if (!over && !exiting) { persist(); } cleanup(); },
