@@ -27,7 +27,7 @@ export function normalizeProfile(p) {
     days: [...new Set((Array.isArray(p.days) ? p.days : []).map(Number).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6))].sort(),
     time: typeof p.time === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(p.time) ? p.time : '',
     equipment: pick(p.equipment, PROFILE_EQUIP),
-    minutes: [10, 15, 20, 30, 45, 60].includes(Number(p.minutes)) ? Number(p.minutes) : DEFAULT_PROFILE.minutes,
+    minutes: [5, 10, 15, 20, 30].includes(Number(p.minutes)) ? Number(p.minutes) : Number(p.minutes) > 30 ? 30 : DEFAULT_PROFILE.minutes,
     limits: pick(p.limits, PROFILE_LIMITS),
     updatedAt: Number.isFinite(p.updatedAt) ? p.updatedAt : 0,
   };

@@ -62,7 +62,7 @@ export function scoreProgram(p, profile, ctx) {
   if ((p.goals || []).some((g) => tags.includes(g))) { score += 3; reasons.push({ key: 'goal' }); }
 
   const min = programMinutes(p, exById);
-  if (min <= profile.minutes) { score += 2; reasons.push({ key: 'time', min }); }
+  if (min <= profile.minutes) { score += 2 + (min >= profile.minutes - 4 ? 1 : 0); reasons.push({ key: 'time', min }); }
   else if (min <= profile.minutes + 5) { score += 0; warnings.push({ key: 'timeOver', min }); }
   else { score -= 3; warnings.push({ key: 'timeOver', min }); }
 

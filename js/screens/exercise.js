@@ -41,11 +41,6 @@ export default function exercise({ id }) {
   body.append(h('div', { class: 'block' }, h('h2', { class: 'h3' }, t('exercise.mistakes')), h('ul', { class: 'bullets' }, ...c.mistakes.map((s) => h('li', null, s)))));
   if (c.tip) body.append(h('div', { class: 'block' }, noteBox(c.tip, 'info')));
 
-  const variants = [['easier', ex.easier], ['harder', ex.harder]].filter(([, v]) => v);
-  if (variants.length) body.append(h('div', { class: 'block' }, h('h2', { class: 'h3' }, t('exercise.variants')),
-    h('div', { class: 'list' }, ...variants.map(([k, vid]) => h('button', { class: 'item', onClick: () => router.go('exercise', { id: vid }) },
-      h('div', { class: 'grow' }, h('div', { class: 's' }, t('exercise.' + k)), h('div', { class: 't' }, exName(vid))), icon('chev-r', 18))))));
-
   body.append(h('div', { class: 'block' }, h('p', { class: 'small', style: { color: 'var(--text3)' } }, t('exercise.disclaimer'))));
   body.append(h('div', { class: 'sticky-cta' }, h('button', { class: 'btn', onClick: () => startPlan(planForExercise(id)) }, icon('play'), t('exercise.try'))));
   el.append(body);

@@ -6,7 +6,7 @@ import { tabsCfg, pages, store } from './store.js';
 import { sheet, toggle, confirmDialog } from './ui.js';
 import { dragSort } from './dragsort.js';
 
-export const BUILTIN = ['home', 'workouts', 'progress', 'compete', 'profile'];
+export const BUILTIN = ['home', 'workouts', 'progress', 'profile', 'compete'];
 export const TAB_ICONS = ['star', 'flame', 'drop', 'leaf', 'book', 'target', 'moon', 'sun', 'list', 'calendar', 'trophy', 'heart', 'bolt', 'clock'];
 
 /** Итоговый список вкладок: порядок (новые в конце) и скрытые. «Профиль» скрыть нельзя — там настройки. */

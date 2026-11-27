@@ -367,10 +367,10 @@ await test('Нижняя панель: зажать и перетащить вк
   await page.clock.runFor(500);
   await page.mouse.move(by.x + by.width / 2 + 25, by.y + 20, { steps: 12 });
   await page.mouse.up(); await page.clock.runFor(600);
-  eq((await names()).slice(0, 5).join(), 'Тренировки,Прогресс,Главная,Рейтинг,Профиль', 'вкладка «Главная» перетащена');
+  eq((await names()).slice(0, 5).join(), 'Тренировки,Прогресс,Главная,Профиль,Рейтинг', 'вкладка «Главная» перетащена');
   ok(await page.locator('.todo').count() === 1, 'клик после перетаскивания не открыл вкладку');
   await page.reload(); await page.waitForSelector('#tabbar button');
-  eq((await names()).slice(0, 5).join(), 'Тренировки,Прогресс,Главная,Рейтинг,Профиль', 'порядок сохранился');
+  eq((await names()).slice(0, 5).join(), 'Тренировки,Прогресс,Главная,Профиль,Рейтинг', 'порядок сохранился');
   // быстрое нажатие по-прежнему открывает вкладку
   await tab(page, 'workouts'); await page.waitForSelector('.page-title');
   eq(await page.locator('.tab-add').count(), 0, 'кнопки «+ Добавить» на панели нет');
@@ -606,8 +606,8 @@ await test('Длительность подсвечена; график со с�
   } });
   await tab(page, 'workouts'); await page.locator('.plan-plate', { hasText: 'Мой план' }).click(); await page.waitForSelector('.level-plate');
   eq(await page.locator('.chip[aria-pressed=true]', { hasText: '20 мин' }).count(), 1, 'выбранная длительность подсвечена');
-  await page.locator('.chip', { hasText: '45 мин' }).click();
-  eq(await page.locator('.chip[aria-pressed=true]', { hasText: '45 мин' }).count(), 1, 'после выбора подсветился 45');
+  await page.locator('.chip', { hasText: '10 мин' }).click();
+  eq(await page.locator('.chip[aria-pressed=true]', { hasText: '10 мин' }).count(), 1, 'после выбора подсветился 10');
   eq(await page.locator('.chip[aria-pressed=true]', { hasText: '20 мин' }).count(), 0, 'прежняя снята');
   await tab(page, 'progress'); await page.waitForSelector('.chart');
   const h2 = await page.locator('.chart .cbar:not(.zero)').first().evaluate((e) => ({ h: e.getBoundingClientRect().height, b: e.getBoundingClientRect().bottom, base: e.ownerSVGElement.querySelector('.grid').getBoundingClientRect().bottom }));

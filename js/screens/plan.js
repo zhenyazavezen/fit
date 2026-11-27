@@ -78,7 +78,7 @@ export default function plan() {
       h('div', { class: 'grow stack', style: { gap: '2px', textAlign: 'left' } }, h('div', { class: 'h3' }, t('map.title')), h('div', { class: 'small muted' }, t('map.hint'))), icon('chev-r', 18)),
     single(t('plan.goal'), PROFILE_GOALS, 'goal', 'pgoal.'),
     daysPick(), timePick(),
-    single(t('plan.minutes'), [10, 15, 20, 30, 45, 60].map(String), 'minutes', 'min.'),
+    single(t('plan.minutes'), [5, 10, 15, 20, 30].map(String), 'minutes', 'min.'),
     h('details', { class: 'more' }, h('summary', null, t('plan.more')),
       multi(t('plan.limits'), PROFILE_LIMITS, 'limits', 'limit.'),
       h('p', { class: 'small muted' }, t('plan.limitsNote')),
