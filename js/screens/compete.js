@@ -26,7 +26,7 @@ const askNick = (cur) => ask({ title: t('comp.nickTitle'), text: t('comp.nickTex
 
 export default function compete() {
   const el = h('div'), body = h('div', { class: 'pad stack' });
-  el.append(topbar({ title: t('comp.title'), back: false }), body);
+  el.append(h('div', { class: 'pad' }, h('h1', { class: 'h1 page-title' }, t('comp.title'))), body);
   const st = { me: null, view: null, period: 'week' };
 
   if (!apiEnabled() || !auth.signedIn) {
@@ -68,8 +68,9 @@ export default function compete() {
         m.global ? h('button', { class: 'item', onClick: () => { st.view = 'global'; draw(); } }, icon('progress'), h('div', { class: 'grow t' }, t('comp.openGlobal')), icon('chev-r', 18)) : null),
       h('h2', { class: 'h3 group-title' }, t('comp.rooms')),
       rooms.length ? h('div', { class: 'list' }, ...rooms) : h('p', { class: 'muted small' }, t('comp.noRooms')),
-      h('button', { class: 'btn', onClick: () => guard(createRoom) }, icon('plus'), t('comp.create')),
-      h('button', { class: 'btn secondary', onClick: () => guard(joinRoom) }, t('comp.join')));
+      h('div', { class: 'row-flex', style: { gap: '8px' } },
+        h('button', { class: 'btn small', style: { flex: 1 }, onClick: () => guard(createRoom) }, icon('plus'), t('comp.create')),
+        h('button', { class: 'btn secondary small', style: { flex: 1 }, onClick: () => guard(joinRoom) }, t('comp.join'))));
   }
 
   async function createRoom() {

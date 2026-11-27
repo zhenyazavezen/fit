@@ -22,6 +22,7 @@ h1, h2, h3, p { margin: 0; }
   height: var(--app-h, 100%); max-width: var(--maxw); margin: 0 auto; display: flex; flex-direction: column;
   background: var(--bg); position: relative; overflow: hidden;
 }
+#app::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: var(--tg-top); background: var(--bg); z-index: 30; pointer-events: none; }
 #screen { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; margin-top: var(--tg-top); outline: none; }
 #screen.enter > * { animation: fade .18s ease-out; }
 @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
