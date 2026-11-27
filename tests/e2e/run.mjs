@@ -223,8 +223,7 @@ await test('Конструктор: своя программа создаётс
   await btn(page, 'Выйти из тренировки').click(); await btn(page, 'Отменить без сохранения').click();
   await tab(page, 'home'); await page.waitForSelector('.todo');
   await tab(page, 'workouts'); 
-  await page.locator('.mine-main', { hasText: 'Моя проверка' }).click();
-  await btn(page, 'Удалить').click(); await page.locator('.sheet .btn.danger').click();
+  await page.locator('.mine-card', { hasText: 'Моя проверка' }).locator('.icon-btn').nth(1).click(); await page.locator('.sheet .btn.danger').click();
   await page.waitForSelector('.pad');
   eq(await page.evaluate(() => JSON.parse(localStorage.getItem('seven:programs') || '[]').length), 0, 'программа удалена');
   eq(errors.length, 0, errors.join(' | '));

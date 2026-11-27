@@ -35,15 +35,6 @@ export default function program({ id }) {
   })));
   if (text.note) body.append(h('div', { class: 'block' }, h('h2', { class: 'h3' }, t('program.note')), h('p', { class: 'small muted' }, text.note)));
 
-  if (p.custom) {
-    body.append(h('div', { class: 'row-flex' },
-      h('button', { class: 'btn ghost small', style: { flex: 1 }, onClick: () => router.go('builder', { id: p.id }) }, icon('edit', 18), t('common.edit')),
-      h('button', { class: 'btn danger small', style: { flex: 1 }, onClick: async () => {
-        if (await confirmDialog({ title: t('program.deleteTitle'), text: t('program.deleteText', { name: p.name }), confirm: t('common.delete'), danger: true })) {
-          customPrograms.remove(p.id); toast(t('program.deleted')); router.back();
-        }
-      } }, icon('trash', 18), t('common.delete'))));
-  }
   body.append(h('div', { class: 'sticky-cta' }, h('button', { class: 'btn', onClick: () => startPlan(planForProgram(p)) }, icon('play'), t('program.start'))));
   return { el };
 }

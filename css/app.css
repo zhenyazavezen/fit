@@ -48,7 +48,7 @@ h1, h2, h3, p { margin: 0; }
 .topbar .title { flex: 1; min-width: 0; font-weight: 600; font-size: var(--fs-l); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .icon-btn { width: var(--touch); height: var(--touch); display: inline-grid; place-items: center; border-radius: 50%; color: var(--text); flex: none; transition: background .15s; }
 .icon-btn:active { background: var(--s3); }
-.page-title { padding: var(--sp-6) 0 var(--sp-4); }
+.page-title { padding: var(--sp-4) 0 var(--sp-2); }
 
 /* ---------- кнопки */
 .btn { min-height: var(--btn-h); padding: 0 var(--sp-6); border-radius: var(--r-m); display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2); font-weight: 600; font-size: var(--fs-l); background: var(--platinum); color: var(--on-platinum); width: 100%; text-align: center; transition: transform .12s, background .15s, opacity .15s; }
@@ -479,3 +479,6 @@ button.card:active, .pcard-wide:active, .pcard:active, .level-plate:active { tra
 .time-btn { min-height: 48px; font-size: var(--fs-l); }
 
 .icon-btn[disabled] { opacity: .3; pointer-events: none; }
+
+.group-title.tight { margin: 0 0 var(--sp-2); }
+.stack { gap: 10px; }

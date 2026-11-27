@@ -58,24 +58,26 @@ export default function compete() {
       }), t('comp.global')));
     const rooms = m.rooms.map((r) => h('button', { class: 'item', onClick: () => { st.view = r.id; draw(); } }, icon('list'),
       h('div', { class: 'grow' }, h('div', { class: 't' }, r.name), h('div', { class: 's' }, t('comp.members', { n: r.members }))), icon('chev-r', 18)));
+    const nickRow = h('button', { class: 'item', type: 'button', onClick: () => guard(async () => { const n = await askNick(m.nick); if (n) { st.me = await call('/nick', 'POST', { nick: n }); draw(); } }) },
+      avatarNode(m.photo || photo.v, m.nick || tg.user?.first_name || '?', 'sm'),
+      h('div', { class: 'grow' }, h('div', { class: 's' }, t('comp.nickRow')), h('div', { class: 't' }, m.nick || t('comp.nickNone'))),
+      h('span', { class: 'small row-flex', style: { gap: '4px', color: 'var(--silver)', fontWeight: 600 } }, icon('edit', 16), t('comp.nickEdit')));
     body.replaceChildren(
-      h('p', { class: 'muted' }, t('comp.intro')),
-      h('button', { class: 'item card-item', type: 'button', onClick: () => guard(async () => { const n = await askNick(m.nick); if (n) { st.me = await call('/nick', 'POST', { nick: n }); draw(); } }) },
-        avatarNode(m.photo || photo.v, m.nick || tg.user?.first_name || '?', 'sm'),
-        h('div', { class: 'grow' }, h('div', { class: 's' }, t('comp.nickRow')), h('div', { class: 't' }, m.nick || t('comp.nickNone'))),
-        h('span', { class: 'small row-flex', style: { gap: '4px', color: 'var(--silver)', fontWeight: 600 } }, icon('edit', 16), t('comp.nickEdit'))),
-      h('div', { class: 'list' }, globalRow,
+      h('div', { class: 'list' }, nickRow, globalRow,
         m.global ? h('button', { class: 'item', onClick: () => { st.view = 'global'; draw(); } }, icon('progress'), h('div', { class: 'grow t' }, t('comp.openGlobal')), icon('chev-r', 18)) : null),
-      h('h2', { class: 'h3 group-title' }, t('comp.rooms')),
-      rooms.length ? h('div', { class: 'list' }, ...rooms) : h('p', { class: 'muted small' }, t('comp.noRooms')),
-      h('div', { class: 'row-flex', style: { gap: '8px' } },
-        h('button', { class: 'btn small', style: { flex: 1 }, onClick: () => guard(createRoom) }, icon('plus'), t('comp.create')),
-        h('button', { class: 'btn secondary small', style: { flex: 1 }, onClick: () => guard(joinRoom) }, t('comp.join'))));
+      h('div', {},
+        h('h2', { class: 'h3 group-title tight' }, t('comp.rooms')),
+        rooms.length ? h('div', { class: 'list' }, ...rooms) : null,
+        h('div', { class: 'row-flex', style: { gap: '8px', marginTop: rooms.length ? '8px' : '0' } },
+          h('button', { class: 'btn small', style: { flex: 1 }, onClick: () => guard(createRoom) }, icon('plus'), t('comp.create')),
+          h('button', { class: 'btn secondary small', style: { flex: 1 }, onClick: () => guard(joinRoom) }, t('comp.join'))),
+        rooms.length ? null : h('p', { class: 'muted small', style: { marginTop: '8px' } }, t('comp.noRooms'))),
+      h('p', { class: 'muted small' }, t('comp.intro')));
   }
 
   async function createRoom() {
     const nick = await nickFor(); if (nick === null) return;
-    const name = await ask({ title: t('comp.create'), label: t('comp.roomName'), maxlength: 30, confirm: t('comp.create') }); if (!name) return;
+    const name = await ask({ title: t('comp.createRoom'), label: t('comp.roomName'), maxlength: 30, confirm: t('comp.create') }); if (!name) return;
     const r = await call('/rooms', 'POST', { name, nick, photo: photo.v }); st.me = r.me; st.view = r.id; draw();
   }
   async function joinRoom() {
