@@ -49,8 +49,7 @@ function todayCard(hist, now) {
   if (doneSec > 0) {
     return h('section', { class: 'card stack today htile', dataset: { key: 'today' }, 'aria-label': t('today.title') }, head,
       h('div', { class: 'row-flex', style: { gap: '8px' } }, icon('check', 22), h('div', { class: 'h2' }, t('today.done'))),
-      h('div', { class: 'muted' }, t('today.doneSub', { min: Math.max(1, Math.round(doneSec / 60)) })), note,
-      h('button', { class: 'link-btn row-flex', style: { gap: '4px', alignSelf: 'flex-start' }, type: 'button', onClick: () => router.openTab('workouts') }, t('today.others'), icon('chev-r', 16)));
+      h('div', { class: 'muted' }, t('today.doneSub', { min: Math.max(1, Math.round(doneSec / 60)) })), note);
   }
   const ctx = { exById: D.exById, history: hist, programs: allPrograms(), now };
   let prog = recommendPrograms(userProfile.get(), ctx, { limit: 1 })[0]?.program;
@@ -60,7 +59,7 @@ function todayCard(hist, now) {
     h('div', { class: 'h2' }, progText(prog).name),
     h('div', { class: 'muted' }, t('today.meta', { n: prog.items.length, time: durationLabel(programEstimate(prog)) })),
     h('button', { class: 'btn', type: 'button', onClick: () => startPlan(planForProgram(prog)) }, icon('play'), t('today.start')),
-    note, h('button', { class: 'link-btn row-flex', style: { gap: '4px', alignSelf: 'flex-start' }, type: 'button', onClick: () => router.openTab('workouts') }, t('today.others'), icon('chev-r', 16)));
+    note);
 }
 
 const todoCard = () => dayCard({ list: todos, k: 'todo', key: 'todo', route: 'myday' });

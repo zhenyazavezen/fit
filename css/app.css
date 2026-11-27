@@ -449,7 +449,7 @@ button.card:active, .pcard-wide:active, .pcard:active, .level-plate:active { tra
 
 /* загрузка: стартовый экран и индикатор в списках */
 .boot { min-height: 60vh; display: grid; place-items: center; }
-.spin { display: block; width: 30px; height: 30px; border-radius: 50%; border: 2.5px solid var(--s3); border-top-color: var(--silver); animation: spin .8s linear infinite; }
+.spin { display: none; width: 30px; height: 30px; border-radius: 50%; border: 2.5px solid var(--s3); border-top-color: var(--silver); animation: spin .8s linear infinite; }
 .spin-wrap { display: grid; place-items: center; padding: var(--sp-8) 0; }
 
 @media (prefers-reduced-motion: reduce) {

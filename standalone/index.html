@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0F0F12">
 <meta name="color-scheme" content="dark">
-<meta name="build" content="799b677a">
+<meta name="build" content="d03cc259">
 <title>ZAVEZEN_FIT</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230A0A0B'/%3E%3Cpath d='M18 20h28L30 46' fill='none' stroke='%23ECEDEF' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
@@ -526,7 +526,7 @@ button.card:active, .pcard-wide:active, .pcard:active, .level-plate:active { tra
 
 /* загрузка: стартовый экран и индикатор в списках */
 .boot { min-height: 60vh; display: grid; place-items: center; }
-.spin { display: block; width: 30px; height: 30px; border-radius: 50%; border: 2.5px solid var(--s3); border-top-color: var(--silver); animation: spin .8s linear infinite; }
+.spin { display: none; width: 30px; height: 30px; border-radius: 50%; border: 2.5px solid var(--s3); border-top-color: var(--silver); animation: spin .8s linear infinite; }
 .spin-wrap { display: grid; place-items: center; padding: var(--sp-8) 0; }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1414,7 +1414,7 @@ function syncBackButton() {
 }
 
 /** Перерисовать текущий экран (например, после смены языка). */
-function refresh() { const c = current(); if (c) { navDir = 'none'; return show(c, stack, true); } }
+function refresh() { const c = current(); if (c) { c.scroll = screenEl?.scrollTop || 0; navDir = 'none'; return show(c, stack, true); } }
 
 ;return { register, start, go, openTab, onBack, back, syncTabbar, refresh };
 })();
@@ -2943,8 +2943,7 @@ function todayCard(hist, now) {
   if (doneSec > 0) {
     return h('section', { class: 'card stack today htile', dataset: { key: 'today' }, 'aria-label': t('today.title') }, head,
       h('div', { class: 'row-flex', style: { gap: '8px' } }, icon('check', 22), h('div', { class: 'h2' }, t('today.done'))),
-      h('div', { class: 'muted' }, t('today.doneSub', { min: Math.max(1, Math.round(doneSec / 60)) })), note,
-      h('button', { class: 'link-btn row-flex', style: { gap: '4px', alignSelf: 'flex-start' }, type: 'button', onClick: () => router.openTab('workouts') }, t('today.others'), icon('chev-r', 16)));
+      h('div', { class: 'muted' }, t('today.doneSub', { min: Math.max(1, Math.round(doneSec / 60)) })), note);
   }
   const ctx = { exById: D.exById, history: hist, programs: allPrograms(), now };
   let prog = recommendPrograms(userProfile.get(), ctx, { limit: 1 })[0]?.program;
@@ -2954,7 +2953,7 @@ function todayCard(hist, now) {
     h('div', { class: 'h2' }, progText(prog).name),
     h('div', { class: 'muted' }, t('today.meta', { n: prog.items.length, time: durationLabel(programEstimate(prog)) })),
     h('button', { class: 'btn', type: 'button', onClick: () => startPlan(planForProgram(prog)) }, icon('play'), t('today.start')),
-    note, h('button', { class: 'link-btn row-flex', style: { gap: '4px', alignSelf: 'flex-start' }, type: 'button', onClick: () => router.openTab('workouts') }, t('today.others'), icon('chev-r', 16)));
+    note);
 }
 
 const todoCard = () => dayCard({ list: todos, k: 'todo', key: 'todo', route: 'myday' });

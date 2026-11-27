@@ -129,4 +129,4 @@ function syncBackButton() {
 }
 
 /** Перерисовать текущий экран (например, после смены языка). */
-export function refresh() { const c = current(); if (c) { navDir = 'none'; return show(c, stack, true); } }
+export function refresh() { const c = current(); if (c) { c.scroll = screenEl?.scrollTop || 0; navDir = 'none'; return show(c, stack, true); } }
