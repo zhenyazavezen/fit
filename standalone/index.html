@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0F0F12">
 <meta name="color-scheme" content="dark">
-<meta name="build" content="b15f25bd">
+<meta name="build" content="1c99cd5f">
 <title>ZAVEZEN_FIT</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230A0A0B'/%3E%3Cpath d='M18 20h28L30 46' fill='none' stroke='%23ECEDEF' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
@@ -2951,7 +2951,7 @@ function todayCard(hist, now) {
   if (!prog) return null;
   return h('section', { class: 'card stack today htile', dataset: { key: 'today' }, 'aria-label': t('today.title') }, head,
     h('div', { class: 'h2' }, progText(prog).name),
-    h('div', { class: 'muted' }, t('today.meta', { n: prog.items.length, time: durationLabel(programEstimate(prog)) })),
+    h('div', { class: 'muted' }, t('today.meta', { n: prog.items.length, time: durationLabel({ ...programEstimate(prog), exact: false }) })),
     h('button', { class: 'btn', type: 'button', onClick: () => startPlan(planForProgram(prog)) }, icon('play'), t('today.start')),
     note);
 }
@@ -3000,7 +3000,7 @@ function programCard(p) {
   return h('button', { class: 'pcard-wide', onClick: () => router.go('program', { id: p.id }) },
     h('div', { class: 'top' }, h('div', { class: 't' }, text.name)),
     h('div', { class: 'row-flex small muted', style: { fontWeight: 600, gap: '16px' } },
-      h('span', { class: 'row-flex', style: { gap: '6px' } }, icon('clock', 16), durationLabel(est)),
+      h('span', { class: 'row-flex', style: { gap: '6px' } }, icon('clock', 16), durationLabel({ ...est, exact: false })),
       h('span', null, t('n.exercises', { n: p.items.length }))));
 }
 
@@ -3841,7 +3841,7 @@ function plan() {
     recBox.replaceChildren(h('h2', { class: 'h3 group-title' }, t('plan.recs')),
       ...(recs.length ? recs.map((r) => h('button', { class: 'card stack', style: { gap: '6px', textAlign: 'left', marginBottom: '12px', width: '100%' }, onClick: () => router.go('program', { id: r.program.id }) },
         h('div', { class: 'h3' }, progText(r.program).name),
-        h('div', { class: 'small muted' }, `${durationLabel(programEstimate(r.program))} · ${t('level.' + r.program.level)}`),
+        h('div', { class: 'small muted' }, `${durationLabel({ ...programEstimate(r.program), exact: false })} · ${t('level.' + r.program.level)}`),
         h('div', { class: 'small' }, r.reasons.filter((x) => x.key !== 'noConflicts').map(reasonText).join(' · ')),
         ...r.warnings.map((x) => h('div', { class: 'small muted' }, '! ' + reasonText(x))))) : [noteBox(t('plan.noRecs'))]));
   }
@@ -4005,7 +4005,7 @@ function gate(done) {
   box.append(h('div', { class: 'gate-hero' }, robot), h('h1', { class: 'h1' }, t('auth.title')), h('p', { class: 'muted' }, t('auth.text')));
   if (tg.available) box.append(h('button', { class: 'btn', onClick: async () => { msg.textContent = ''; try { await loginWithTelegram(); done(); } catch (e) { msg.textContent = errText(e); } } }, icon('profile'), t('auth.telegram')));
   else box.append(noteBox(t('auth.telegramHint')));
-  box.append(msg, h('button', { class: 'link-btn', onClick: () => router.back() }, t('auth.skip')));
+  box.append(msg);
   return box;
 }
 

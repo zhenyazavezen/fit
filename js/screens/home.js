@@ -57,7 +57,7 @@ function todayCard(hist, now) {
   if (!prog) return null;
   return h('section', { class: 'card stack today htile', dataset: { key: 'today' }, 'aria-label': t('today.title') }, head,
     h('div', { class: 'h2' }, progText(prog).name),
-    h('div', { class: 'muted' }, t('today.meta', { n: prog.items.length, time: durationLabel(programEstimate(prog)) })),
+    h('div', { class: 'muted' }, t('today.meta', { n: prog.items.length, time: durationLabel({ ...programEstimate(prog), exact: false }) })),
     h('button', { class: 'btn', type: 'button', onClick: () => startPlan(planForProgram(prog)) }, icon('play'), t('today.start')),
     note);
 }

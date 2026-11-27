@@ -28,7 +28,7 @@ function gate(done) {
   box.append(h('div', { class: 'gate-hero' }, robot), h('h1', { class: 'h1' }, t('auth.title')), h('p', { class: 'muted' }, t('auth.text')));
   if (tg.available) box.append(h('button', { class: 'btn', onClick: async () => { msg.textContent = ''; try { await loginWithTelegram(); done(); } catch (e) { msg.textContent = errText(e); } } }, icon('profile'), t('auth.telegram')));
   else box.append(noteBox(t('auth.telegramHint')));
-  box.append(msg, h('button', { class: 'link-btn', onClick: () => router.back() }, t('auth.skip')));
+  box.append(msg);
   return box;
 }
 

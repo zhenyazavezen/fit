@@ -14,7 +14,7 @@ export function programCard(p) {
   return h('button', { class: 'pcard-wide', onClick: () => router.go('program', { id: p.id }) },
     h('div', { class: 'top' }, h('div', { class: 't' }, text.name)),
     h('div', { class: 'row-flex small muted', style: { fontWeight: 600, gap: '16px' } },
-      h('span', { class: 'row-flex', style: { gap: '6px' } }, icon('clock', 16), durationLabel(est)),
+      h('span', { class: 'row-flex', style: { gap: '6px' } }, icon('clock', 16), durationLabel({ ...est, exact: false })),
       h('span', null, t('n.exercises', { n: p.items.length }))));
 }
 
