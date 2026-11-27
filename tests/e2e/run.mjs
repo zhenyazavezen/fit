@@ -597,6 +597,33 @@ await test('Конструктор: сводка, фильтр по группе
   ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
 });
 
+await test('Длительность подсвечена; график со столбцами от оси; удаление записи и дела из списка', async () => {
+  const { page, errors, ctx } = await fresh({ pre: () => {
+    if (localStorage.getItem('seven:seeded2')) return; localStorage.setItem('seven:seeded2', '1');
+    const d = Date.now(), mk = (id, ts, title) => ({ id, at: ts, startedAt: ts - 600000, durationSec: 600, title, setsDone: 9, exercisesDone: 5, exerciseIds: ['squat'], completed: true });
+    localStorage.setItem('seven:history', JSON.stringify([mk('a', d - 5000, 'Первая'), mk('b', d - 4000, 'Вторая')]));
+    const k = new Date(d - 86400000), key = k.getFullYear() + '-' + String(k.getMonth() + 1).padStart(2, '0') + '-' + String(k.getDate()).padStart(2, '0');
+    localStorage.setItem('seven:todos', JSON.stringify({ [key]: [{ id: 'z', t: 'Лишнее дело', d: false }] }));
+  } });
+  await tab(page, 'workouts'); await page.locator('.plan-plate', { hasText: 'Мой план' }).click(); await page.waitForSelector('.level-plate');
+  eq(await page.locator('.chip[aria-pressed=true]', { hasText: '20 мин' }).count(), 1, 'выбранная длительность подсвечена');
+  await page.locator('.chip', { hasText: '45 мин' }).click();
+  eq(await page.locator('.chip[aria-pressed=true]', { hasText: '45 мин' }).count(), 1, 'после выбора подсветился 45');
+  eq(await page.locator('.chip[aria-pressed=true]', { hasText: '20 мин' }).count(), 0, 'прежняя снята');
+  await tab(page, 'progress'); await page.waitForSelector('.chart');
+  const h2 = await page.locator('.chart .cbar:not(.zero)').first().evaluate((e) => ({ h: e.getBoundingClientRect().height, b: e.getBoundingClientRect().bottom, base: e.ownerSVGElement.querySelector('.grid').getBoundingClientRect().bottom }));
+  ok(h2.h > 20 && Math.abs(h2.b - h2.base) < 2, 'столбец стоит на оси и не обрезан: ' + JSON.stringify(h2));
+  await page.getByRole('button', { name: 'Удалить' }).first().click();
+  await page.locator('.sheet .btn.danger').last().click();
+  eq(await page.evaluate(() => JSON.parse(localStorage.getItem('seven:history')).length), 1, 'запись удалена прямо из списка');
+  await tab(page, 'home'); await page.getByRole('button', { name: /Расписание и история/ }).click(); await page.waitForSelector('.days-row');
+  ok((await text(page, '#screen')).includes('Лишнее дело'), 'дело в истории дел');
+  await page.getByRole('button', { name: 'Удалить из истории' }).first().click();
+  await page.locator('.sheet .btn.danger').last().click();
+  ok(!(await text(page, '#screen')).includes('Лишнее дело'), 'дело удалено из истории дел');
+  ok(!errors.length, 'ошибки: ' + errors.join(' | ')); await ctx.close();
+});
+
 await test('Конструктор: одна плашка «Добавить упражнение»; отдых от 1 с, удержание меняет значение', async () => {
   const { page, errors, ctx } = await fresh();
   await tab(page, 'workouts'); await btn(page, /Создать свою тренировку/).click(); await page.waitForSelector('.stepper');

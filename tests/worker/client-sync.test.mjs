@@ -85,3 +85,19 @@ test('Просроченный токен: статус ошибки, локал
   assert.equal(syncStatus().state === 'error' || syncStatus().state === 'idle', true);
   assert.equal(history.all().length, 1);
 });
+
+test('Запись, удалённая пока идёт отправка, не остаётся «призраком» на сервере и пропадает из рейтинга', async () => {
+  device();
+  const acc = await login(4343);
+  await enableSync(acc.account.id, acc.token);
+  const at = Date.now() - 1000;
+  history.add({ at, startedAt: at - 5000, durationSec: 300, programId: null, title: 'Гонка', setsDone: 3, exercisesDone: 1, exerciseIds: ['plank'], completed: true });
+  const id = history.all().find((s) => s.title === 'Гонка').id;
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (...a) => { const r = await realFetch(...a); history.remove(id); return r; };   // пользователь нажал «Удалить», пока шёл запрос
+  await syncNow();
+  globalThis.fetch = realFetch;
+  await syncNow();
+  const row = env.DB.raw.prepare('SELECT deleted FROM workout_sessions WHERE id = ?').get(id);
+  assert.equal(row.deleted, 1, 'на сервере запись помечена удалённой');
+});

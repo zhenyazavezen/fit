@@ -35,7 +35,7 @@ export default function plan() {
   // Один выбор: переносимые «таблетки» (длинные подписи не обрезаются).
   const single = (label, all, key, tkey) => {
     const box = h('div', { class: 'chipset' });
-    const draw = () => box.replaceChildren(...all.map((v) => chip({ label: t(tkey + v), pressed: p[key] === v, onClick: () => { save({ [key]: v }); draw(); } })));
+    const draw = () => box.replaceChildren(...all.map((v) => chip({ label: t(tkey + v), pressed: String(p[key]) === String(v), onClick: () => { save({ [key]: v }); draw(); } })));
     draw();
     return h('div', null, h('h2', { class: 'h3 group-title' }, label), box);
   };

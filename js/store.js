@@ -153,6 +153,12 @@ const dayLists = (key) => ({
     }
     return out.slice(0, limit);
   },
+  /** Убрать дело с таким названием из истории (из всех сохранённых дней; расписание не трогаем). */
+  forget(text) {
+    const k = String(text).trim().toLowerCase(), all = { ...this.all() };
+    for (const day of Object.keys(all).filter((x) => x !== 'daily')) if (Array.isArray(all[day])) all[day] = all[day].filter((x) => String(x.t).trim().toLowerCase() !== k);
+    return store.set(key, all);
+  },
   set(day, items) {
     const all = { ...this.all(), [day]: items };
     for (const k of Object.keys(all).filter((x) => x !== 'daily').sort().slice(0, -14)) delete all[k];

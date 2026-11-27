@@ -23,7 +23,7 @@ function chart(p) {
   const peak = Math.max(...p.bars.map((b) => b.sec));
   p.bars.forEach((b, i) => {
     const x = L + slot * i + (slot - bw) / 2, hgt = b.sec ? Math.max(3, (b.sec / 60 / top) * ph) : 2;
-    svg.append(sv('rect', { class: 'bar' + (b.sec ? '' : ' zero') + (b.sec && b.sec === peak ? ' peak' : ''), x, y: base - hgt, width: bw, height: hgt, rx: Math.min(3, bw / 2), style: `animation-delay:${Math.min(i, 30) * 14}ms` }));
+    svg.append(sv('rect', { class: 'cbar' + (b.sec ? '' : ' zero') + (b.sec && b.sec === peak ? ' peak' : ''), x, y: base - hgt, width: bw, height: hgt, rx: Math.min(3, bw / 2), style: `animation-delay:${Math.min(i, 30) * 14}ms` }));
     const label = p.mode === 'week' ? t('day.' + i) : (b.i === 0 || (b.i + 1) % 7 === 1 ? String(b.i + 1) : '');
     if (label) svg.append(sv('text', { x: x + bw / 2, y: H - 6, 'text-anchor': 'middle' }, label));
   });
@@ -86,9 +86,11 @@ export default function progress() {
       h('h2', { class: 'h3', style: { margin: '28px 0 0' } }, state.day ? t('cal.dayList') : t('progress.history')),
       ...(state.day && !groupByDay(hist).some((g) => g.key === state.day) ? [h('p', { class: 'muted small' }, t('cal.noDay'))] : []),
       ...groupByDay(hist).filter((g) => !state.day || g.key === state.day).flatMap((g) => [h('div', { class: 'day-title' }, dayTitle(g.ts, now)),
-        h('div', { class: 'list' }, ...g.items.map((s) => h('button', { class: 'item', onClick: () => openRecord(s) },
-          h('div', { class: 'grow' }, h('div', { class: 't' }, s.title || t('progress.customWorkout')), h('div', { class: 's' }, `${timeOf(s.at)} · ${t('n.sets', { n: s.setsDone })}`)),
-          h('div', { class: 'end' }, spentLabel(s.durationSec)), icon('chev-r', 18))))]));
+        h('div', { class: 'list' }, ...g.items.map((s) => h('div', { class: 'item' },
+          h('button', { class: 'row-flex grow', type: 'button', style: { textAlign: 'left', gap: '12px' }, onClick: () => openRecord(s) },
+            h('div', { class: 'grow' }, h('div', { class: 't' }, s.title || t('progress.customWorkout')), h('div', { class: 's' }, `${timeOf(s.at)} · ${t('n.sets', { n: s.setsDone })}`)),
+            h('div', { class: 'end' }, spentLabel(s.durationSec))),
+          h('button', { class: 'icon-btn', type: 'button', 'aria-label': t('common.delete'), onClick: () => askDelete(s) }, icon('trash', 18)))))]));
   };
   const row = (label, value) => h('div', { class: 'item', style: { cursor: 'default' } }, h('div', { class: 'grow t' }, label), h('div', { class: 'value' }, value));
   const mins = (sec) => (sec >= 60 ? spentLabel(sec) : t('dur.s', { s: Math.round(sec) }));
@@ -102,6 +104,10 @@ export default function progress() {
   const tile = (v, l) => h('div', { class: 'fact' }, h('div', { class: 'v' }, v), h('div', { class: 'l' }, l));
 
   const logOf = (s, id, i) => { const l = (s.log || [])[i]?.ex === id ? s.log[i] : (s.log || []).find((x) => x.ex === id); return l ? doseLabel({ kind: l.seconds != null ? 'timed' : 'reps', ...l }) : ''; };
+  async function askDelete(s) {
+    if (!(await confirmDialog({ title: t('progress.deleteTitle'), text: t('progress.deleteText'), confirm: t('common.delete'), danger: true }))) return false;
+    history.remove(s.id); toast(t('progress.deleted')); router.refresh(); return true;
+  }
   function openRecord(s) {
     const ids = s.exerciseIds || [];
     const sh = sheet({
@@ -110,9 +116,7 @@ export default function progress() {
         h('div', { class: 'facts' }, tile(spentLabel(s.durationSec), t('progress.time')), tile(String(s.setsDone), t('progress.sets')), tile(String(s.exercisesDone), t('player.finishExercises'))),
         ids.length ? h('div', { class: 'list' }, ...ids.map((id, i) => h('div', { class: 'item', style: { minHeight: '52px' } }, h('div', { class: 'lead' }, String(i + 1)), h('div', { class: 'grow' }, h('div', { class: 't' }, exName(id)), logOf(s, id, i) ? h('div', { class: 's' }, logOf(s, id, i)) : null))))
           : h('p', { class: 'small muted' }, t('progress.noExercises'))],
-      foot: [h('button', { class: 'btn danger', onClick: async () => {
-        if (await confirmDialog({ title: t('progress.deleteTitle'), text: t('progress.deleteText'), confirm: t('common.delete'), danger: true })) { history.remove(s.id); sh.close(); toast(t('progress.deleted')); router.refresh(); }
-      } }, icon('trash', 18), t('common.delete'))],
+      foot: [h('button', { class: 'btn danger', onClick: async () => { if (await askDelete(s)) sh.close(); } }, icon('trash', 18), t('common.delete'))],
     });
   }
   draw();

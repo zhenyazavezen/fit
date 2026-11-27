@@ -3,7 +3,7 @@ import { h, icon, uid } from '../util.js';
 import { t } from '../i18n.js';
 import { todos as todayTodos, workoutsToday, weekdayOf } from '../store.js';
 import { dayKey } from '../dates.js';
-import { topbar, chip } from '../ui.js';
+import { topbar, chip, confirmDialog, toast } from '../ui.js';
 
 const ALL = [1, 2, 3, 4, 5, 6, 7];
 const daysLabel = (days) => (days.length === 7 ? t('myday.everyDay') : days.map((n) => t('day.' + (n - 1))).join(', '));
@@ -24,6 +24,11 @@ export default function myday({ kind } = {}) {
     todos.setDaily(rest.length ? all.map((x) => (x.id === r.id ? { ...x, days: rest } : x)) : all.filter((x) => x.id !== r.id));
     if (wd === weekdayOf(today)) todos.set(today, todos.get(today).filter((x) => x.src !== r.id));   // сегодняшняя копия тоже уходит
     draw();
+  };
+
+  const forget = async (text) => {
+    if (!(await confirmDialog({ title: t('myday.forgetTitle'), text: t('myday.forgetText', { name: text }), confirm: t('common.delete'), danger: true }))) return;
+    todos.forget(text); toast(t('myday.forgotten')); draw();
   };
 
   function draw() {
@@ -48,7 +53,8 @@ export default function myday({ kind } = {}) {
       hist.length
         ? h('div', { class: 'stack', style: { gap: '8px' } }, h('p', { class: 'small muted' }, t(P + '.historyHint', { day: t('day.' + (st.wd - 1)) })),
             h('div', { class: 'list' }, ...hist.map((x) => h('div', { class: 'item' }, h('div', { class: 'grow t' }, x.t),
-              h('button', { class: 'link-btn row-flex', type: 'button', style: { gap: '4px' }, onClick: () => schedule(x.t, st.all ? ALL : [st.wd]) }, icon('plus', 16), t('myday.toSchedule'))))))
+              h('button', { class: 'link-btn row-flex', type: 'button', style: { gap: '4px' }, onClick: () => schedule(x.t, st.all ? ALL : [st.wd]) }, icon('plus', 16), t('myday.toSchedule')),
+              h('button', { class: 'icon-btn', type: 'button', 'aria-label': t('myday.forget'), onClick: () => forget(x.t) }, icon('trash', 18))))))
         : h('p', { class: 'muted small' }, t(P + '.noHistory')));
   }
   draw();

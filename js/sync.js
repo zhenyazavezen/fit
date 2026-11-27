@@ -85,7 +85,11 @@ export async function syncNow() {
       const res = await api('/sync', { method: 'POST', token, body: { baseRev: m.rev, docs, sessions, deleted } });
       const m2 = meta();                                        // запись могла произойти, пока шёл запрос
       for (const k of Object.keys(docs)) if (m2.docs[k] === stamp[k]) m2.dirty = m2.dirty.filter((x) => x !== k);
-      for (const s of sessions) if (!m2.sent.includes(s.id)) m2.sent.push(s.id);
+      const nowIds = new Set(history.all().map((x) => x.id));
+      for (const s of sessions) {
+        if (nowIds.has(s.id)) { if (!m2.sent.includes(s.id)) m2.sent.push(s.id); }
+        else if (!m2.del.includes(s.id)) m2.del.push(s.id);           // удалили, пока шёл запрос: на сервере тоже убрать
+      }
       m2.del = m2.del.filter((id) => !deleted.includes(id));
       for (const c of res.conflicts || []) { store.setSilent(c.key, c.value); m2.docs[c.key] = c.updatedAt; m2.dirty = m2.dirty.filter((k) => k !== c.key); }
       applyRemote(m2, { docs: (res.docs || []).filter((d) => !(res.conflicts || []).some((c) => c.key === d.key)), sessions: res.sessions });

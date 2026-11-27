@@ -235,8 +235,8 @@ body[data-route="player"] .toast { bottom: calc(var(--safe-bottom) + var(--tg-bo
 .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-3); }
 .chart { width: 100%; height: auto; display: block; }
 .chart text { fill: var(--text3); font-size: 10px; font-family: var(--font); font-weight: 600; }
-.chart .bar { fill: var(--silver); }
-.chart .bar.zero { fill: var(--s3); }
+.chart .cbar { fill: var(--silver); }
+.chart .cbar.zero { fill: var(--s3); }
 .chart .grid { stroke: var(--s3); stroke-width: 1; }
 .chart .peak { fill: var(--platinum); }
 .day-title { font-size: var(--fs-s); font-weight: 600; color: var(--text3); margin: var(--sp-5) 0 var(--sp-2); }
