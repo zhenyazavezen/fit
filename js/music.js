@@ -30,6 +30,7 @@ function kick(at) {
 }
 
 function schedule() {
+  if (next < bus.ctx.currentTime) next = bus.ctx.currentTime + 0.05;   // после фона не играть пропущенное разом
   while (next < bus.ctx.currentTime + 0.35) {
     const i = k % 16, bar = Math.floor(k / 16) % 4;
     if (i % 4 === 0) kick(next);

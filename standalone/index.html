@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0F0F12">
 <meta name="color-scheme" content="dark">
-<meta name="build" content="1c99cd5f">
+<meta name="build" content="b122e762">
 <title>ZAVEZEN_FIT</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230A0A0B'/%3E%3Cpath d='M18 20h28L30 46' fill='none' stroke='%23ECEDEF' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
@@ -707,7 +707,7 @@ function svgEl(tag, attrs = {}, ...kids) {
 // ── js/store.js
 __m[2] = (function () {
 // Хранилище на устройстве. Правила, чтобы не терять данные:
-//  • повреждённое значение не затирается молча — копия сохраняется под ключом ...:corrupt:<время>;
+//  • повреждённое значение не затирается молча — копия сохраняется под ключом ...:corrupt:last (одна копия на ключ);
 //  • история не обрезается; ошибка записи (переполнение) возвращает false и показывается пользователю;
 //  • каждая запись проходит через setWriteHook — сюда позже подключится синхронизация с backend.
 const { CONFIG } = __m[0];
@@ -739,7 +739,7 @@ const store = {
     try { raw = rawGet(key); } catch { return fallback; }
     if (raw == null) return fallback;
     try { return JSON.parse(raw); } catch {
-      try { rawSet(`${key}:corrupt:${Date.now()}`, raw); } catch { /* нечего делать */ }
+      try { rawSet(`${key}:corrupt:last`, raw); } catch { /* нечего делать */ }
       return fallback;
     }
   },
@@ -1026,7 +1026,7 @@ const { api, ApiError } = __m[3];
 const DOCS = ['settings', 'favorites', 'programs', 'profile', 'avatar', 'myex', 'todos', 'wtodos', 'tabs', 'pages', 'week'];
 const PUSH_LIMIT = 200;
 const listeners = new Set();
-let applying = false, timer = null, running = false, token = null, status = { state: 'off', lastAt: 0, error: null };
+let applying = false, timer = null, running = false, again = false, current = null, token = null, status = { state: 'off', lastAt: 0, error: null };
 
 const fresh = (user) => ({ user, rev: 0, docs: {}, dirty: [], sent: [], del: [] });
 const meta = () => store.get('syncmeta', null) || fresh(null);
@@ -1041,12 +1041,7 @@ const onSyncStatus = (fn) => { listeners.add(fn); return () => listeners.delete(
 async function enableSync(accountId, sessionToken) {
   token = sessionToken;
   let m = meta();
-  if (m.user !== accountId) {
-    m = fresh(accountId);
-    saveMeta(m);
-    emit({ state: 'syncing', error: null });
-    await firstMerge(m);
-  }
+  if (m.user !== accountId) { m = fresh(accountId); m.pendingMerge = true; saveMeta(m); }   // слияние повторится, пока не удастся
   emit({ state: 'idle' });
   return syncNow();
 }
@@ -1061,8 +1056,25 @@ async function firstMerge(m) {
     for (const k of DOCS) if (store.get(k, null) != null) { m.docs[k] = Date.now(); m.dirty.push(k); }
     m.dirty = [...new Set(m.dirty)];
     m.rev = remote.more ? 0 : remote.rev;
+    delete m.pendingMerge;
     saveMeta(m);
-  } catch (e) { emit({ state: e instanceof ApiError && e.status === 0 ? 'offline' : 'error', error: e.code }); }
+    return true;
+  } catch (e) { emit({ state: e instanceof ApiError && e.status === 0 ? 'offline' : 'error', error: e.code }); return false; }
+}
+
+/** Объединение значений документа: массивы — без потерь (по id или по содержимому), объекты — по ключам; при споре скаляров побеждает сервер. */
+function mergeVal(server, local) {
+  if (Array.isArray(server) && Array.isArray(local)) {
+    const key = (x) => (x && typeof x === 'object' && x.id != null ? 'id:' + x.id : JSON.stringify(x));
+    const seen = new Set(server.map(key));
+    return [...server, ...local.filter((x) => !seen.has(key(x)))];
+  }
+  if (server && local && typeof server === 'object' && typeof local === 'object' && !Array.isArray(server) && !Array.isArray(local)) {
+    const out = { ...local };
+    for (const k of Object.keys(server)) out[k] = k in local ? mergeVal(server[k], local[k]) : server[k];
+    return out;
+  }
+  return server;
 }
 
 function applyRemote(m, remote, { union = false } = {}) {
@@ -1070,12 +1082,8 @@ function applyRemote(m, remote, { union = false } = {}) {
   try {
     for (const d of remote.docs || []) {
       const localTs = m.docs[d.key] || 0, localVal = store.get(d.key, null);
-      if (union && (d.key === 'favorites' || d.key === 'programs') && Array.isArray(localVal)) {
-        const merged = d.key === 'favorites' ? [...new Set([...d.value, ...localVal])] : [...d.value, ...localVal.filter((p) => !d.value.some((x) => x.id === p.id))];
-        store.setSilent(d.key, merged); m.docs[d.key] = Date.now(); if (!m.dirty.includes(d.key)) m.dirty.push(d.key);
-      } else if (union && localVal != null && (d.key === 'settings' || d.key === 'profile')) {
-        // на этом устройстве уже есть данные: оставляем более новые по времени сервера (для нового входа — серверные)
-        store.setSilent(d.key, d.value); m.docs[d.key] = d.updatedAt;
+      if (union && localVal != null) {
+        store.setSilent(d.key, mergeVal(d.value, localVal)); m.docs[d.key] = Date.now(); if (!m.dirty.includes(d.key)) m.dirty.push(d.key);
       } else if (d.updatedAt > localTs || localVal == null) { store.setSilent(d.key, d.value); m.docs[d.key] = d.updatedAt; m.dirty = m.dirty.filter((k) => k !== d.key); }
     }
     let hist = history.all(), changed = false;
@@ -1090,10 +1098,16 @@ function applyRemote(m, remote, { union = false } = {}) {
   } finally { applying = false; }
 }
 
-async function syncNow() {
-  if (!token || running) return;
-  running = true; emit({ state: 'syncing', error: null });
+function syncNow() {
+  if (!token) return Promise.resolve();
+  if (running) { again = true; return current; }                // идёт отправка: после неё запустится ещё одна; ждать можно текущую
+  running = true;
+  return (current = run());
+}
+async function run() {
+  emit({ state: 'syncing', error: null });
   try {
+    if (meta().pendingMerge && !(await firstMerge(meta()))) return;
     for (let i = 0; i < 20; i++) {
       const m = meta();
       const docs = {}, stamp = {};
@@ -1121,7 +1135,7 @@ async function syncNow() {
   } catch (e) {
     if (e instanceof ApiError && e.status === 401) { emit({ state: 'error', error: 'unauthorized' }); }
     else emit({ state: e instanceof ApiError && e.status === 0 ? 'offline' : 'error', error: e.code || 'error' });
-  } finally { running = false; }
+  } finally { running = false; if (again) { again = false; schedule(500); } }
 }
 
 const schedule = (ms = 2500) => { if (!token) return; clearTimeout(timer); timer = setTimeout(syncNow, ms); };
@@ -1309,6 +1323,12 @@ function start({ screen, tabbar, initial }) {
     if (b && !tabbar.dataset.hold) openTab(b.dataset.tab);
   });
   window.addEventListener('popstate', onPop);
+  let day = new Date().toDateString();                       // приложение открыто с вечера: после полуночи обновить «сегодня»
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+    const d = new Date().toDateString();
+    if (d !== day) { day = d; if (current() && current().name !== 'player') refresh(); }
+  });
   replaceState(1);
   stack = []; navDir = 'tab';
   return show({ name: initial, params: {} }, [{ name: initial, params: {}, scroll: 0 }]);
@@ -1318,6 +1338,8 @@ const current = () => stack[stack.length - 1] || null;
 
 /** Перейти на экран. replace — заменить текущий вместо добавления в стек. */
 function go(name, params = {}, { replace = false } = {}) {
+  const top = current();
+  if (!replace && top && top.name === name && JSON.stringify(top.params || {}) === JSON.stringify(params)) return;   // двойной тап: тот же экран уже открыт
   saveScroll(); navDir = 'fwd';
   const entry = { name, params, scroll: 0 };
   const next = replace ? [...stack.slice(0, -1), entry] : [...stack, entry];
@@ -2303,6 +2325,7 @@ function durationLabel({ sec, exact }) {
 /** Длительность в истории: 1 ч 05 мин / 12 мин / 45 с. */
 function spentLabel(sec) {
   sec = Math.round(sec);
+  if (sec >= 3570) sec = Math.max(sec, 3600);
   if (sec >= 3600) return t('dur.h', { h: Math.floor(sec / 3600), m: Math.floor((sec % 3600) / 60) });
   if (sec >= 600) return t('dur.m', { m: Math.round(sec / 60) });
   if (sec >= 60) return t('dur.ms', { m: Math.floor(sec / 60), s: sec % 60 });
@@ -3445,6 +3468,7 @@ function kick(at) {
 }
 
 function schedule() {
+  if (next < bus.ctx.currentTime) next = bus.ctx.currentTime + 0.05;   // после фона не играть пропущенное разом
   while (next < bus.ctx.currentTime + 0.35) {
     const i = k % 16, bar = Math.floor(k / 16) % 4;
     if (i % 4 === 0) kick(next);
@@ -3675,9 +3699,10 @@ function player(params = {}) {
     if (over) return;
     over = true; cleanup(true);
     const now = Date.now(), r = session.result(now), before = history.all();
+    const endT = session.endAt && session.endAt <= now ? session.endAt : now;   // завершили в фоне — время окончания, а не возврата
     let savedOk = true, log = [];
     if (r.setsDone > 0) {
-      savedOk = !!history.add({ at: now, startedAt: now - r.durationSec * 1000, durationSec: r.durationSec, title: plan.title, programId: plan.programId, kind: plan.kind,
+      savedOk = !!history.add({ at: endT, startedAt: endT - r.durationSec * 1000, durationSec: r.durationSec, title: plan.title, programId: plan.programId, kind: plan.kind,
         setsDone: r.setsDone, exercisesDone: r.exercisesDone, exerciseIds: r.exerciseIds, completed: r.completed,
         log: (log = r.exerciseIds.map((id) => plan.items.find((i) => i.ex === id)).filter(Boolean).map((i) => { const x = resolved(i, plan.restBetween); const o = { ex: x.ex, sets: x.sets }; if (x.kind === 'reps') o.reps = x.reps; else o.seconds = x.seconds; if (x.kg) o.kg = x.kg; return o; })) });
     }
@@ -4320,7 +4345,7 @@ function loadTelegram() {
     s.src = 'https://telegram.org/js/telegram-web-app.js';
     const done = () => resolve();
     s.onload = done; s.onerror = done;
-    setTimeout(done, 2500);
+    setTimeout(done, 6000);
     document.head.append(s);
   });
 }

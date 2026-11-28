@@ -241,3 +241,19 @@ test('Расписание тренировок: дни 1–7 и id програ
   assert.equal((await put({ 1: '<script>' })).status, 400);
   assert.equal((await put({ 1: 5 })).status, 400);
 });
+
+test('Удаление аккаунта после объединения работает; будущие тренировки и пустой документ не принимаются как есть', async () => {
+  const { e, t, gg } = await twoAccounts();
+  const code = (await call(e, req('POST', '/link/start', { token: t.token }))).body.code;
+  const done = await call(e, req('POST', '/link/complete', { token: gg.token, body: { code, confirm: true } }));
+  assert.equal(done.status, 200);
+  assert.equal((await call(e, req('DELETE', '/me', { token: done.body.token, body: { confirm: 'DELETE' } }))).status, 200, 'после объединения удаление не падает');
+  const a = await tg(e, 555);
+  const bad = await push(e, a.token, { docs: { settings: { updatedAt: 1 } } });
+  assert.equal(bad.status, 400, 'документ без value — 400, а не 500');
+  const future = Date.now() + 30 * 86400_000;
+  await push(e, a.token, { sessions: [{ ...W('fut'), at: future, startedAt: future - 1000, durationSec: 86000 }] });
+  const got = (await call(e, req('GET', '/sync?since=0', { token: a.token }))).body.sessions.find((s) => s.id === 'fut').data;
+  assert.ok(got.at <= Date.now() + 6 * 60_000, 'время не из будущего');
+  assert.ok(got.durationSec <= 4 * 3600, 'длительность ограничена');
+});

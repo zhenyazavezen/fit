@@ -10,6 +10,7 @@ export function durationLabel({ sec, exact }) {
 /** Длительность в истории: 1 ч 05 мин / 12 мин / 45 с. */
 export function spentLabel(sec) {
   sec = Math.round(sec);
+  if (sec >= 3570) sec = Math.max(sec, 3600);
   if (sec >= 3600) return t('dur.h', { h: Math.floor(sec / 3600), m: Math.floor((sec % 3600) / 60) });
   if (sec >= 600) return t('dur.m', { m: Math.round(sec / 60) });
   if (sec >= 60) return t('dur.ms', { m: Math.floor(sec / 60), s: sec % 60 });

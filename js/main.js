@@ -20,7 +20,7 @@ function loadTelegram() {
     s.src = 'https://telegram.org/js/telegram-web-app.js';
     const done = () => resolve();
     s.onload = done; s.onerror = done;
-    setTimeout(done, 2500);
+    setTimeout(done, 6000);
     document.head.append(s);
   });
 }

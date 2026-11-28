@@ -7,7 +7,7 @@ import { api, ApiError } from './api.js';
 export const DOCS = ['settings', 'favorites', 'programs', 'profile', 'avatar', 'myex', 'todos', 'wtodos', 'tabs', 'pages', 'week'];
 const PUSH_LIMIT = 200;
 const listeners = new Set();
-let applying = false, timer = null, running = false, token = null, status = { state: 'off', lastAt: 0, error: null };
+let applying = false, timer = null, running = false, again = false, current = null, token = null, status = { state: 'off', lastAt: 0, error: null };
 
 const fresh = (user) => ({ user, rev: 0, docs: {}, dirty: [], sent: [], del: [] });
 const meta = () => store.get('syncmeta', null) || fresh(null);
@@ -22,12 +22,7 @@ export const onSyncStatus = (fn) => { listeners.add(fn); return () => listeners.
 export async function enableSync(accountId, sessionToken) {
   token = sessionToken;
   let m = meta();
-  if (m.user !== accountId) {
-    m = fresh(accountId);
-    saveMeta(m);
-    emit({ state: 'syncing', error: null });
-    await firstMerge(m);
-  }
+  if (m.user !== accountId) { m = fresh(accountId); m.pendingMerge = true; saveMeta(m); }   // слияние повторится, пока не удастся
   emit({ state: 'idle' });
   return syncNow();
 }
@@ -42,8 +37,25 @@ async function firstMerge(m) {
     for (const k of DOCS) if (store.get(k, null) != null) { m.docs[k] = Date.now(); m.dirty.push(k); }
     m.dirty = [...new Set(m.dirty)];
     m.rev = remote.more ? 0 : remote.rev;
+    delete m.pendingMerge;
     saveMeta(m);
-  } catch (e) { emit({ state: e instanceof ApiError && e.status === 0 ? 'offline' : 'error', error: e.code }); }
+    return true;
+  } catch (e) { emit({ state: e instanceof ApiError && e.status === 0 ? 'offline' : 'error', error: e.code }); return false; }
+}
+
+/** Объединение значений документа: массивы — без потерь (по id или по содержимому), объекты — по ключам; при споре скаляров побеждает сервер. */
+function mergeVal(server, local) {
+  if (Array.isArray(server) && Array.isArray(local)) {
+    const key = (x) => (x && typeof x === 'object' && x.id != null ? 'id:' + x.id : JSON.stringify(x));
+    const seen = new Set(server.map(key));
+    return [...server, ...local.filter((x) => !seen.has(key(x)))];
+  }
+  if (server && local && typeof server === 'object' && typeof local === 'object' && !Array.isArray(server) && !Array.isArray(local)) {
+    const out = { ...local };
+    for (const k of Object.keys(server)) out[k] = k in local ? mergeVal(server[k], local[k]) : server[k];
+    return out;
+  }
+  return server;
 }
 
 function applyRemote(m, remote, { union = false } = {}) {
@@ -51,12 +63,8 @@ function applyRemote(m, remote, { union = false } = {}) {
   try {
     for (const d of remote.docs || []) {
       const localTs = m.docs[d.key] || 0, localVal = store.get(d.key, null);
-      if (union && (d.key === 'favorites' || d.key === 'programs') && Array.isArray(localVal)) {
-        const merged = d.key === 'favorites' ? [...new Set([...d.value, ...localVal])] : [...d.value, ...localVal.filter((p) => !d.value.some((x) => x.id === p.id))];
-        store.setSilent(d.key, merged); m.docs[d.key] = Date.now(); if (!m.dirty.includes(d.key)) m.dirty.push(d.key);
-      } else if (union && localVal != null && (d.key === 'settings' || d.key === 'profile')) {
-        // на этом устройстве уже есть данные: оставляем более новые по времени сервера (для нового входа — серверные)
-        store.setSilent(d.key, d.value); m.docs[d.key] = d.updatedAt;
+      if (union && localVal != null) {
+        store.setSilent(d.key, mergeVal(d.value, localVal)); m.docs[d.key] = Date.now(); if (!m.dirty.includes(d.key)) m.dirty.push(d.key);
       } else if (d.updatedAt > localTs || localVal == null) { store.setSilent(d.key, d.value); m.docs[d.key] = d.updatedAt; m.dirty = m.dirty.filter((k) => k !== d.key); }
     }
     let hist = history.all(), changed = false;
@@ -71,10 +79,16 @@ function applyRemote(m, remote, { union = false } = {}) {
   } finally { applying = false; }
 }
 
-export async function syncNow() {
-  if (!token || running) return;
-  running = true; emit({ state: 'syncing', error: null });
+export function syncNow() {
+  if (!token) return Promise.resolve();
+  if (running) { again = true; return current; }                // идёт отправка: после неё запустится ещё одна; ждать можно текущую
+  running = true;
+  return (current = run());
+}
+async function run() {
+  emit({ state: 'syncing', error: null });
   try {
+    if (meta().pendingMerge && !(await firstMerge(meta()))) return;
     for (let i = 0; i < 20; i++) {
       const m = meta();
       const docs = {}, stamp = {};
@@ -102,7 +116,7 @@ export async function syncNow() {
   } catch (e) {
     if (e instanceof ApiError && e.status === 401) { emit({ state: 'error', error: 'unauthorized' }); }
     else emit({ state: e instanceof ApiError && e.status === 0 ? 'offline' : 'error', error: e.code || 'error' });
-  } finally { running = false; }
+  } finally { running = false; if (again) { again = false; schedule(500); } }
 }
 
 const schedule = (ms = 2500) => { if (!token) return; clearTimeout(timer); timer = setTimeout(syncNow, ms); };

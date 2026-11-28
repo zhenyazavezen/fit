@@ -184,7 +184,14 @@ export async function unlinkIdentity(db, accountId, currentProvider, provider, n
 
 /** Удаление аккаунта и всех его данных (право пользователя). Записи объединения о нём остаются без персональных данных. */
 export async function deleteAccount(db, accountId) {
+  // комнаты, которыми владеет аккаунт: если в них есть другие участники, владение переходит к одному из них (комната не исчезает у всех)
+  try {
+    await db.prepare(`UPDATE comp_rooms SET owner_id = (SELECT m.account_id FROM comp_members m WHERE m.room_id = comp_rooms.id AND m.account_id != ?1 ORDER BY m.joined_at LIMIT 1)
+      WHERE owner_id = ?1 AND EXISTS (SELECT 1 FROM comp_members m WHERE m.room_id = comp_rooms.id AND m.account_id != ?1)`).bind(accountId).run();
+  } catch { /* таблиц рейтинга ещё нет — передавать нечего */ }
   await db.batch([
+    db.prepare('DELETE FROM audit_log WHERE account_id IN (SELECT id FROM accounts WHERE merged_into = ?1)').bind(accountId),
+    db.prepare('DELETE FROM accounts WHERE merged_into = ?1').bind(accountId),
     db.prepare('DELETE FROM audit_log WHERE account_id = ?1').bind(accountId),
     db.prepare('DELETE FROM accounts WHERE id = ?1').bind(accountId),
   ]);

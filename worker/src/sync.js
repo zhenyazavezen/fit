@@ -19,6 +19,7 @@ const str = (v, n) => typeof v === 'string' && v.length <= n;
 /** Проверка и очистка документа. Возвращает чистое значение или бросает 400. */
 export function validateDoc(key, value) {
   const bad = (m) => new HttpError(400, 'bad_doc', `${key}: ${m}`);
+  if (value === undefined) throw bad('нет значения');
   if (JSON.stringify(value).length > MAX_DOC_BYTES) throw new HttpError(413, 'too_large', `${key}: слишком большой документ`);
   if (key === 'favorites') {
     if (!Array.isArray(value) || value.length > 500 || !value.every((x) => str(x, 64) && ID_RE.test(x))) throw bad('ожидается список идентификаторов');
@@ -115,11 +116,11 @@ export function validateDoc(key, value) {
 }
 
 /** Очистка записи тренировки: остаются только известные поля. */
-export function cleanSession(s) {
+export function cleanSession(s, now = Date.now()) {
   if (!isObj(s) || !str(s.id, 64) || !ID_RE.test(s.id) || !finite(s.at, 1e12, 4.2e12)) throw new HttpError(400, 'bad_session', 'Некорректная запись тренировки');
-  const o = { id: s.id, at: Math.round(s.at) };
-  if (finite(s.startedAt, 1e12, 4.2e12)) o.startedAt = Math.round(s.startedAt);
-  if (finite(s.durationSec, 0, 86400)) o.durationSec = Math.round(s.durationSec);
+  const o = { id: s.id, at: Math.min(Math.round(s.at), now + 5 * 60_000) };   // «из будущего» нельзя: рейтинг не накрутить
+  if (finite(s.startedAt, 1e12, 4.2e12)) o.startedAt = Math.min(Math.round(s.startedAt), o.at);
+  if (finite(s.durationSec, 0, 86400)) o.durationSec = Math.min(Math.round(s.durationSec), 4 * 3600);
   if (str(s.programId, 64) || s.programId === null) o.programId = s.programId;
   if (str(s.title, 120)) o.title = s.title;
   if (finite(s.setsDone, 0, 1000)) o.setsDone = Math.round(s.setsDone);
@@ -166,7 +167,7 @@ export async function push(db, accountId, payload, now = Date.now()) {
     if (!isObj(d) || !finite(d.updatedAt, 0, 4.2e12)) throw new HttpError(400, 'bad_doc', key + ': нужен updatedAt');
     docs.push({ key, value: validateDoc(key, d.value), updatedAt: Math.min(Math.round(d.updatedAt), now + 5 * 60_000) });
   }
-  const sessions = sessIn.map(cleanSession);
+  const sessions = sessIn.map((x) => cleanSession(x, now));
   const dels = delIn.map((id) => { if (!str(id, 64) || !ID_RE.test(id)) throw new HttpError(400, 'bad_session', 'Некорректный id'); return id; });
 
   if (sessions.length) {
@@ -181,7 +182,7 @@ export async function push(db, accountId, payload, now = Date.now()) {
     stmts.push(db.prepare(
       `INSERT INTO user_docs (account_id, doc_key, value, rev, updated_at) VALUES (?1, ?2, ?3, ${REV}, ?4)
        ON CONFLICT(account_id, doc_key) DO UPDATE SET value = excluded.value, rev = excluded.rev, updated_at = excluded.updated_at
-       WHERE excluded.updated_at > user_docs.updated_at`).bind(accountId, d.key, JSON.stringify(d.value), d.updatedAt));
+       WHERE excluded.updated_at >= user_docs.updated_at`).bind(accountId, d.key, JSON.stringify(d.value), d.updatedAt));
   }
   for (const s of sessions) {
     stmts.push(db.prepare(`INSERT OR IGNORE INTO workout_sessions (account_id, id, data, at, deleted, rev) VALUES (?1, ?2, ?3, ?4, 0, ${REV})`).bind(accountId, s.id, JSON.stringify(s), s.at));

@@ -1,5 +1,5 @@
 // Хранилище на устройстве. Правила, чтобы не терять данные:
-//  • повреждённое значение не затирается молча — копия сохраняется под ключом ...:corrupt:<время>;
+//  • повреждённое значение не затирается молча — копия сохраняется под ключом ...:corrupt:last (одна копия на ключ);
 //  • история не обрезается; ошибка записи (переполнение) возвращает false и показывается пользователю;
 //  • каждая запись проходит через setWriteHook — сюда позже подключится синхронизация с backend.
 import { CONFIG } from './config.js';
@@ -31,7 +31,7 @@ export const store = {
     try { raw = rawGet(key); } catch { return fallback; }
     if (raw == null) return fallback;
     try { return JSON.parse(raw); } catch {
-      try { rawSet(`${key}:corrupt:${Date.now()}`, raw); } catch { /* нечего делать */ }
+      try { rawSet(`${key}:corrupt:last`, raw); } catch { /* нечего делать */ }
       return fallback;
     }
   },

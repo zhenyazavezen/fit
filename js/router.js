@@ -24,6 +24,12 @@ export function start({ screen, tabbar, initial }) {
     if (b && !tabbar.dataset.hold) openTab(b.dataset.tab);
   });
   window.addEventListener('popstate', onPop);
+  let day = new Date().toDateString();                       // приложение открыто с вечера: после полуночи обновить «сегодня»
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+    const d = new Date().toDateString();
+    if (d !== day) { day = d; if (current() && current().name !== 'player') refresh(); }
+  });
   replaceState(1);
   stack = []; navDir = 'tab';
   return show({ name: initial, params: {} }, [{ name: initial, params: {}, scroll: 0 }]);
@@ -33,6 +39,8 @@ const current = () => stack[stack.length - 1] || null;
 
 /** Перейти на экран. replace — заменить текущий вместо добавления в стек. */
 export function go(name, params = {}, { replace = false } = {}) {
+  const top = current();
+  if (!replace && top && top.name === name && JSON.stringify(top.params || {}) === JSON.stringify(params)) return;   // двойной тап: тот же экран уже открыт
   saveScroll(); navDir = 'fwd';
   const entry = { name, params, scroll: 0 };
   const next = replace ? [...stack.slice(0, -1), entry] : [...stack, entry];

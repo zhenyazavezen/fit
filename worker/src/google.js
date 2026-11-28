@@ -28,6 +28,7 @@ export async function verifyGoogleIdToken(idToken, clientId, opts = {}) {
     header = JSON.parse(new TextDecoder().decode(b64urlDecode(parts[0])));
     claims = JSON.parse(new TextDecoder().decode(b64urlDecode(parts[1])));
   } catch { return { ok: false, reason: 'format' }; }
+  if (!header || typeof header !== 'object' || !claims || typeof claims !== 'object') return { ok: false, reason: 'format' };
   if (header.alg !== 'RS256' || !header.kid) return { ok: false, reason: 'alg' };
 
   const find = () => cache.keys.find((k) => k.kid === header.kid);

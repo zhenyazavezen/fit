@@ -101,3 +101,19 @@ test('Запись, удалённая пока идёт отправка, не 
   const row = env.DB.raw.prepare('SELECT deleted FROM workout_sessions WHERE id = ?').get(id);
   assert.equal(row.deleted, 1, 'на сервере запись помечена удалённой');
 });
+
+test('Первый вход: локальные списки дел и настройки не затираются серверными, а объединяются; без сети слияние повторяется', async () => {
+  device();
+  const a = await login(9001);
+  await enableSync(a.account.id, a.token);
+  store.set('todos', { '2026-11-01': [{ id: 't-server', t: 'с сервера' }] });
+  await syncNow();
+  device();
+  store.set('todos', { '2026-11-01': [{ id: 't-local', t: 'локально' }] });
+  offline = true;
+  await enableSync(a.account.id, a.token);
+  offline = false;
+  assert.deepEqual(store.get('todos')['2026-11-01'].map((x) => x.id), ['t-local'], 'без сети ничего не затёрто');
+  await syncNow();
+  assert.deepEqual(store.get('todos')['2026-11-01'].map((x) => x.id).sort(), ['t-local', 't-server'], 'после появления сети — объединено');
+});
